@@ -458,20 +458,24 @@ async function loadGeoJsonLayer(layerDef) {
             });
         } else if (layerId === 'loteamento_por_bairro') {
             geojsonLayer = L.geoJSON(geojsonData, {
-                style: {
-                    color: layerDef.color || '#d97706',
-                    weight: layerDef.weight || 1.2,
-                    dashArray: layerDef.dashArray || '2, 2',
-                    fill: true,
-                    fillColor: layerDef.fillColor || '#f59e0b',
-                    fillOpacity: layerDef.fillOpacity || 0.15
+                style: feature => {
+                    const featColor = (feature.properties && feature.properties.color) ? feature.properties.color : '#d97706';
+                    return {
+                        color: '#232323',
+                        weight: 0.8,
+                        dashArray: null,
+                        fill: true,
+                        fillColor: featColor,
+                        fillOpacity: 0.65
+                    };
                 },
                 onEachFeature: (feature, layer) => {
                     layer.layerDef = layerDef;
                     const props = feature.properties || {};
                     const nomeLoteamento = props.Loteamento || 'Loteamento';
-                    const nomeBairro = props.Bairro ? `<br><span style="font-size:0.75rem; color:#d97706;"><i class="fa-solid fa-location-dot"></i> Bairro: ${props.Bairro}</span>` : '';
-                    layer.bindTooltip(`<b>${nomeLoteamento}</b>${nomeBairro}`, {
+                    const cor = props.color || '#d97706';
+                    const nomeBairro = props.Bairro ? `<br><span style="font-size:0.75rem; color:#444;"><i class="fa-solid fa-location-dot"></i> Bairro: ${props.Bairro}</span>` : '';
+                    layer.bindTooltip(`<div style="display:flex;align-items:center;gap:6px;"><span style="width:11px;height:11px;border-radius:2px;background:${cor};display:inline-block;border:1px solid #333;flex-shrink:0;"></span><b>${nomeLoteamento}</b></div>${nomeBairro}`, {
                         sticky: true,
                         direction: 'top',
                         className: 'bairro-tooltip'
@@ -571,13 +575,14 @@ function resetLayerStyle(l) {
             fillOpacity: def.fillOpacity
         });
     } else if (def.id === 'loteamento_por_bairro') {
+        const featColor = (l.feature && l.feature.properties && l.feature.properties.color) ? l.feature.properties.color : '#d97706';
         l.setStyle({
-            color: def.color || '#d97706',
-            weight: def.weight || 1.2,
-            dashArray: def.dashArray || '2, 2',
+            color: '#232323',
+            weight: 0.8,
+            dashArray: null,
             fill: true,
-            fillColor: def.fillColor || '#f59e0b',
-            fillOpacity: def.fillOpacity || 0.15
+            fillColor: featColor,
+            fillOpacity: 0.65
         });
     } else {
         l.setStyle({
@@ -673,7 +678,7 @@ function displayFeatureDetails(feature, layerDef, latlng) {
     } else if (layerDef.id === 'loteamento_por_bairro') {
         title = props.Loteamento || 'Loteamento';
         badgeText = 'Loteamento';
-        badgeBg = '#d97706';
+        badgeBg = props.color || '#d97706';
         if (props.Bairro) {
             zoneDesc = `Loteamento urbano cadastrado no bairro/balneário: <b>${props.Bairro}</b>`;
         }

@@ -14,7 +14,8 @@
         "fid": 1,
         "Loteamento": "Planta 116 - Baln. Jardim Monções II",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#ea623e"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -88,7 +89,8 @@
         "fid": 2,
         "Loteamento": "Planta 46 - Jardim Monções",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#d2edb1"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -154,7 +156,8 @@
         "fid": 3,
         "Loteamento": "Planta 73 - Baln. Arco-Íris",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#90caa9"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -228,7 +231,8 @@
         "fid": 4,
         "Loteamento": "Planta 67 - Baln. Corais",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#a5d9a5"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -270,7 +274,8 @@
         "fid": 5,
         "Loteamento": "Planta 120 - Lages e Corais (Artezor Toniolo)",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#ef7647"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -332,7 +337,8 @@
         "fid": 6,
         "Loteamento": "Planta 57 - Baln. Céu Azul",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#b9e3a9"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -386,7 +392,8 @@
         "fid": 7,
         "Loteamento": "Planta 86 - Balneário dos Corais",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#6aafaf"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -468,7 +475,8 @@
         "fid": 8,
         "Loteamento": "Planta 63 - Balneário Junara",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#aedea5"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -534,7 +542,8 @@
         "fid": 9,
         "Loteamento": "Planta 44 - Praia das Gaivotas I",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#e2f3b6"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -580,7 +589,8 @@
         "fid": 10,
         "Loteamento": "Planta 44A (176) - Praia das Gaivotas II Lote B2A",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#e0f3b5"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -626,7 +636,8 @@
         "fid": 11,
         "Loteamento": "Planta 44B (177) - Praia das Gaivotas III Lote C3 Parte A",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#def2b4"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -728,7 +739,8 @@
         "fid": 12,
         "Loteamento": "Planta 44D (179) - Praia das Gaivotas V Lote B2",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#d9f0b3"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -770,7 +782,8 @@
         "fid": 13,
         "Loteamento": "Planta 44C (178) - Praia das Gaivotas IV Lote C3 Parte B",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#dcf1b4"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -820,7 +833,8 @@
         "fid": 14,
         "Loteamento": "Planta 45 - Balneário Iracema",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#d7efb2"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -898,7 +912,8 @@
         "fid": 15,
         "Loteamento": "Planta 45 - Balneário Iracema 01",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#d5eeb1"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -956,7 +971,8 @@
         "fid": 16,
         "Loteamento": "Planta 55 - Balneário Caravella I",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#bee5aa"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -1082,7 +1098,8 @@
         "fid": 17,
         "Loteamento": "Planta 54 - Balneário Caravella II",
         "Bairros_Matinhos_IPM_Código": 6,
-        "Bairro": "Balneario Albatroz"
+        "Bairro": "Balneario Albatroz",
+        "color": "#c0e6ab"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -1132,7 +1149,8 @@
         "fid": 18,
         "Loteamento": "Planta 54 - Balneário Caravella II",
         "Bairros_Matinhos_IPM_Código": 4,
-        "Bairro": "Balneario Gaivotas"
+        "Bairro": "Balneario Gaivotas",
+        "color": "#c0e6ab"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -1258,7 +1276,8 @@
         "fid": 19,
         "Loteamento": "Planta 03 - 2º Loteamento Carlos Ihle",
         "Bairros_Matinhos_IPM_Código": 2,
-        "Bairro": "Balneario Caioba"
+        "Bairro": "Balneario Caioba",
+        "color": "#da2522"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -1324,7 +1343,8 @@
         "fid": 20,
         "Loteamento": "Planta 03 - 2º Loteamento Carlos Ihle",
         "Bairros_Matinhos_IPM_Código": 9,
-        "Bairro": "Balneario Praia Mansa"
+        "Bairro": "Balneario Praia Mansa",
+        "color": "#da2522"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -1582,7 +1602,8 @@
         "fid": 21,
         "Loteamento": "Planta 03 - 2º Loteamento Carlos Ihle",
         "Bairros_Matinhos_IPM_Código": 8,
-        "Bairro": "Bairro Tabuleiro"
+        "Bairro": "Bairro Tabuleiro",
+        "color": "#da2522"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -1644,7 +1665,8 @@
         "fid": 22,
         "Loteamento": "Planta 02 - 1º Loteamento Carlos Ihle",
         "Bairros_Matinhos_IPM_Código": 2,
-        "Bairro": "Balneario Caioba"
+        "Bairro": "Balneario Caioba",
+        "color": "#d92120"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -1706,7 +1728,8 @@
         "fid": 23,
         "Loteamento": "Planta 02 - 1º Loteamento Carlos Ihle",
         "Bairros_Matinhos_IPM_Código": 9,
-        "Bairro": "Balneario Praia Mansa"
+        "Bairro": "Balneario Praia Mansa",
+        "color": "#d92120"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -1772,7 +1795,8 @@
         "fid": 24,
         "Loteamento": "Planta 14 - Felipe Mendes",
         "Bairros_Matinhos_IPM_Código": 2,
-        "Bairro": "Balneario Caioba"
+        "Bairro": "Balneario Caioba",
+        "color": "#fdb164"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -2058,7 +2082,8 @@
         "fid": 25,
         "Loteamento": "Planta 14 - Felipe Mendes",
         "Bairros_Matinhos_IPM_Código": 8,
-        "Bairro": "Bairro Tabuleiro"
+        "Bairro": "Bairro Tabuleiro",
+        "color": "#fdb164"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -2228,7 +2253,8 @@
         "fid": 26,
         "Loteamento": "Planta 92 - Celina Mendes",
         "Bairros_Matinhos_IPM_Código": 8,
-        "Bairro": "Bairro Tabuleiro"
+        "Bairro": "Bairro Tabuleiro",
+        "color": "#58a3b2"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -2278,7 +2304,8 @@
         "fid": 27,
         "Loteamento": "Planta 152 - Vila Nova",
         "Bairros_Matinhos_IPM_Código": 8,
-        "Bairro": "Bairro Tabuleiro"
+        "Bairro": "Bairro Tabuleiro",
+        "color": "#fdba6e"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -2516,7 +2543,8 @@
         "fid": 28,
         "Loteamento": "Planta 05 - Cidade Balneária Caiubá - Parte 1",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#dc2d25"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -2602,7 +2630,8 @@
         "fid": 29,
         "Loteamento": "Planta 05 - Cidade Balneária Caiubá - Parte 1",
         "Bairros_Matinhos_IPM_Código": 2,
-        "Bairro": "Balneario Caioba"
+        "Bairro": "Balneario Caioba",
+        "color": "#dc2d25"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -2948,7 +2977,8 @@
         "fid": 30,
         "Loteamento": "Planta 05 - Cidade Balneária Caiubá - Parte 1",
         "Bairros_Matinhos_IPM_Código": 8,
-        "Bairro": "Bairro Tabuleiro"
+        "Bairro": "Bairro Tabuleiro",
+        "color": "#dc2d25"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -3058,7 +3088,8 @@
         "fid": 31,
         "Loteamento": "Planta 05 - Cidade Balneária Caiubá - Parte 2",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#dd3127"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -3496,7 +3527,8 @@
         "fid": 32,
         "Loteamento": "Planta 05 - Cidade Balneária Caiubá - Parte 2",
         "Bairros_Matinhos_IPM_Código": 8,
-        "Bairro": "Bairro Tabuleiro"
+        "Bairro": "Bairro Tabuleiro",
+        "color": "#dd3127"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -3750,7 +3782,8 @@
         "fid": 33,
         "Loteamento": "Planta 150 - Tabuleiro",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#fdb76c"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -3828,7 +3861,8 @@
         "fid": 34,
         "Loteamento": "Planta 150 - Tabuleiro",
         "Bairros_Matinhos_IPM_Código": 8,
-        "Bairro": "Bairro Tabuleiro"
+        "Bairro": "Bairro Tabuleiro",
+        "color": "#fdb76c"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -4018,7 +4052,8 @@
         "fid": 35,
         "Loteamento": "Planta 85 - João Carraro",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#6db2af"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -4252,7 +4287,8 @@
         "fid": 36,
         "Loteamento": "Planta 155 - Jardim Scheffer",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#fdbc71"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -4402,7 +4438,8 @@
         "fid": 37,
         "Loteamento": "Planta 122 - Banhomar",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#f17e4b"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -4448,7 +4485,8 @@
         "fid": 38,
         "Loteamento": "Planta 124 - Vila Municipal",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#f3864f"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -4498,7 +4536,8 @@
         "fid": 39,
         "Loteamento": "Planta 124 - Vila Municipal",
         "Bairros_Matinhos_IPM_Código": 8,
-        "Bairro": "Bairro Tabuleiro"
+        "Bairro": "Bairro Tabuleiro",
+        "color": "#f3864f"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -4544,7 +4583,8 @@
         "fid": 40,
         "Loteamento": "Planta 07 - Boqueirão de Matinhos",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#de3529"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -4622,7 +4662,8 @@
         "fid": 41,
         "Loteamento": "Planta 07 - Boqueirão de Matinhos",
         "Bairros_Matinhos_IPM_Código": 2,
-        "Bairro": "Balneario Caioba"
+        "Bairro": "Balneario Caioba",
+        "color": "#de3529"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -4816,7 +4857,8 @@
         "fid": 42,
         "Loteamento": "Planta 07 - Boqueirão de Matinhos",
         "Bairros_Matinhos_IPM_Código": 1,
-        "Bairro": "Bairro Centro"
+        "Bairro": "Bairro Centro",
+        "color": "#de3529"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -4902,7 +4944,8 @@
         "fid": 43,
         "Loteamento": "Planta 05 - Balneário Matinhos",
         "Bairros_Matinhos_IPM_Código": 2,
-        "Bairro": "Balneario Caioba"
+        "Bairro": "Balneario Caioba",
+        "color": "#db2924"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -4968,7 +5011,8 @@
         "fid": 44,
         "Loteamento": "Planta 05 - Balneário Matinhos",
         "Bairros_Matinhos_IPM_Código": 1,
-        "Bairro": "Bairro Centro"
+        "Bairro": "Bairro Centro",
+        "color": "#db2924"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -5190,7 +5234,8 @@
         "fid": 45,
         "Loteamento": "Planta 05 - Balneário Matinhos",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#db2924"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -5236,7 +5281,8 @@
         "fid": 46,
         "Loteamento": "Planta 29 - Fernando Afonso Alves de Camargo",
         "Bairros_Matinhos_IPM_Código": 1,
-        "Bairro": "Bairro Centro"
+        "Bairro": "Bairro Centro",
+        "color": "#fee6a2"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -5418,7 +5464,8 @@
         "fid": 47,
         "Loteamento": "Planta 53 - Gabriel Mesquita",
         "Bairros_Matinhos_IPM_Código": 1,
-        "Bairro": "Bairro Centro"
+        "Bairro": "Bairro Centro",
+        "color": "#c2e6ac"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -5488,7 +5535,8 @@
         "fid": 48,
         "Loteamento": "Planta 53 - Gabriel Mesquita",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#c2e6ac"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -5526,7 +5574,8 @@
         "fid": 49,
         "Loteamento": "Planta 52 - Derder",
         "Bairros_Matinhos_IPM_Código": 1,
-        "Bairro": "Bairro Centro"
+        "Bairro": "Bairro Centro",
+        "color": "#c5e7ac"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -5584,7 +5633,8 @@
         "fid": 50,
         "Loteamento": "Planta 52 - Derder",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#c5e7ac"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -5626,7 +5676,8 @@
         "fid": 51,
         "Loteamento": "Planta 51 - Francisco Mesquita",
         "Bairros_Matinhos_IPM_Código": 1,
-        "Bairro": "Bairro Centro"
+        "Bairro": "Bairro Centro",
+        "color": "#c7e8ad"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -5692,7 +5743,8 @@
         "fid": 52,
         "Loteamento": "Planta 51 - Francisco Mesquita",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#c7e8ad"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -5738,7 +5790,8 @@
         "fid": 53,
         "Loteamento": "Planta 09 - \nJoão Jacinto Mesquita",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#e03d2d"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -5772,7 +5825,8 @@
         "fid": 54,
         "Loteamento": "Planta 09 - \nJoão Jacinto Mesquita",
         "Bairros_Matinhos_IPM_Código": 1,
-        "Bairro": "Bairro Centro"
+        "Bairro": "Bairro Centro",
+        "color": "#e03d2d"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -5886,7 +5940,8 @@
         "fid": 55,
         "Loteamento": "Planta 09 - \nJoão Jacinto Mesquita",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#e03d2d"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -5956,7 +6011,8 @@
         "fid": 56,
         "Loteamento": "Planta 08 - \nJacinto Mesquita",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#df392b"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6038,7 +6094,8 @@
         "fid": 57,
         "Loteamento": "Planta 08 - \nJacinto Mesquita",
         "Bairros_Matinhos_IPM_Código": 1,
-        "Bairro": "Bairro Centro"
+        "Bairro": "Bairro Centro",
+        "color": "#df392b"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6072,7 +6129,8 @@
         "fid": 58,
         "Loteamento": "Planta 59 - Adelaide Nico \nScorsin",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#b7e2a8"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6118,7 +6176,8 @@
         "fid": 59,
         "Loteamento": "Planta 59 - Adelaide Nico \nScorsin",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#b7e2a8"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6160,7 +6219,8 @@
         "fid": 60,
         "Loteamento": "Planta 184 - \nJardim Ross II",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#fecb83"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6206,7 +6266,8 @@
         "fid": 61,
         "Loteamento": "Planta 71 - \nVila São Pedro",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#97cfa7"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6240,7 +6301,8 @@
         "fid": 62,
         "Loteamento": "Planta 69 - \nJardim Ross I",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#9ed4a6"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6342,7 +6404,8 @@
         "fid": 63,
         "Loteamento": "Planta 69 - \nJardim Ross I",
         "Bairros_Matinhos_IPM_Código": 1,
-        "Bairro": "Bairro Centro"
+        "Bairro": "Bairro Centro",
+        "color": "#9ed4a6"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6492,7 +6555,8 @@
         "fid": 64,
         "Loteamento": "Planta 15 - \nSertãozinho",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#fdb569"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6586,7 +6650,8 @@
         "fid": 65,
         "Loteamento": "Planta 66 - Jardim Bernardina",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#a8dba4"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6644,7 +6709,8 @@
         "fid": 66,
         "Loteamento": "Planta 30 - Jardim das Palmeiras",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#fee8a4"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6782,7 +6848,8 @@
         "fid": 67,
         "Loteamento": "Planta 30 - Jardim das Palmeiras",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#fee8a4"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6824,7 +6891,8 @@
         "fid": 68,
         "Loteamento": "Planta 30 - Jardim das Palmeiras",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#fee8a4"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6870,7 +6938,8 @@
         "fid": 69,
         "Loteamento": "Planta 12 - Bela Vista",
         "Bairros_Matinhos_IPM_Código": 7,
-        "Bairro": "Bairro Bela Vista"
+        "Bairro": "Bairro Bela Vista",
+        "color": "#ee7245"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -6964,7 +7033,8 @@
         "fid": 70,
         "Loteamento": "Planta 12 - Bela Vista",
         "Bairros_Matinhos_IPM_Código": 1,
-        "Bairro": "Bairro Centro"
+        "Bairro": "Bairro Centro",
+        "color": "#ee7245"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -7042,7 +7112,8 @@
         "fid": 71,
         "Loteamento": "Planta 13 - \nManoel Ferreira Gomes",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#f69354"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -7372,7 +7443,8 @@
         "fid": 72,
         "Loteamento": "Planta 10 - \nVila Hermes",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#e1422f"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -7706,7 +7778,8 @@
         "fid": 73,
         "Loteamento": "Planta 11 - Vila Paraíso",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#e55236"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -7876,7 +7949,8 @@
         "fid": 74,
         "Loteamento": "Planta 62 - \nLeonor Albini Teixeira",
         "Bairros_Matinhos_IPM_Código": 1,
-        "Bairro": "Bairro Centro"
+        "Bairro": "Bairro Centro",
+        "color": "#b0dfa6"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -7946,7 +8020,8 @@
         "fid": 75,
         "Loteamento": "Planta 62 - \nLeonor Albini Teixeira",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#b0dfa6"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -8072,7 +8147,8 @@
         "fid": 76,
         "Loteamento": "Planta 01 - \nJohanes Max Roesner",
         "Bairros_Matinhos_IPM_Código": 1,
-        "Bairro": "Bairro Centro"
+        "Bairro": "Bairro Centro",
+        "color": "#d81d1e"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -8214,7 +8290,8 @@
         "fid": 77,
         "Loteamento": "Planta 01 - \nJohanes Max Roesner",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#d81d1e"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -8280,7 +8357,8 @@
         "fid": 78,
         "Loteamento": "Planta 26 - \nVila Lica",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#fedf9a"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -8518,7 +8596,8 @@
         "fid": 79,
         "Loteamento": "Planta 60 Jardim Oito Vilas",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#b5e1a7"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -8556,7 +8635,8 @@
         "fid": 80,
         "Loteamento": "Planta 50 - \nMáximo da Silva Ramos",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#c9e9ae"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -8626,7 +8706,8 @@
         "fid": 81,
         "Loteamento": "Planta 50 - \nMáximo da Silva Ramos",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#c9e9ae"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -8688,7 +8769,8 @@
         "fid": 82,
         "Loteamento": "Planta 25 - \nRosa Ferreira Gomes",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#fedd97"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -8762,7 +8844,8 @@
         "fid": 83,
         "Loteamento": "Planta 25 - \nRosa Ferreira Gomes",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#fedd97"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -8836,7 +8919,8 @@
         "fid": 84,
         "Loteamento": "Planta 24 - \nMaria Madalena da Costa Ferreira",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#fedb95"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -8918,7 +9002,8 @@
         "fid": 85,
         "Loteamento": "Planta 24 - \nMaria Madalena da Costa Ferreira",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#fedb95"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -9016,7 +9101,8 @@
         "fid": 86,
         "Loteamento": "Planta 21 - \nSanta Rita de Cássia",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#fed28b"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -9070,7 +9156,8 @@
         "fid": 87,
         "Loteamento": "Planta 97 - Jardim Colina Verde",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#4a99b5"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -9148,7 +9235,8 @@
         "fid": 88,
         "Loteamento": "Planta 81 - Jardim Santa Maria",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#7bbbac"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -9206,7 +9294,8 @@
         "fid": 89,
         "Loteamento": "Planta 81 - Jardim Santa Maria",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#7bbbac"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -9300,7 +9389,8 @@
         "fid": 90,
         "Loteamento": "Planta 110 - Santa Lúcia",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#e75638"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -9358,7 +9448,8 @@
         "fid": 91,
         "Loteamento": "Planta 110 - Santa Lúcia",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#e75638"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -9496,7 +9587,8 @@
         "fid": 92,
         "Loteamento": "Planta 27 - \nManoel Júlio I",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#fee19c"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -9598,7 +9690,8 @@
         "fid": 93,
         "Loteamento": "Planta 28 - \nManoel Júlio II",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#fee39f"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -9716,7 +9809,8 @@
         "fid": 94,
         "Loteamento": "Planta 22 - Jardim Yemanjá",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#fed690"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -9982,7 +10076,8 @@
         "fid": 95,
         "Loteamento": "Planta 65 - \nJardim São Francisco",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#acdda4"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -10148,7 +10243,8 @@
         "fid": 96,
         "Loteamento": "Planta 48 - Vila América",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#cceaae"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -10326,7 +10422,8 @@
         "fid": 97,
         "Loteamento": "Planta 19 - Jardim Alvorada",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#fecd85"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -10432,7 +10529,8 @@
         "fid": 98,
         "Loteamento": "Planta 31 - São Sebastião",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#feeaa7"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -10586,7 +10684,8 @@
         "fid": 99,
         "Loteamento": "Planta 76 - Jardim Santana",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#89c5aa"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -10808,7 +10907,8 @@
         "fid": 100,
         "Loteamento": "Planta 95 - Jardim Aurora",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#519eb3"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -11038,7 +11138,8 @@
         "fid": 101,
         "Loteamento": "Planta 87 - Vila Mesquita Alboit",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#66adb0"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -11312,7 +11413,8 @@
         "fid": 102,
         "Loteamento": "Planta 126 - Jordão",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#f48b51"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -11502,7 +11604,8 @@
         "fid": 103,
         "Loteamento": "Planta 119 - Neumar",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#ed6e43"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -11556,7 +11659,8 @@
         "fid": 104,
         "Loteamento": "Planta 117 - \nParque Balneário Portal das Praias de Matinhos",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#eb6640"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -11806,7 +11910,8 @@
         "fid": 105,
         "Loteamento": "Planta 121 - \nPortal das Praias de Matinhos I",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#f07a49"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -11968,7 +12073,8 @@
         "fid": 106,
         "Loteamento": "Planta 56 - \nJardim Presidente Vargas",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#bce4a9"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -12090,7 +12196,8 @@
         "fid": 107,
         "Loteamento": "Planta 23-Maristela",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#fed892"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -12172,7 +12279,8 @@
         "fid": 108,
         "Loteamento": "Planta 16 - Bom Retiro",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#fdc076"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -12390,7 +12498,8 @@
         "fid": 109,
         "Loteamento": "Planta 17 - Caiçara",
         "Bairros_Matinhos_IPM_Código": 11,
-        "Bairro": "Balneario Riviera"
+        "Bairro": "Balneario Riviera",
+        "color": "#fec77e"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -12468,7 +12577,8 @@
         "fid": 110,
         "Loteamento": "Planta 17 - Caiçara",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#fec77e"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -12634,7 +12744,8 @@
         "fid": 111,
         "Loteamento": "Planta 17 - Caiçara",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#fec77e"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -12732,7 +12843,8 @@
         "fid": 112,
         "Loteamento": "Planta 100 - Cohapar II",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#e24631"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -12806,7 +12918,8 @@
         "fid": 113,
         "Loteamento": "Planta 137 - Cohapar II Área Verde",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#fcab60"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -12844,7 +12957,8 @@
         "fid": 114,
         "Loteamento": "Planta 135-Flamingo B (Salmoria A2-B2)",
         "Bairros_Matinhos_IPM_Código": 11,
-        "Bairro": "Balneario Riviera"
+        "Bairro": "Balneario Riviera",
+        "color": "#faa35c"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -12894,7 +13008,8 @@
         "fid": 115,
         "Loteamento": "Planta 68 - Jardim Flamingo",
         "Bairros_Matinhos_IPM_Código": 11,
-        "Bairro": "Balneario Riviera"
+        "Bairro": "Balneario Riviera",
+        "color": "#a1d6a6"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13132,7 +13247,8 @@
         "fid": 116,
         "Loteamento": "Planta 96 - Jardim Flamingo I\nÁrea A2-4",
         "Bairros_Matinhos_IPM_Código": 11,
-        "Bairro": "Balneario Riviera"
+        "Bairro": "Balneario Riviera",
+        "color": "#4e9bb4"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13214,7 +13330,8 @@
         "fid": 117,
         "Loteamento": "Planta 96 - Jardim Flamingo I\nÁrea A2-4",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#4e9bb4"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13260,7 +13377,8 @@
         "fid": 118,
         "Loteamento": "Planta 72 Sebastião Silvestre Vianna",
         "Bairros_Matinhos_IPM_Código": 11,
-        "Bairro": "Balneario Riviera"
+        "Bairro": "Balneario Riviera",
+        "color": "#93cca8"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13298,7 +13416,8 @@
         "fid": 119,
         "Loteamento": "Planta 70-\nJardim João Júlio Viana",
         "Bairros_Matinhos_IPM_Código": 11,
-        "Bairro": "Balneario Riviera"
+        "Bairro": "Balneario Riviera",
+        "color": "#9ad1a7"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13336,7 +13455,8 @@
         "fid": 120,
         "Loteamento": "Planta 209-\nJardim Santa Rosa II",
         "Bairros_Matinhos_IPM_Código": 11,
-        "Bairro": "Balneario Riviera"
+        "Bairro": "Balneario Riviera",
+        "color": "#fed088"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13374,7 +13494,8 @@
         "fid": 121,
         "Loteamento": "Planta 18-\nJardim Santa Rosa I",
         "Bairros_Matinhos_IPM_Código": 11,
-        "Bairro": "Balneario Riviera"
+        "Bairro": "Balneario Riviera",
+        "color": "#fec980"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13412,7 +13533,8 @@
         "fid": 122,
         "Loteamento": "Planta 212-Bahr (Lote 2C)",
         "Bairros_Matinhos_IPM_Código": 11,
-        "Bairro": "Balneario Riviera"
+        "Bairro": "Balneario Riviera",
+        "color": "#fed48d"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13450,7 +13572,8 @@
         "fid": 123,
         "Loteamento": "Planta 93-Jardim Pavin",
         "Bairros_Matinhos_IPM_Código": 11,
-        "Bairro": "Balneario Riviera"
+        "Bairro": "Balneario Riviera",
+        "color": "#55a0b3"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13488,7 +13611,8 @@
         "fid": 124,
         "Loteamento": "Planta 129-Flamingo (Desm. A2-5)",
         "Bairros_Matinhos_IPM_Código": 11,
-        "Bairro": "Balneario Riviera"
+        "Bairro": "Balneario Riviera",
+        "color": "#f58f52"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13526,7 +13650,8 @@
         "fid": 125,
         "Loteamento": "Planta 123 - Mangue Seco",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#f2824d"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13600,7 +13725,8 @@
         "fid": 126,
         "Loteamento": "Planta 136-\nJardim das Orquídeas",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#fba75e"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13662,7 +13788,8 @@
         "fid": 127,
         "Loteamento": "Planta 105-\nLevi Alves (Desm. lote 16H)",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#e34a33"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13772,7 +13899,8 @@
         "fid": 128,
         "Loteamento": "Planta 97A-\nRio da Onça 16A",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#4797b5"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13830,7 +13958,8 @@
         "fid": 129,
         "Loteamento": "Planta 99A-Plínio Alves Viana",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#3c8fb7"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -13948,7 +14077,8 @@
         "fid": 130,
         "Loteamento": "Planta 47-\nPatrício da Silva",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#d0ecb0"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -14030,7 +14160,8 @@
         "fid": 131,
         "Loteamento": "Planta 47A-\nCiro Macalossi",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#ceebaf"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -14100,7 +14231,8 @@
         "fid": 132,
         "Loteamento": "Planta 164-Mangue Seco (Moradia Legal)",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#fec279"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -14526,7 +14658,8 @@
         "fid": 133,
         "Loteamento": "Planta 90-\nElízio Júlio Viana",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#5ca5b2"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -14600,7 +14733,8 @@
         "fid": 134,
         "Loteamento": "Planta 84-\nFrancisco dos Santos Jr.",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#71b4ae"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -14654,7 +14788,8 @@
         "fid": 135,
         "Loteamento": "Planta 89-\nJardim Lídio Júlio Viana",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#5fa8b1"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -14692,7 +14827,8 @@
         "fid": 136,
         "Loteamento": "97A - Rio da Onça",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#d7191c"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -14734,7 +14870,8 @@
         "fid": 137,
         "Loteamento": "Planta 138-\nJacinto Mesquita de Souza",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#fdaf62"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -14776,7 +14913,8 @@
         "fid": 138,
         "Loteamento": "Planta 115-\nColônia dos Pescadores",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#e95e3c"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -14838,7 +14976,8 @@
         "fid": 139,
         "Loteamento": "Planta 32 - Balneário Riviera",
         "Bairros_Matinhos_IPM_Código": 11,
-        "Bairro": "Balneario Riviera"
+        "Bairro": "Balneario Riviera",
+        "color": "#ffeca9"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -15200,7 +15339,8 @@
         "fid": 140,
         "Loteamento": "Planta 32 - Balneário Riviera",
         "Bairros_Matinhos_IPM_Código": 12,
-        "Bairro": "Balneario Praia Grande"
+        "Bairro": "Balneario Praia Grande",
+        "color": "#ffeca9"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -15238,7 +15378,8 @@
         "fid": 141,
         "Loteamento": "Planta 32 - Balneário Riviera",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#ffeca9"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -15444,7 +15585,8 @@
         "fid": 142,
         "Loteamento": "Planta 32 - Balneário Riviera\nB",
         "Bairros_Matinhos_IPM_Código": 11,
-        "Bairro": "Balneario Riviera"
+        "Bairro": "Balneario Riviera",
+        "color": "#ffeeac"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -15482,7 +15624,8 @@
         "fid": 143,
         "Loteamento": "Planta 88-São Guido",
         "Bairros_Matinhos_IPM_Código": 11,
-        "Bairro": "Balneario Riviera"
+        "Bairro": "Balneario Riviera",
+        "color": "#63aab0"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -15580,7 +15723,8 @@
         "fid": 144,
         "Loteamento": "Planta 88-São Guido",
         "Bairros_Matinhos_IPM_Código": 12,
-        "Bairro": "Balneario Praia Grande"
+        "Bairro": "Balneario Praia Grande",
+        "color": "#63aab0"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -15678,7 +15822,8 @@
         "fid": 145,
         "Loteamento": "Planta 33 - Balneário Praia Grande\nParte 1",
         "Bairros_Matinhos_IPM_Código": 12,
-        "Bairro": "Balneario Praia Grande"
+        "Bairro": "Balneario Praia Grande",
+        "color": "#fff1ae"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -15724,7 +15869,8 @@
         "fid": 146,
         "Loteamento": "Planta 33 - Balneário Praia Grande\nParte 2",
         "Bairros_Matinhos_IPM_Código": 12,
-        "Bairro": "Balneario Praia Grande"
+        "Bairro": "Balneario Praia Grande",
+        "color": "#fff3b1"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -15782,7 +15928,8 @@
         "fid": 147,
         "Loteamento": "Planta 118 - Antenor Vieira Barradas",
         "Bairros_Matinhos_IPM_Código": 12,
-        "Bairro": "Balneario Praia Grande"
+        "Bairro": "Balneario Praia Grande",
+        "color": "#ec6a42"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -15856,7 +16003,8 @@
         "fid": 148,
         "Loteamento": "Planta 34-\nBalneário Flórida",
         "Bairros_Matinhos_IPM_Código": 12,
-        "Bairro": "Balneario Praia Grande"
+        "Bairro": "Balneario Praia Grande",
+        "color": "#fff5b3"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -15934,7 +16082,8 @@
         "fid": 149,
         "Loteamento": "Planta 74 - Balneário Saint Etienne",
         "Bairros_Matinhos_IPM_Código": 12,
-        "Bairro": "Balneario Praia Grande"
+        "Bairro": "Balneario Praia Grande",
+        "color": "#8dc8a9"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -15996,7 +16145,8 @@
         "fid": 150,
         "Loteamento": "Planta 36 - União dos Ferroviários do Brasil",
         "Bairros_Matinhos_IPM_Código": 12,
-        "Bairro": "Balneario Praia Grande"
+        "Bairro": "Balneario Praia Grande",
+        "color": "#fff9b9"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16070,7 +16220,8 @@
         "fid": 151,
         "Loteamento": "Planta 37 - Balneário Inajá",
         "Bairros_Matinhos_IPM_Código": 12,
-        "Bairro": "Balneario Praia Grande"
+        "Bairro": "Balneario Praia Grande",
+        "color": "#fffcbb"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16112,7 +16263,8 @@
         "fid": 152,
         "Loteamento": "Planta 37 - Balneário Inajá",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#fffcbb"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16158,7 +16310,8 @@
         "fid": 153,
         "Loteamento": "Planta 130-\nLART Lote C20B2",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#f79756"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16196,7 +16349,8 @@
         "fid": 154,
         "Loteamento": "Planta 131-LART Lote C20B3",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#f89b58"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16274,7 +16428,8 @@
         "fid": 155,
         "Loteamento": "Planta 38 - José Dias da Silva",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#feffbf"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16316,7 +16471,8 @@
         "fid": 156,
         "Loteamento": "Planta 38 - Balneário Marajó",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#fffebe"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16358,7 +16514,8 @@
         "fid": 157,
         "Loteamento": "Planta 39 - \nBalneário Solymar",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#fcfebe"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16416,7 +16573,8 @@
         "fid": 158,
         "Loteamento": "Planta 98 - \nSol e Mar\nParte I",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#4394b6"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16466,7 +16624,8 @@
         "fid": 159,
         "Loteamento": "Planta 82 - \nBalneário Eldorado I",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#78b9ad"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16508,7 +16667,8 @@
         "fid": 160,
         "Loteamento": "Planta 99 - \nSol e Mar\nParte II",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#4092b6"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16546,7 +16706,8 @@
         "fid": 161,
         "Loteamento": "Planta 82 - \nBalneário Eldorado II",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#74b6ad"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16588,7 +16749,8 @@
         "fid": 162,
         "Loteamento": "Planta 40 - \nPraia das Betaras \nParte 1",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#f9fdbd"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16646,7 +16808,8 @@
         "fid": 163,
         "Loteamento": "Planta 40 - \nPraia das Betaras \nParte 2",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#f7fcbc"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16708,7 +16871,8 @@
         "fid": 164,
         "Loteamento": "Planta 40 - \nPraia das Betaras \nParte 3",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#f5fbbc"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16762,7 +16926,8 @@
         "fid": 165,
         "Loteamento": "Planta 41 - \nBalneário Ipacaraí \nParte I",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#f2fabb"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16800,7 +16965,8 @@
         "fid": 166,
         "Loteamento": "Planta 41A - \nBalneário Ipacaraí \nParte II",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#f0f9ba"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16838,7 +17004,8 @@
         "fid": 167,
         "Loteamento": "Planta 42-\nBalneário Perequê \nParte I",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#eef8b9"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -16936,7 +17103,8 @@
         "fid": 168,
         "Loteamento": "Planta 42A-\nBalneário Perequê \nParte II-Fig.A",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#ecf7b9"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17006,7 +17174,8 @@
         "fid": 169,
         "Loteamento": "Planta 114-\nSão Domingos",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#e85a3a"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17044,7 +17213,8 @@
         "fid": 170,
         "Loteamento": "Planta 42C-\nBalneário Perequê \nParte III-Fig.C",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#e9f6b8"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17094,7 +17264,8 @@
         "fid": 171,
         "Loteamento": "Planta 77-\nBalneário Jamail Mar",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#86c3aa"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17132,7 +17303,8 @@
         "fid": 172,
         "Loteamento": "Planta 108-\nMarino Pereira",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#e44e34"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17170,7 +17342,8 @@
         "fid": 173,
         "Loteamento": "Planta 61 - Balneário Currais",
         "Bairros_Matinhos_IPM_Código": 15,
-        "Bairro": "Balneario Betaras"
+        "Bairro": "Balneario Betaras",
+        "color": "#b2e0a6"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17224,7 +17397,8 @@
         "fid": 174,
         "Loteamento": "Planta 61 - Balneário Currais",
         "Bairros_Matinhos_IPM_Código": 6,
-        "Bairro": "Balneario Albatroz"
+        "Bairro": "Balneario Albatroz",
+        "color": "#b2e0a6"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17302,7 +17476,8 @@
         "fid": 175,
         "Loteamento": "Planta 158 - Gleba Jacarandá",
         "Bairros_Matinhos_IPM_Código": 6,
-        "Bairro": "Balneario Albatroz"
+        "Bairro": "Balneario Albatroz",
+        "color": "#fdbe74"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17344,7 +17519,8 @@
         "fid": 176,
         "Loteamento": "Planta 141 - Marino Pereira \"A\" - MAT. 42575/G",
         "Bairros_Matinhos_IPM_Código": 6,
-        "Bairro": "Balneario Albatroz"
+        "Bairro": "Balneario Albatroz",
+        "color": "#fdb367"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17410,7 +17586,8 @@
         "fid": 177,
         "Loteamento": "Planta 134 - Alípio Santos Filho - MAT. 25102",
         "Bairros_Matinhos_IPM_Código": 6,
-        "Bairro": "Balneario Albatroz"
+        "Bairro": "Balneario Albatroz",
+        "color": "#f99f5a"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17452,7 +17629,8 @@
         "fid": 178,
         "Loteamento": "Planta 79 - Balneário Albatroz",
         "Bairros_Matinhos_IPM_Código": 6,
-        "Bairro": "Balneario Albatroz"
+        "Bairro": "Balneario Albatroz",
+        "color": "#82c0ab"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17534,7 +17712,8 @@
         "fid": 179,
         "Loteamento": "Planta A1B-\nBaln. Currais",
         "Bairros_Matinhos_IPM_Código": 6,
-        "Bairro": "Balneario Albatroz"
+        "Bairro": "Balneario Albatroz",
+        "color": "#398db8"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17572,7 +17751,8 @@
         "fid": 180,
         "Loteamento": "Planta A2B-\nBaln. Currais",
         "Bairros_Matinhos_IPM_Código": 6,
-        "Bairro": "Balneario Albatroz"
+        "Bairro": "Balneario Albatroz",
+        "color": "#358ab8"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17610,7 +17790,8 @@
         "fid": 181,
         "Loteamento": "Planta A3B-\nBaln. Currais",
         "Bairros_Matinhos_IPM_Código": 6,
-        "Bairro": "Balneario Albatroz"
+        "Bairro": "Balneario Albatroz",
+        "color": "#3288b9"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17652,7 +17833,8 @@
         "fid": 182,
         "Loteamento": "Planta A4B-\nBaln. Currais",
         "Bairros_Matinhos_IPM_Código": 6,
-        "Bairro": "Balneario Albatroz"
+        "Bairro": "Balneario Albatroz",
+        "color": "#2e85b9"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17702,7 +17884,8 @@
         "fid": 183,
         "Loteamento": "Planta 43 - Balneário Guaciara\nParte I",
         "Bairros_Matinhos_IPM_Código": 6,
-        "Bairro": "Balneario Albatroz"
+        "Bairro": "Balneario Albatroz",
+        "color": "#e7f5b7"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17824,7 +18007,8 @@
         "fid": 184,
         "Loteamento": "Planta 43A - Balneário Guaciara\nParte II",
         "Bairros_Matinhos_IPM_Código": 6,
-        "Bairro": "Balneario Albatroz"
+        "Bairro": "Balneario Albatroz",
+        "color": "#e5f4b7"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17874,7 +18058,8 @@
         "fid": 185,
         "Loteamento": "Planta 80 - Jardim Eliza",
         "Bairros_Matinhos_IPM_Código": 6,
-        "Bairro": "Balneario Albatroz"
+        "Bairro": "Balneario Albatroz",
+        "color": "#7fbeac"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17940,7 +18125,8 @@
         "fid": 186,
         "Loteamento": "Planta 35 - Balneário Costa Azul",
         "Bairros_Matinhos_IPM_Código": 6,
-        "Bairro": "Balneario Albatroz"
+        "Bairro": "Balneario Albatroz",
+        "color": "#fff7b6"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -17986,7 +18172,8 @@
         "fid": 187,
         "Loteamento": "Planta 168 - Nossa Senhora Aparecida",
         "Bairros_Matinhos_IPM_Código": 13,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#fec57b"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -18052,7 +18239,8 @@
         "fid": 188,
         "Loteamento": "Planta 168 - Nossa Senhora Aparecida",
         "Bairros_Matinhos_IPM_Código": 3,
-        "Bairro": "Bairro Sertaozinho"
+        "Bairro": "Bairro Sertaozinho",
+        "color": "#fec57b"
       },
       "geometry": {
         "type": "MultiPolygon",
@@ -18150,7 +18338,8 @@
         "fid": 189,
         "Loteamento": "Planta 168 - Nossa Senhora Aparecida",
         "Bairros_Matinhos_IPM_Código": 17,
-        "Bairro": "Bairro Bom Retiro"
+        "Bairro": "Bairro Bom Retiro",
+        "color": "#fec57b"
       },
       "geometry": {
         "type": "MultiPolygon",
