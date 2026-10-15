@@ -324,16 +324,23 @@ function setupUIEvents() {
     map.on('click', onMapMeasureClick);
     map.on('dblclick', onMapMeasureDblClick);
 
-    // Alternar todas as camadas
-    document.getElementById('toggle-all-layers').addEventListener('click', () => {
+    // Ligar / desligar todas as camadas de uma vez (os interruptores individuais continuam ativos)
+    function setAllLayers(state) {
         const checkboxes = document.querySelectorAll('.group-content input[type="checkbox"]');
-        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
         checkboxes.forEach(cb => {
-            cb.checked = !anyChecked;
-            const event = new Event('change');
-            cb.dispatchEvent(event);
+            if (cb.checked !== state) {
+                cb.checked = state;
+                cb.dispatchEvent(new Event('change'));
+            }
         });
-    });
+        // Limpar destaque de feição selecionada ao desligar tudo
+        if (!state && activeHighlight) {
+            resetLayerStyle(activeHighlight);
+            activeHighlight = null;
+        }
+    }
+    document.getElementById('btn-layers-on').addEventListener('click', () => setAllLayers(true));
+    document.getElementById('btn-layers-off').addEventListener('click', () => setAllLayers(false));
 
     // Busca rápida
     setupSearch();
