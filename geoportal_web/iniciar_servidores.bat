@@ -8,7 +8,7 @@ echo ============================================================
 echo Iniciando servidores locais...
 
 start "Geoportal - Tile Server Ortofoto (8081)" cmd /k ""C:\Program Files\QGIS 3.44.14\bin\python-qgis-ltr.bat" "%~dp0tile_server_ortofoto.py""
-timeout /t 2 /nobreak >nul
+ping 127.0.0.1 -n 3 >nul
 start "Geoportal - Web Server (8080)" cmd /k ""C:\Program Files\QGIS 3.44.14\bin\python-qgis-ltr.bat" "%~dp0server.py""
 
 echo.
