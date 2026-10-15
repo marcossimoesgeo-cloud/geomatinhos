@@ -8,6 +8,11 @@ geoportal_web/ngrok.exe
 geoportal_web/app_profile/
 *.exe
 
+# Extensões bloqueadas por políticas do OneDrive / corporativas
+*.bat
+*.cmd
+*.bak
+
 # Python caches
 __pycache__/
 *.pyc
