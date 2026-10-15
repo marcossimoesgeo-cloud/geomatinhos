@@ -1,0 +1,10 @@
+﻿version: "3"
+agent:
+  authtoken: 3K8tcv0p8ciKZTWrd0dD7tyJPvn_4FX1QsRmta4npMS3T4mGK
+
+tunnels:
+  geoportal:
+    proto: http
+    addr: 8080
+    schemes:
+      - https

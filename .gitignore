@@ -1,0 +1,22 @@
+# Rasters pesados (armazenados localmente na máquina da Prefeitura)
+*.ecw
+*.tif
+*.tiff
+
+# Executáveis e perfis temporários de navegador
+geoportal_web/ngrok.exe
+geoportal_web/app_profile/
+*.exe
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+
+# Sistema operacional
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs
+*.log

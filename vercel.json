@@ -1,0 +1,10 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/geoportal_web/index.html" },
+    { "source": "/css/(.*)", "destination": "/geoportal_web/css/$1" },
+    { "source": "/js/(.*)", "destination": "/geoportal_web/js/$1" },
+    { "source": "/data/(.*)", "destination": "/geoportal_web/data/$1" },
+    { "source": "/(.*)", "destination": "/geoportal_web/$1" }
+  ]
+}
