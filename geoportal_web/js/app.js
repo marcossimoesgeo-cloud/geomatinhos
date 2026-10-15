@@ -456,6 +456,29 @@ async function loadGeoJsonLayer(layerDef) {
                     setupFeatureInteractions(feature, layer, layerDef);
                 }
             });
+        } else if (layerId === 'loteamento_por_bairro') {
+            geojsonLayer = L.geoJSON(geojsonData, {
+                style: {
+                    color: layerDef.color || '#d97706',
+                    weight: layerDef.weight || 1.2,
+                    dashArray: layerDef.dashArray || '2, 2',
+                    fill: true,
+                    fillColor: layerDef.fillColor || '#f59e0b',
+                    fillOpacity: layerDef.fillOpacity || 0.15
+                },
+                onEachFeature: (feature, layer) => {
+                    layer.layerDef = layerDef;
+                    const props = feature.properties || {};
+                    const nomeLoteamento = props.Loteamento || 'Loteamento';
+                    const nomeBairro = props.Bairro ? `<br><span style="font-size:0.75rem; color:#d97706;"><i class="fa-solid fa-location-dot"></i> Bairro: ${props.Bairro}</span>` : '';
+                    layer.bindTooltip(`<b>${nomeLoteamento}</b>${nomeBairro}`, {
+                        sticky: true,
+                        direction: 'top',
+                        className: 'bairro-tooltip'
+                    });
+                    setupFeatureInteractions(feature, layer, layerDef);
+                }
+            });
         } else {
             geojsonLayer = L.geoJSON(geojsonData, {
                 style: {
@@ -546,6 +569,15 @@ function resetLayerStyle(l) {
             dashArray: def.dashArray,
             fillColor: def.fillColor,
             fillOpacity: def.fillOpacity
+        });
+    } else if (def.id === 'loteamento_por_bairro') {
+        l.setStyle({
+            color: def.color || '#d97706',
+            weight: def.weight || 1.2,
+            dashArray: def.dashArray || '2, 2',
+            fill: true,
+            fillColor: def.fillColor || '#f59e0b',
+            fillOpacity: def.fillOpacity || 0.15
         });
     } else {
         l.setStyle({
@@ -638,6 +670,13 @@ function displayFeatureDetails(feature, layerDef, latlng) {
         title = props.Layer || 'Bairro';
         badgeText = 'Bairro / Balneário';
         badgeBg = '#1f78b4';
+    } else if (layerDef.id === 'loteamento_por_bairro') {
+        title = props.Loteamento || 'Loteamento';
+        badgeText = 'Loteamento';
+        badgeBg = '#d97706';
+        if (props.Bairro) {
+            zoneDesc = `Loteamento urbano cadastrado no bairro/balneário: <b>${props.Bairro}</b>`;
+        }
     }
 
     // Calcular área e perímetro aproximados
@@ -775,6 +814,23 @@ function setupSearch() {
             }
         });
 
+        // Buscar em loteamentos
+        if (layersMap['loteamento_por_bairro']) {
+            layersMap['loteamento_por_bairro'].eachLayer(layer => {
+                const props = layer.feature.properties || {};
+                const lName = (props.Loteamento || '').toLowerCase();
+                const bName = (props.Bairro || '').toLowerCase();
+                if (lName.includes(q) || (bName && bName.includes(q))) {
+                    matches.push({
+                        title: props.Loteamento,
+                        type: props.Bairro ? `Loteamento (${props.Bairro})` : 'Loteamento',
+                        layer: layer,
+                        layerId: 'loteamento_por_bairro'
+                    });
+                }
+            });
+        }
+
         // Buscar em parques
         [
             'parque_saint_hilaire', 'parque_estadual_riodaonca', 'parque_municipal_morrodoboi',
@@ -822,8 +878,13 @@ function setupSearch() {
                     select.value = m.zoneKey;
                     select.dispatchEvent(new Event('change'));
                 } else if (m.layer) {
+                    if (m.layerId && layersMap[m.layerId] && !map.hasLayer(layersMap[m.layerId])) {
+                        layersMap[m.layerId].addTo(map);
+                        const cb = document.getElementById('layer-' + m.layerId);
+                        if (cb) cb.checked = true;
+                    }
                     const bounds = m.layer.getBounds();
-                    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+                    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 });
                     m.layer.fire('click');
                 }
             });

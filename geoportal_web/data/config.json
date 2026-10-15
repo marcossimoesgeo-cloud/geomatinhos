@@ -52,6 +52,21 @@
       "visible_default": true
     },
     {
+      "id": "loteamento_por_bairro",
+      "file": "loteamento_por_bairro.geojson",
+      "title": "Loteamentos por Bairro",
+      "group": "administrativo",
+      "type": "polygon",
+      "color": "#d97706",
+      "weight": 1.2,
+      "dashArray": "2, 2",
+      "fill": true,
+      "fillColor": "#f59e0b",
+      "fillOpacity": 0.15,
+      "name_field": "Loteamento",
+      "visible_default": false
+    },
+    {
       "id": "zoneamento_corrigido",
       "file": "zoneamento_corrigido.geojson",
       "title": "Zoneamento de Uso do Solo",
