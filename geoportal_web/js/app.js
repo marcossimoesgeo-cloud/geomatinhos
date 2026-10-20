@@ -25,7 +25,7 @@ function initGeoportal() {
         center: INITIAL_CENTER,
         zoom: INITIAL_ZOOM,
         minZoom: 10,
-        maxZoom: 20,
+        maxZoom: 21,
         zoomControl: false
     });
 
@@ -48,24 +48,27 @@ function initGeoportal() {
     // Fabrica de TileLayers — cria uma nova instancia para cada seleção
     const BASEMAP_DEFS = {
         googleSat: () => L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-            maxZoom: 20, attribution: '&copy; Google Maps'
+            maxZoom: 21, maxNativeZoom: 20, attribution: '&copy; Google Maps'
         }),
         esri: () => L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 19, attribution: '&copy; Esri World Imagery'
+            maxZoom: 21, maxNativeZoom: 19, attribution: '&copy; Esri World Imagery'
         }),
         osm: () => L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
+            maxZoom: 21, maxNativeZoom: 19, attribution: '&copy; OpenStreetMap contributors'
         }),
         topo: () => L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-            maxZoom: 17, attribution: '&copy; OpenTopoMap'
+            maxZoom: 21, maxNativeZoom: 17, attribution: '&copy; OpenTopoMap'
         }),
         carto: () => L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19, attribution: '&copy; CARTO Positron'
+            maxZoom: 21, maxNativeZoom: 19, attribution: '&copy; CARTO Positron'
         }),
-        ortofoto: () => L.tileLayer('http://localhost:8081/tiles/ortofoto/{z}/{x}/{y}.png', {
-            maxZoom: 20, tms: false, crossOrigin: true,
-            attribution: '&copy; Ortofoto Matinhos GSD 7cm &mdash; Jan/2026',
-            bounds: L.latLngBounds([-25.853, -48.563], [-25.699, -48.473])
+        ortofoto: () => L.tileLayer('https://storage.googleapis.com/xskylab-gaia/TMS/AEROLEVANTAMENTO/2025/MATINHOS_ORTOMOSAICO_PR1/color/MATINHOS_ORTOMOSAICO_PR1.tms/{z}/{x}/{y}.png', {
+            maxZoom: 21,
+            maxNativeZoom: 21,
+            tms: true,
+            crossOrigin: true,
+            attribution: '&copy; Aerolevantamento / Ortomosaico Matinhos 2025 (PR1)',
+            bounds: L.latLngBounds([-25.860, -48.575], [-25.695, -48.465])
         }),
         none: () => null
     };
