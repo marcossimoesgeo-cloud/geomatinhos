@@ -45,6 +45,97 @@ function initGeoportal() {
     // Cada slot tem seu proprio TileLayer; zIndex determina qual fica por cima.
     // =========================================================================
 
+    // Camada customizada para o Ortomosaico: remove via Canvas o colarinho branco (RGB 255,255,255)
+    // e a borda de serrilhado (halo de reamostragem), deixando recorte limpo sobre imagens de satélite
+    const OrthoCutoutTileLayer = L.TileLayer.extend({
+        createTile: function (coords, done) {
+            const tile = document.createElement('canvas');
+            tile.width = 256;
+            tile.height = 256;
+            tile.className = 'leaflet-tile';
+            const ctx = tile.getContext('2d', { willReadFrequently: true });
+            const url = this.getTileUrl(coords);
+
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                try {
+                    ctx.drawImage(img, 0, 0, 256, 256);
+                    const imgData = ctx.getImageData(0, 0, 256, 256);
+                    const d = imgData.data;
+                    const W = 256, H = 256, N = W * H;
+                    const bg = new Uint8Array(N);
+                    const q = new Int32Array(N);
+                    let head = 0, tail = 0;
+
+                    const isCollarWhite = (p) => {
+                        const a = d[p + 3];
+                        if (a < 24) return true;
+                        const r = d[p], g = d[p + 1], b = d[p + 2];
+                        if (r < 240 || g < 240 || b < 240) return false;
+                        const mx = r > g ? (r > b ? r : b) : (g > b ? g : b);
+                        const mn = r < g ? (r < b ? r : b) : (g < b ? g : b);
+                        return (mx - mn) <= 18;
+                    };
+
+                    // Semear flood-fill pelas bordas do tile e por pixels já transparentes
+                    for (let i = 0; i < N; i++) {
+                        const x = i & 255, y = i >> 8;
+                        const p = i << 2;
+                        if (d[p + 3] < 24 || ((x === 0 || x === 255 || y === 0 || y === 255) && isCollarWhite(p))) {
+                            bg[i] = 1;
+                            q[tail++] = i;
+                        }
+                    }
+
+                    // Flood-fill 4-conectado removendo todo o fundo branco externo
+                    while (head < tail) {
+                        const idx = q[head++];
+                        d[(idx << 2) + 3] = 0;
+                        const x = idx & 255, y = idx >> 8;
+                        if (x > 0) { const n = idx - 1; if (!bg[n] && isCollarWhite(n << 2)) { bg[n] = 1; q[tail++] = n; } }
+                        if (x < 255) { const n = idx + 1; if (!bg[n] && isCollarWhite(n << 2)) { bg[n] = 1; q[tail++] = n; } }
+                        if (y > 0) { const n = idx - 256; if (!bg[n] && isCollarWhite(n << 2)) { bg[n] = 1; q[tail++] = n; } }
+                        if (y < 255) { const n = idx + 256; if (!bg[n] && isCollarWhite(n << 2)) { bg[n] = 1; q[tail++] = n; } }
+                    }
+
+                    // Passo 2: suavizar/eliminar halo esbranquiçado de 1-2px na linha de corte
+                    for (let y = 0; y < H; y++) {
+                        for (let x = 0; x < W; x++) {
+                            const idx = (y << 8) | x;
+                            if (bg[idx]) continue;
+                            const hasBgNeighbor =
+                                (x > 0 && bg[idx - 1]) || (x < 255 && bg[idx + 1]) ||
+                                (y > 0 && bg[idx - 256]) || (y < 255 && bg[idx + 256]) ||
+                                (x > 0 && y > 0 && bg[idx - 257]) || (x < 255 && y > 0 && bg[idx - 255]) ||
+                                (x > 0 && y < 255 && bg[idx + 255]) || (x < 255 && y < 255 && bg[idx + 257]);
+                            if (!hasBgNeighbor) continue;
+                            const p = idx << 2;
+                            const r = d[p], g = d[p + 1], b = d[p + 2];
+                            const mx = r > g ? (r > b ? r : b) : (g > b ? g : b);
+                            const mn = r < g ? (r < b ? r : b) : (g < b ? g : b);
+                            if (mn >= 210 && (mx - mn) <= 26) {
+                                if (mn >= 234) {
+                                    d[p + 3] = 0;
+                                } else {
+                                    d[p + 3] = Math.round(d[p + 3] * ((234 - mn) / 24));
+                                }
+                            }
+                        }
+                    }
+
+                    ctx.putImageData(imgData, 0, 0);
+                } catch (e) { /* fallback caso CORS falhe */ }
+                done(null, tile);
+            };
+            img.onerror = () => {
+                done(null, tile);
+            };
+            img.src = url;
+            return tile;
+        }
+    });
+
     // Fabrica de TileLayers — cria uma nova instancia para cada seleção
     const BASEMAP_DEFS = {
         googleSat: () => L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
@@ -62,22 +153,35 @@ function initGeoportal() {
         carto: () => L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 21, maxNativeZoom: 19, attribution: '&copy; CARTO Positron'
         }),
-        ortofoto: () => L.tileLayer('https://storage.googleapis.com/xskylab-gaia/TMS/AEROLEVANTAMENTO/2025/MATINHOS_ORTOMOSAICO_PR1/color/MATINHOS_ORTOMOSAICO_PR1.tms/{z}/{x}/{y}.png', {
+        ortofoto: () => new OrthoCutoutTileLayer('https://storage.googleapis.com/xskylab-gaia/TMS/AEROLEVANTAMENTO/2025/MATINHOS_ORTOMOSAICO_PR1/color/MATINHOS_ORTOMOSAICO_PR1.tms/{z}/{x}/{y}.png', {
             maxZoom: 21,
             maxNativeZoom: 21,
             tms: true,
-            crossOrigin: true,
             attribution: '&copy; Aerolevantamento / Ortomosaico Matinhos 2025 (PR1)',
             bounds: L.latLngBounds([-25.860, -48.575], [-25.695, -48.465])
         }),
         none: () => null
     };
 
-    // Estado dos dois slots: { layer, key, zIndex }
+    // Estado dos dois slots: { layer, key, zIndex } + satélite de fundo automático sob o recorte da ortofoto
+    let orthoUnderlay = null;
     const basemapState = {
         1: { layer: null, key: 'googleSat', zIndex: 1 },
         2: { layer: null, key: 'none',      zIndex: 2 }
     };
+
+    function syncOrthoUnderlay() {
+        const needsUnderlay = (basemapState[1].key === 'ortofoto' && basemapState[2].key === 'none') ||
+                              (basemapState[2].key === 'ortofoto' && basemapState[1].key === 'none');
+        if (needsUnderlay && !orthoUnderlay) {
+            orthoUnderlay = BASEMAP_DEFS.googleSat();
+            orthoUnderlay.setZIndex(0);
+            orthoUnderlay.addTo(map);
+        } else if (!needsUnderlay && orthoUnderlay) {
+            map.removeLayer(orthoUnderlay);
+            orthoUnderlay = null;
+        }
+    }
 
     /**
      * Troca a camada de basemap no slot indicado.
@@ -92,6 +196,7 @@ function initGeoportal() {
             state.layer = null;
         }
         state.key = key;
+        syncOrthoUnderlay();
         if (key === 'none') return;
 
         const layer = BASEMAP_DEFS[key]();
