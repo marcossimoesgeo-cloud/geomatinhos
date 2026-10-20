@@ -31,20 +31,31 @@ O Geoportal de Matinhos possui autenticação real integrada ao **Supabase** (pl
 
 ## 4. Conectar o Geoportal ao seu Supabase
 
-1. No painel do Supabase, vá em **Project Settings** (ícone de engrenagem) → **API**.
-2. Copie o **Project URL** e a chave **anon / public**.
-3. Abra o arquivo [`geoportal_web/js/supabase-config.js`](./geoportal_web/js/supabase-config.js) e preencha:
+No painel novo do Supabase, o endereço (`url`) e a chave (`anonKey`) ficam em lugares separados:
+
+1. **Como achar a `url` (Project URL):**
+   - Olhe o endereço do navegador enquanto estiver no painel do Supabase: ele será parecido com `https://supabase.com/dashboard/project/abcdefghijklmnop`.
+   - Aquele código final (`abcdefghijklmnop`) é o ID do seu projeto, então sua `url` é `https://abcdefghijklmnop.supabase.co`.
+   - *(Alternativa)*: No menu lateral, clique em **Project Settings** (engrenagem no rodapé) → **Data API** → copie o campo **Project URL** (ou clique no botão **Connect** no topo da página).
+
+2. **Como achar a `anonKey` (Chave Pública):**
+   - Vá em **Project Settings** (engrenagem) → **API Keys**.
+   - Copie a **Publishable key** (começa com `sb_publishable_...`) **OU** clique na aba **Legacy API Keys** e copie a chave **`anon` `public`** (começa com `eyJ...`).
+   - ⚠️ **Atenção:** **NUNCA** use a **Secret key** (`sb_secret_...`) nem a `service_role` no geoportal.
+
+3. **Onde colar:**
+   - Abra o arquivo [`geoportal_web/js/supabase-config.js`](./geoportal_web/js/supabase-config.js) (e **não** este arquivo `LEIA-ME_LOGIN.md`) e preencha:
 
 ```javascript
 window.GEO_SUPABASE = {
-    url: "https://SEU-PROJETO.supabase.co",
-    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    url: "https://SEU-CODIGO-DE-PROJETO.supabase.co",
+    anonKey: "sb_publishable_2a42kGEPSssk0SGJK-JoTQ_Dp4bwPaL",
     bucket: "restrito",
     manifest: "config_restrito.json"
 };
 ```
 
-4. Salve o arquivo e envie a atualização para o GitHub (`enviar_github.ps1`).
+4. Salve o arquivo [`geoportal_web/js/supabase-config.js`](./geoportal_web/js/supabase-config.js).
 
 ---
 

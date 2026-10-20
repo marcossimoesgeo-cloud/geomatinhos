@@ -9,7 +9,17 @@ const GeoAuth = (() => {
     let session = null;
     const listeners = [];
 
-    const configured = () => !!(cfg.url && cfg.anonKey && window.supabase && window.supabase.createClient);
+    function resolveUrl(raw) {
+        const s = String(raw || '').trim();
+        if (!s || /^sb_(publishable|secret)_/i.test(s)) return '';
+        const dash = s.match(/supabase\.com\/dashboard\/project\/([a-z0-9]+)/i);
+        if (dash) return `https://${dash[1]}.supabase.co`;
+        if (/^[a-z0-9]{15,30}$/i.test(s)) return `https://${s}.supabase.co`;
+        if (/^https?:\/\//i.test(s)) return s.replace(/\/+$/, '');
+        return '';
+    }
+    const projectUrl = () => resolveUrl(cfg.url);
+    const configured = () => !!(projectUrl() && cfg.anonKey && !/^sb_secret_/i.test(cfg.anonKey) && window.supabase && window.supabase.createClient);
     const isStaff = () => !!session;
     const email = () => (session && session.user && session.user.email) || '';
     const $ = id => document.getElementById(id);
@@ -126,7 +136,7 @@ const GeoAuth = (() => {
         if (btn) btn.addEventListener('click', () => { isStaff() ? signOut() : openLogin(); });
         updateUI();
         if (!configured()) return;
-        client = window.supabase.createClient(cfg.url, cfg.anonKey);
+        client = window.supabase.createClient(projectUrl(), cfg.anonKey);
         client.auth.getSession().then(({ data }) => setSession(data.session));
         client.auth.onAuthStateChange((_evt, s) => setSession(s));
     }

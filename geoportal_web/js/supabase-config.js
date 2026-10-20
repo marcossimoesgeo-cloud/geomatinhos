@@ -6,8 +6,8 @@
  * NUNCA coloque aqui a chave "service_role".
  */
 window.GEO_SUPABASE = {
-    url: "",       // exemplo: "https://abcdefghijkl.supabase.co"
-    anonKey: "",   // chave "anon public" do projeto
+    url: "https://gbdeftfhayevbyvepwqp.supabase.co",
+    anonKey: "sb_publishable_2a42kGEPSssk0SGJK-JoTQ_Dp4bwPaL",
     bucket: "restrito",                 // bucket PRIVADO com as camadas restritas
     manifest: "config_restrito.json"    // lista das camadas restritas dentro do bucket
 };
