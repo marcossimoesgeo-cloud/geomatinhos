@@ -20,6 +20,13 @@ const GeoTools = (() => {
         drawVerts: null,
         drawPreview: null,
         drawColor: '#e63946',
+        snapOn: false,
+        snapMode: 'both',
+        snapTol: 12,
+        snapMarker: null,
+        vertPick: null,
+        extractGroup: null,
+        extractRenderer: null,
         showVerts: true,
         vertexGroup: null,
         minimap: null,
@@ -134,6 +141,7 @@ const GeoTools = (() => {
         search: { icon: 'fa-magnifying-glass-location', label: 'Busca Avançada', title: 'Busca Avançada', build: buildSearchPanel },
         coords: { icon: 'fa-location-crosshairs', label: 'Buscar Coordenadas', title: 'Buscar e Capturar Coordenadas', build: buildCoordsPanel, onClose: stopPick },
         draw:   { icon: 'fa-pen-ruler', label: 'Desenhar no Mapa', title: 'Desenhar, Anotar e Exportar', build: buildDrawPanel, onOpen: onDrawPanelOpen, onClose: stopActiveDraw },
+        verts:  { icon: 'fa-vector-square', label: 'Extrair Vértices', title: 'Extrair Vértices das Camadas', build: buildVertsPanel, onOpen: fillLayerSelect, onClose: stopVertPick },
         print:  { icon: 'fa-print', label: 'Imprimir Mapa', title: 'Layout de Impressão / PDF', build: buildPrintPanel }
     };
 
@@ -471,6 +479,228 @@ const GeoTools = (() => {
         $('vx-txt').addEventListener('click', () => download('vertices_matinhos.txt', [header.join(sep)].concat(lines.map(x => x.join(sep))).join('\r\n'), 'text/plain;charset=utf-8'));
     }
 
+    /* ---------- ADERÊNCIA (SNAP) ---------- */
+    function ringsOf(l) {
+        const out = [];
+        const walk = a => {
+            if (!Array.isArray(a) || !a.length) return;
+            if (a[0] instanceof L.LatLng) out.push(a); else a.forEach(walk);
+        };
+        if (l.getLatLngs) walk(l.getLatLngs());
+        else if (l.getLatLng) out.push([l.getLatLng()]);
+        return out;
+    }
+
+    function snapSources() {
+        const src = [];
+        Object.values(layersMap).forEach(g => {
+            if (g && g.eachLayer && map.hasLayer(g)) g.eachLayer(l => { if (l.getLatLngs || l.getLatLng) src.push(l); });
+        });
+        state.drawnList.forEach(l => { if (!(l instanceof L.Circle) && !l._isText && (l.getLatLngs || l.getLatLng)) src.push(l); });
+        return src;
+    }
+
+    function findSnap(latlng) {
+        const p = map.latLngToContainerPoint(latlng);
+        const tol = state.snapTol;
+        const edges = state.snapMode === 'both';
+        let bestV = null, bestVd = Infinity, bestE = null, bestEd = Infinity;
+
+        const testRing = (pts, closed) => {
+            const cp = pts.map(q => map.latLngToContainerPoint(q));
+            for (let i = 0; i < cp.length; i++) {
+                const d = cp[i].distanceTo(p);
+                if (d < bestVd) { bestVd = d; bestV = pts[i]; }
+                if (edges) {
+                    let b = null;
+                    if (i + 1 < cp.length) b = cp[i + 1];
+                    else if (closed && cp.length > 2) b = cp[0];
+                    if (b) {
+                        const c = L.LineUtil.closestPointOnSegment(p, cp[i], b);
+                        const dd = c.distanceTo(p);
+                        if (dd < bestEd) { bestEd = dd; bestE = map.containerPointToLatLng(c); }
+                    }
+                }
+            }
+        };
+
+        snapSources().forEach(l => {
+            if (l.getBounds) {
+                const b = l.getBounds();
+                const sw = map.latLngToContainerPoint(b.getSouthWest());
+                const ne = map.latLngToContainerPoint(b.getNorthEast());
+                if (p.x < Math.min(sw.x, ne.x) - tol || p.x > Math.max(sw.x, ne.x) + tol ||
+                    p.y < Math.min(sw.y, ne.y) - tol || p.y > Math.max(sw.y, ne.y) + tol) return;
+            }
+            const closed = l instanceof L.Polygon;
+            ringsOf(l).forEach(r => testRing(r, closed));
+        });
+        if (state.drawPts.length) testRing(state.drawPts, false);
+
+        if (bestV && bestVd <= tol) return { ll: bestV, kind: 'vertex' };
+        if (bestE && bestEd <= tol) return { ll: bestE, kind: 'edge' };
+        return null;
+    }
+
+    function snapLatLng(latlng) {
+        if (!state.snapOn) return latlng;
+        const t = findSnap(latlng);
+        return t ? t.ll : latlng;
+    }
+
+    function showSnapMarker(t) {
+        if (!t) {
+            if (state.snapMarker) { state.snapMarker.remove(); state.snapMarker = null; }
+            return;
+        }
+        const style = { radius: 9, color: '#d946ef', weight: 2.5, fillColor: '#d946ef', fillOpacity: t.kind === 'vertex' ? 0.55 : 0, interactive: false };
+        if (!state.snapMarker) state.snapMarker = L.circleMarker(t.ll, style).addTo(map);
+        else { state.snapMarker.setLatLng(t.ll); state.snapMarker.setStyle(style); }
+    }
+
+    /* ---------- EXTRAÇÃO DE VÉRTICES DE LOTES, ZONAS E DEMAIS CAMADAS ---------- */
+    function geomRings(g) {
+        const out = [];
+        if (!g) return out;
+        const clean = r => (r.length > 1 && r[0][0] === r[r.length - 1][0] && r[0][1] === r[r.length - 1][1]) ? r.slice(0, -1) : r;
+        switch (g.type) {
+            case 'Point': out.push({ parte: 1, anel: 1, pts: [g.coordinates] }); break;
+            case 'MultiPoint': g.coordinates.forEach((c, i) => out.push({ parte: i + 1, anel: 1, pts: [c] })); break;
+            case 'LineString': out.push({ parte: 1, anel: 1, pts: g.coordinates }); break;
+            case 'MultiLineString': g.coordinates.forEach((r, i) => out.push({ parte: i + 1, anel: 1, pts: r })); break;
+            case 'Polygon': g.coordinates.forEach((r, j) => out.push({ parte: 1, anel: j + 1, pts: clean(r) })); break;
+            case 'MultiPolygon': g.coordinates.forEach((poly, i) => poly.forEach((r, j) => out.push({ parte: i + 1, anel: j + 1, pts: clean(r) }))); break;
+            case 'GeometryCollection': (g.geometries || []).forEach(x => geomRings(x).forEach(r => out.push(r))); break;
+            default: break;
+        }
+        return out;
+    }
+
+    function featureVertexRows(feature, camada) {
+        const nome = featureName(feature.properties, null);
+        const rows = [];
+        geomRings(feature.geometry).forEach(r => r.pts.forEach((c, i) => {
+            const u = toUTM22S(c[1], c[0]);
+            rows.push({ camada, nome, anel: `${r.parte}.${r.anel}`, v: i + 1, lat: c[1], lng: c[0], e: u.x, n: u.y });
+        }));
+        return rows;
+    }
+
+    function extractableLayers() {
+        const list = [];
+        Object.entries(layersMap).forEach(([id, g]) => {
+            if (!g || !g.eachLayer) return;
+            let first = null;
+            g.eachLayer(l => { if (!first && l.feature) first = l; });
+            if (first) list.push({ id, title: layerTitle(first, id), visible: map.hasLayer(g) });
+        });
+        return list;
+    }
+
+    function fillLayerSelect() {
+        const sel = $('vl-layer');
+        if (!sel) return;
+        const prev = sel.value;
+        sel.innerHTML = extractableLayers().map(x => `<option value="${esc(x.id)}">${x.visible ? '● ' : '○ '}${esc(x.title)}</option>`).join('');
+        if (prev && sel.querySelector(`option[value="${prev}"]`)) sel.value = prev;
+    }
+
+    function buildVertsPanel(body) {
+        body.innerHTML = `
+            <p class="tp-hint" style="margin-top:0;">Extraia as coordenadas de todos os vértices de lotes, zonas e demais feições das camadas (● ligada / ○ desligada).</p>
+            <div class="tp-sub" style="margin-top:0;">Camada</div>
+            <div class="tp-row"><select id="vl-layer" class="tp-input"></select></div>
+            <div class="tp-row two">
+                <button type="button" class="tp-btn primary" id="vl-all"><i class="fa-solid fa-layer-group"></i> Camada inteira</button>
+                <button type="button" class="tp-btn" id="vl-pick"><i class="fa-solid fa-hand-pointer"></i> Clicar numa feição</button>
+            </div>
+            <label class="tp-check"><input type="checkbox" id="vl-show" checked> Mostrar os vértices no mapa</label>
+            <div id="vl-out"></div>
+            <div class="tp-row"><button type="button" class="tp-btn danger" id="vl-clear"><i class="fa-solid fa-eraser"></i> Limpar vértices do mapa</button></div>`;
+        fillLayerSelect();
+        $('vl-all').addEventListener('click', () => {
+            const id = $('vl-layer').value;
+            const g = layersMap[id];
+            if (!g) { toast('Selecione uma camada.', 'err'); return; }
+            const rows = [];
+            let n = 0;
+            g.eachLayer(l => { if (l.feature) { n++; featureVertexRows(l.feature, layerTitle(l, id)).forEach(r => rows.push(r)); } });
+            showExtraction(rows, n);
+        });
+        $('vl-pick').addEventListener('click', () => { if (state.vertPick) stopVertPick(); else startVertPick(); });
+        $('vl-clear').addEventListener('click', clearExtraction);
+        $('vl-show').addEventListener('change', e => { if (!e.target.checked && state.extractGroup) state.extractGroup.clearLayers(); });
+    }
+
+    function startVertPick() {
+        const sel = $('vl-layer');
+        if (!sel || !sel.value) { toast('Selecione uma camada.', 'err'); return; }
+        window.GEO_TOOL_BUSY = true;
+        state.vertPick = e => {
+            const id = $('vl-layer').value;
+            const g = layersMap[id];
+            if (!g) return;
+            let hit = null;
+            g.eachLayer(l => { if (!hit && l.feature && l.getBounds && l.getBounds().contains(e.latlng) && pointInGeom(e.latlng.lat, e.latlng.lng, l.feature.geometry)) hit = l; });
+            if (!hit) { toast('Nenhuma feição desta camada neste ponto.', 'err', 2200); return; }
+            showExtraction(featureVertexRows(hit.feature, layerTitle(hit, id)), 1);
+        };
+        map.on('click', state.vertPick);
+        map.getContainer().classList.add('pick-cursor');
+        const b = $('vl-pick');
+        if (b) { b.classList.add('active'); b.innerHTML = '<i class="fa-solid fa-hand-pointer"></i> Clique no mapa... (parar)'; }
+    }
+
+    function stopVertPick() {
+        if (state.vertPick) map.off('click', state.vertPick);
+        state.vertPick = null;
+        window.GEO_TOOL_BUSY = !!(state.drawMode || state.pickHandler);
+        map.getContainer().classList.remove('pick-cursor');
+        const b = $('vl-pick');
+        if (b) { b.classList.remove('active'); b.innerHTML = '<i class="fa-solid fa-hand-pointer"></i> Clicar numa feição'; }
+    }
+
+    function clearExtraction() {
+        if (state.extractGroup) state.extractGroup.clearLayers();
+        const out = $('vl-out'); if (out) out.innerHTML = '';
+    }
+
+    function showExtraction(rows, nFeat) {
+        const out = $('vl-out');
+        if (!out) return;
+        if (state.extractGroup) state.extractGroup.clearLayers();
+        if (!rows.length) { out.innerHTML = '<div class="tp-hint">Nenhum vértice encontrado.</div>'; return; }
+        const f = n => n.toFixed(6);
+        const CAP = 300;
+        out.innerHTML = `<div class="tp-hint"><b>${rows.length.toLocaleString('pt-BR')}</b> vértice(s) em <b>${nFeat}</b> feição(ões)${rows.length > CAP ? ` — tabela mostra os ${CAP} primeiros; a exportação traz todos` : ''}.</div>
+            <div class="vx-table-wrap"><table class="vx-table"><thead><tr><th>Feição</th><th>Anel</th><th>V</th><th>Latitude</th><th>Longitude</th><th>UTM E</th><th>UTM N</th></tr></thead><tbody>${
+                rows.slice(0, CAP).map(r => `<tr><td>${esc(r.nome)}</td><td>${r.anel}</td><td>${r.v}</td><td>${f(r.lat)}</td><td>${f(r.lng)}</td><td>${r.e}</td><td>${r.n}</td></tr>`).join('')
+            }</tbody></table></div>
+            <div class="tp-row three">
+                <button type="button" class="tp-btn" id="vl-copy"><i class="fa-regular fa-copy"></i> Copiar</button>
+                <button type="button" class="tp-btn" id="vl-csv"><i class="fa-solid fa-file-csv"></i> CSV</button>
+                <button type="button" class="tp-btn" id="vl-txt"><i class="fa-solid fa-file-lines"></i> TXT</button>
+            </div>`;
+        const header = ['Camada', 'Feicao', 'Anel', 'Vertice', 'Latitude', 'Longitude', 'UTM_E_22S', 'UTM_N_22S'];
+        const lines = () => rows.map(r => [r.camada, r.nome, r.anel, r.v, f(r.lat), f(r.lng), r.e, r.n]);
+        $('vl-copy').addEventListener('click', () => copyText([header.join('\t')].concat(lines().map(x => x.join('\t'))).join('\n')));
+        $('vl-csv').addEventListener('click', () => download('vertices_camada.csv', '\ufeff' + [header.join(';')].concat(lines().map(x => x.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';'))).join('\r\n'), 'text/csv;charset=utf-8'));
+        $('vl-txt').addEventListener('click', () => download('vertices_camada.txt', [header.join('\t')].concat(lines().map(x => x.join('\t'))).join('\r\n'), 'text/plain;charset=utf-8'));
+
+        if ($('vl-show') && $('vl-show').checked) {
+            if (rows.length > 3000) { toast(`Muitos vértices (${rows.length.toLocaleString('pt-BR')}): pontos não exibidos no mapa; tabela e exportação estão completas.`, 'info', 6000); return; }
+            if (!state.extractGroup) state.extractGroup = new L.LayerGroup().addTo(map);
+            if (!state.extractRenderer) state.extractRenderer = L.canvas({ padding: 0.5 });
+            rows.forEach(r => {
+                const dd = `${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}`;
+                const m = L.circleMarker([r.lat, r.lng], { renderer: state.extractRenderer, radius: 4.5, color: '#7c2d12', weight: 1.5, fillColor: '#fb923c', fillOpacity: 1, bubblingMouseEvents: false });
+                m.bindTooltip(`<b>${esc(r.nome)} · ${r.anel}.V${r.v}</b><br>Lat/Lon: ${dd}<br>UTM 22S: E ${r.e} N ${r.n}<br><small>Clique para copiar</small>`, { direction: 'top', offset: [0, -4] });
+                m.on('click', () => copyText(dd));
+                state.extractGroup.addLayer(m);
+            });
+        }
+    }
+
     function describeLayer(l) {
         const rows = [];
         if (l._note) rows.push(`<b>${esc(l._note)}</b>`);
@@ -541,6 +771,14 @@ const GeoTools = (() => {
                 <button type="button" class="color-swatch" data-color="#111827" style="background:#111827;" title="Preto"></button>
             </div>
 
+            <div class="tp-sub">Aderência (Snap)</div>
+            <label class="tp-check"><input type="checkbox" id="snap-on"> Ativar aderência aos vértices e arestas das camadas e desenhos</label>
+            <div class="tp-row two">
+                <select id="snap-mode" class="tp-input"><option value="both">Vértices e arestas</option><option value="vertex">Somente vértices</option></select>
+                <select id="snap-tol" class="tp-input"><option value="8">Raio 8 px</option><option value="12" selected>Raio 12 px</option><option value="20">Raio 20 px</option></select>
+            </div>
+            <div class="tp-hint">Com a aderência ativa, o cursor "gruda" no vértice (círculo cheio) ou na aresta (círculo vazado) mais próximo das camadas ligadas.</div>
+
             <div id="draw-live-box" class="draw-live-box" style="display:none;">
                 <div id="draw-live-hint" class="draw-live-hint">Clique no mapa para iniciar...</div>
                 <div id="draw-live-metric" class="draw-live-metric"></div>
@@ -586,6 +824,12 @@ const GeoTools = (() => {
         });
 
         $('draw-btn-finish').addEventListener('click', finishActiveDraw);
+        $('snap-on').checked = state.snapOn;
+        $('snap-mode').value = state.snapMode;
+        $('snap-tol').value = String(state.snapTol);
+        $('snap-on').addEventListener('change', e => { state.snapOn = e.target.checked; if (!state.snapOn) showSnapMarker(null); toast(state.snapOn ? 'Aderência ativada.' : 'Aderência desativada.', 'info', 1800); });
+        $('snap-mode').addEventListener('change', e => { state.snapMode = e.target.value; });
+        $('snap-tol').addEventListener('change', e => { state.snapTol = parseInt(e.target.value, 10) || 12; });
         $('vx-show').checked = state.showVerts;
         $('vx-show').addEventListener('change', e => { state.showVerts = e.target.checked; refreshVertices(); });
         $('vx-gen').addEventListener('click', buildCoordTable);
@@ -657,6 +901,7 @@ const GeoTools = (() => {
         map.off('click', onDrawMapClick);
         map.off('mousemove', onDrawMapMove);
         map.off('dblclick', onDrawMapDblClick);
+        showSnapMarker(null);
         if (state.drawPreview) { state.drawPreview.remove(); state.drawPreview = null; }
         if (state.drawVerts) state.drawVerts.clearLayers();
         state.drawMode = null;
@@ -747,7 +992,7 @@ const GeoTools = (() => {
 
     function onDrawMapClick(e) {
         if (!state.drawMode) return;
-        const ll = e.latlng;
+        const ll = snapLatLng(e.latlng);
         const col = state.drawColor;
 
         if (state.drawMode === 'marker') {
@@ -812,8 +1057,11 @@ const GeoTools = (() => {
     }
 
     function onDrawMapMove(e) {
-        if (!state.drawMode || !state.drawPts.length) return;
-        updateLivePreview(e.latlng);
+        if (!state.drawMode) return;
+        const t = state.snapOn ? findSnap(e.latlng) : null;
+        showSnapMarker(t);
+        if (!state.drawPts.length) return;
+        updateLivePreview(t ? t.ll : e.latlng);
     }
 
     function onDrawMapDblClick(e) {
@@ -1209,9 +1457,10 @@ const GeoTools = (() => {
                 <b class="info-sec"><i class="fa-solid fa-layer-group"></i> Camadas Incidentes neste Ponto</b>
                 ${latlng ? overlaysHTML(ov) : '<p class="tp-hint">Ponto de clique indisponível.</p>'}
             </div>
-            <div class="detail-actions">
+            <div class="detail-actions" style="flex-wrap: wrap;">
                 <button type="button" class="tp-btn primary" id="btn-ficha"><i class="fa-solid fa-file-pdf"></i> Emitir Ficha (PDF)</button>
                 ${latlng ? '<button type="button" class="tp-btn" id="btn-copy-coord"><i class="fa-regular fa-copy"></i> Copiar Coordenadas</button>' : ''}
+                <button type="button" class="tp-btn" id="btn-extract-this" style="width: 100%; margin-top: 4px;"><i class="fa-solid fa-vector-square"></i> Extrair Vértices desta Feição</button>
             </div>`;
         container.appendChild(wrap);
         const btnUnlock = $('btn-unlock-staff');
@@ -1219,6 +1468,13 @@ const GeoTools = (() => {
         $('btn-ficha').addEventListener('click', () => openFicha(feature, layerDef, latlng, ov));
         const cc = $('btn-copy-coord');
         if (cc) cc.addEventListener('click', () => copyText(`${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`));
+        const bExt = $('btn-extract-this');
+        if (bExt) bExt.addEventListener('click', () => {
+            const rows = featureVertexRows(feature, layerDef.title || layerDef.id);
+            if (state.panel !== 'verts') togglePanel('verts');
+            showExtraction(rows, 1);
+            toast('Vértices da feição extraídos com sucesso!', 'ok', 2500);
+        });
     }
 
     function openFicha(feature, layerDef, latlng, overlays) {
