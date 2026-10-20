@@ -12,8 +12,13 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
     
+    <!-- Plugins: desenho e mini-mapa -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-minimap@3.6.1/dist/Control.MiniMap.min.css"/>
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/tools.css">
 </head>
 <body>
 
@@ -56,6 +61,12 @@
             <button class="btn-tool" id="btn-print" title="Imprimir / Salvar Mapa">
                 <i class="fa-solid fa-print"></i>
             </button>
+            <div class="user-area">
+                <span id="user-chip" class="user-chip public"><i class="fa-solid fa-globe"></i> Acesso público</span>
+                <button class="btn-tool" id="btn-login" title="Login para servidores municipais">
+                    <i class="fa-solid fa-lock"></i> Entrar
+                </button>
+            </div>
         </div>
     </header>
 
@@ -447,8 +458,17 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     
+    <!-- Plugins -->
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <script src="https://unpkg.com/leaflet-minimap@3.6.1/dist/Control.MiniMap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <!-- Scripts da Aplicação -->
+    <script src="js/supabase-config.js"></script>
     <script src="js/styles.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/tools.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

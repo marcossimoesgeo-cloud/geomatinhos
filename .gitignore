@@ -25,3 +25,6 @@ Desktop.ini
 
 # Logs
 *.log
+
+# Camadas restritas (sobem só pelo painel do Supabase, nunca pelo Git)
+restrito/

@@ -159,6 +159,8 @@ function initGeoportal() {
     setupUIEvents();
 
     // 4. Carregar Camadas Vetoriais
+    if (window.GeoTools) GeoTools.init();
+    if (window.GeoAuth) GeoAuth.init();
     loadVectorLayers();
 }
 
@@ -297,7 +299,8 @@ function setupUIEvents() {
 
     // Botão de Impressão
     document.getElementById('btn-print').addEventListener('click', () => {
-        window.print();
+        if (window.GeoTools) GeoTools.openPanel('print');
+        else window.print();
     });
 
     // Ferramenta de Medição de Distância
@@ -608,7 +611,7 @@ function resetLayerStyle(l) {
  */
 function setupFeatureInteractions(feature, layer, layerDef) {
     layer.on('mouseover', (e) => {
-        if (measureMode) return;
+        if (measureMode || window.GEO_TOOL_BUSY) return;
         const l = e.target;
         // Destaque suave na borda sem alterar z-index nem sobrepor camadas
         if (activeHighlight !== l) {
@@ -620,14 +623,14 @@ function setupFeatureInteractions(feature, layer, layerDef) {
     });
 
     layer.on('mouseout', (e) => {
-        if (measureMode) return;
+        if (measureMode || window.GEO_TOOL_BUSY) return;
         const l = e.target;
         if (activeHighlight === l) return;
         resetLayerStyle(l);
     });
 
     layer.on('click', (e) => {
-        if (measureMode) return;
+        if (measureMode || window.GEO_TOOL_BUSY) return;
         L.DomEvent.stopPropagation(e);
 
         // Remover destaque anterior suavemente
@@ -760,6 +763,7 @@ function displayFeatureDetails(feature, layerDef, latlng) {
     `;
 
     detailsContainer.innerHTML = html;
+    if (window.GeoTools) GeoTools.afterDetails(feature, layerDef, latlng, detailsContainer);
 }
 
 /**
@@ -995,9 +999,14 @@ function onMapMeasureClick(e) {
                 coordinates: [measurePoints.map(p => [p.lng, p.lat])]
             };
             const area = calculateApproxArea(geom);
-            const formatted = area > 10000 
+            let perimeter = 0;
+            for (let i = 0; i < measurePoints.length; i++) {
+                perimeter += measurePoints[i].distanceTo(measurePoints[(i + 1) % measurePoints.length]);
+            }
+            const perFmt = perimeter > 1000 ? `${(perimeter / 1000).toFixed(2)} km` : `${perimeter.toFixed(1)} m`;
+            const formatted = (area > 10000 
                 ? `${(area / 10000).toFixed(2)} ha (${area.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} m²)`
-                : `${area.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} m²`;
+                : `${area.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} m²`) + ` | Perímetro: ${perFmt}`;
             document.getElementById('measure-result').textContent = formatted;
         }
     }

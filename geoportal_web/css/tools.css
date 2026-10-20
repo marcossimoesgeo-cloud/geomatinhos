@@ -1,0 +1,124 @@
+/* ============================================================
+   Ferramentas, login, painéis e modo escuro - Geoportal de Matinhos
+   ============================================================ */
+
+/* ---------- Área do usuário (cabeçalho) ---------- */
+.user-area { display: flex; align-items: center; gap: 0.5rem; margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid rgba(255,255,255,0.25); }
+.user-chip { font-size: 0.75rem; font-weight: 600; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,0.12); color: #fff; white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.user-chip.staff { background: #16a34a; }
+
+/* ---------- Modal de login ---------- */
+.login-modal { position: fixed; inset: 0; z-index: 5000; display: none; align-items: center; justify-content: center; background: rgba(7, 34, 61, 0.55); backdrop-filter: blur(3px); }
+.login-modal.open { display: flex; animation: fadeIn 0.18s ease; }
+.login-card { position: relative; width: min(400px, 92vw); background: #fff; color: #1e293b; border-radius: 14px; padding: 28px 26px 22px; box-shadow: 0 24px 60px rgba(0,0,0,0.35); animation: popIn 0.2s ease; }
+.login-close { position: absolute; top: 10px; right: 12px; border: none; background: none; font-size: 1.1rem; cursor: pointer; color: #64748b; }
+.login-icon { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #0d3b66, #00a896); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin: 0 auto 10px; }
+.login-card h2 { text-align: center; font-size: 1.15rem; color: #0d3b66; margin-bottom: 6px; }
+.login-sub { text-align: center; font-size: 0.78rem; color: #64748b; line-height: 1.4; margin-bottom: 16px; }
+.login-card label { display: block; font-size: 0.75rem; font-weight: 600; margin: 10px 0 4px; color: #334155; }
+.login-card input { width: 100%; padding: 10px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; background: #fff; color: #1e293b; }
+.login-card input:focus { outline: none; border-color: #00a896; box-shadow: 0 0 0 3px rgba(0,168,150,0.18); }
+.login-error { min-height: 18px; margin-top: 8px; font-size: 0.78rem; color: #b91c1c; }
+.login-submit { width: 100%; margin-top: 6px; padding: 11px; border: none; border-radius: 8px; background: #0d3b66; color: #fff; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: background 0.15s; }
+.login-submit:hover { background: #185a9d; }
+.login-submit:disabled { opacity: 0.7; cursor: wait; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes popIn { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: none; } }
+
+/* ---------- Dock de ferramentas no mapa ---------- */
+.tools-dock { position: absolute; top: 112px; right: 10px; z-index: 1000; display: flex; flex-direction: column; gap: 6px; background: #fff; padding: 6px; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.22); border: 1px solid var(--border); }
+.dock-btn { width: 38px; height: 38px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--primary); font-size: 1rem; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+.dock-btn:hover { background: #e8f4f8; border-color: var(--accent); transform: translateX(-2px); }
+.dock-btn.active { background: var(--accent); color: #fff; }
+.dock-sep { height: 1px; background: var(--border); margin: 2px 4px; }
+
+/* ---------- Painéis flutuantes ---------- */
+#tool-panels { position: absolute; top: 112px; right: 62px; z-index: 1000; pointer-events: none; }
+.tool-panel { display: none; width: 330px; max-width: calc(100vw - 90px); max-height: calc(100vh - 230px); overflow: hidden; flex-direction: column; background: #fff; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.28); border: 1px solid var(--border); pointer-events: auto; }
+.tool-panel.open { display: flex; animation: slideIn 0.2s ease; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+.tool-panel-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: linear-gradient(135deg, var(--primary-dark), var(--primary)); color: #fff; font-size: 0.85rem; font-weight: 700; }
+.tool-panel-close { border: none; background: none; color: #fff; cursor: pointer; font-size: 1rem; }
+.tool-panel-body { padding: 12px; overflow-y: auto; }
+.tp-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.tp-row.two > * { flex: 1; min-width: 0; }
+.tp-row.three > * { flex: 1; min-width: 0; }
+.tp-input { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border-hover); border-radius: 7px; font-size: 0.82rem; background: #fff; color: var(--text-main); }
+.tp-input:focus { outline: none; border-color: var(--accent); }
+.tp-btn { padding: 8px 10px; border: 1.5px solid var(--border-hover); border-radius: 7px; background: #f8fafc; color: var(--primary); font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s; width: 100%; }
+.tp-btn:hover { background: #e2e8f0; }
+.tp-btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.tp-btn.primary:hover { background: var(--primary-light); }
+.tp-btn.danger { color: #b91c1c; border-color: #fecaca; background: #fef2f2; }
+.tp-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tp-sub { font-size: 0.75rem; font-weight: 700; color: var(--primary); margin: 10px 0 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+.tp-hint { font-size: 0.74rem; color: var(--text-muted); line-height: 1.4; margin: 4px 0 8px; }
+.tp-check { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text-main); margin-bottom: 6px; }
+.adv-results { max-height: 300px; overflow-y: auto; }
+.adv-item { padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; margin-bottom: 6px; cursor: pointer; font-size: 0.8rem; transition: all 0.15s; }
+.adv-item:hover { border-color: var(--accent); background: #f0fdfa; transform: translateX(2px); }
+.adv-item b { display: block; color: var(--primary); }
+.adv-item span { font-size: 0.72rem; color: var(--text-muted); }
+.co-out { font-size: 0.78rem; line-height: 1.7; background: #f8fafc; border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; word-break: break-all; }
+.mini-copy { border: none; background: none; cursor: pointer; color: var(--accent-hover); }
+.pick-cursor { cursor: crosshair !important; }
+.pick-cursor .leaflet-interactive { cursor: crosshair !important; }
+
+/* ---------- Detalhes: ações e camadas no ponto ---------- */
+.info-sec { font-size: 0.82rem; color: var(--primary); display: block; margin-bottom: 6px; }
+.detail-actions { display: flex; gap: 8px; margin: 10px 0 14px; }
+.restricted-group .group-header { background: rgba(22, 163, 74, 0.12); color: #14532d; }
+.badge-staff { font-size: 0.6rem; background: #16a34a; color: #fff; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px; margin-left: 4px; }
+.lock-ico { color: #16a34a; font-size: 0.75rem; }
+.draw-note { font-weight: 700; background: #fff8e1; border: 1px solid #f59e0b; }
+
+/* ---------- Toasts ---------- */
+.toast-box { position: fixed; bottom: 46px; left: 50%; transform: translateX(-50%); z-index: 6000; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+.toast { background: #0d3b66; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 0.82rem; box-shadow: 0 6px 20px rgba(0,0,0,0.3); opacity: 0; transform: translateY(10px); transition: all 0.25s ease; max-width: 80vw; }
+.toast.show { opacity: 1; transform: none; }
+.toast.ok { background: #15803d; }
+.toast.err { background: #b91c1c; }
+
+/* ---------- Modo escuro ---------- */
+body.dark { --bg-main: #0f172a; --bg-card: #1e293b; --text-main: #e2e8f0; --text-muted: #94a3b8; --border: #334155; --border-hover: #475569; color-scheme: dark; }
+body.dark aside.sidebar, body.dark .info-card, body.dark .basemap-panel, body.dark .opacity-box, body.dark .zone-filter-box,
+body.dark .measure-card, body.dark .map-floating-drawer-btn, body.dark .search-results, body.dark .tools-dock,
+body.dark .tool-panel, body.dark .layer-group, body.dark .group-content { background: #1e293b; color: #e2e8f0; }
+body.dark .tp-input, body.dark select, body.dark .search-input { background: #0f172a; color: #e2e8f0; border-color: #475569; }
+body.dark .tp-btn { background: #0f172a; color: #e2e8f0; border-color: #475569; }
+body.dark .tp-btn.primary { background: #00a896; border-color: #00a896; color: #fff; }
+body.dark .dock-btn { color: #e2e8f0; }
+body.dark .dock-btn:hover { background: #334155; }
+body.dark .adv-item:hover { background: #0f172a; }
+body.dark .adv-item b, body.dark .tp-sub, body.dark .info-sec { color: #5eead4; }
+body.dark .co-out { background: #0f172a; }
+body.dark footer.status-bar { background: #0b1220; color: #cbd5e1; }
+body.dark .leaflet-popup-content-wrapper, body.dark .leaflet-popup-tip, body.dark .leaflet-tooltip { background: #1e293b; color: #e2e8f0; border-color: #475569; }
+body.dark .btn-bulk { background: #0f172a; color: #e2e8f0; border-color: #475569; }
+body.dark .btn-bulk-off { background: #3b1a1a; color: #fca5a5; border-color: #7f1d1d; }
+body.dark .info-label { color: #94a3b8; }
+body.dark .info-value { color: #e2e8f0; }
+
+/* ---------- Layout de impressão ---------- */
+#print-frame { display: none; }
+@media print {
+    .tools-dock, #tool-panels, .toast-box, .user-area, .login-modal, .leaflet-draw, .map-floating-drawer-btn { display: none !important; }
+    body.print-layout header.app-header { display: none !important; }
+    body.print-layout #print-frame { display: block; position: fixed; inset: 0; z-index: 100000; pointer-events: none; font-family: 'Segoe UI', Arial, sans-serif; color: #000; }
+    body.print-layout #map { top: 20mm !important; left: 0 !important; width: 100% !important; height: calc(100vh - 26mm) !important; border: 2px solid #000; box-sizing: border-box; }
+    .pf-head { position: absolute; top: 0; left: 0; right: 0; height: 18mm; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #0d3b66; background: #fff; }
+    .pf-title { font-size: 20pt; font-weight: 700; color: #0d3b66; }
+    .pf-sub { font-size: 10pt; color: #475569; }
+    .pf-meta { font-size: 8pt; text-align: right; color: #334155; line-height: 1.3; }
+    .pf-legend { position: absolute; left: 6mm; bottom: 12mm; max-width: 70mm; max-height: 60%; overflow: hidden; background: rgba(255,255,255,0.94); border: 1px solid #333; padding: 3mm; font-size: 7pt; column-gap: 4mm; }
+    .pf-legend b { display: block; font-size: 8.5pt; margin-bottom: 1.5mm; }
+    .pf-legend div { display: flex; align-items: center; gap: 2mm; margin-bottom: 0.8mm; break-inside: avoid; }
+    .pf-legend span { width: 4mm; height: 3mm; display: inline-block; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pf-foot { position: absolute; bottom: 0; left: 0; right: 0; height: 5mm; font-size: 7pt; color: #475569; text-align: center; background: #fff; }
+}
+
+@media (max-width: 760px) {
+    .user-chip { display: none; }
+    .tools-dock { top: 104px; }
+    #tool-panels { right: 58px; }
+}
