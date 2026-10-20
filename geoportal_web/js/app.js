@@ -29,11 +29,11 @@ function initGeoportal() {
         zoomControl: false
     });
 
-    // Reposicionar controle de zoom no topo direito
-    L.control.zoom({ position: 'topright' }).addTo(map);
+    // Controle de zoom no canto inferior esquerdo para liberar a lateral direita
+    L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
     // Escala cartográfica no canto inferior esquerdo
-    L.control.scale({ imperial: false, metric: true, position: 'bottomright' }).addTo(map);
+    L.control.scale({ imperial: false, metric: true, position: 'bottomleft' }).addTo(map);
 
     // Criar Pane dedicado para Áreas de Preservação e Drenagem para garantir sobreposição absoluta
     const presPane = map.createPane('preservacaoPane');
@@ -274,15 +274,21 @@ function setupUIEvents() {
         document.getElementById('zoom-level').textContent = map.getZoom();
     });
 
-    // Botão Voltar para Enquadramento Geral
-    document.getElementById('btn-reset-view').addEventListener('click', () => {
-        map.flyTo(INITIAL_CENTER, INITIAL_ZOOM, { duration: 1.2 });
-    });
+    // Botão Voltar para Enquadramento Geral (se presente no header)
+    const btnResetView = document.getElementById('btn-reset-view');
+    if (btnResetView) {
+        btnResetView.addEventListener('click', () => {
+            map.flyTo(INITIAL_CENTER, INITIAL_ZOOM, { duration: 1.2 });
+        });
+    }
 
-    // Botão GPS / Minha Localização
-    document.getElementById('btn-locate').addEventListener('click', () => {
-        map.locate({ setView: true, maxZoom: 17 });
-    });
+    // Eventos de GPS / Minha Localização
+    const btnLocate = document.getElementById('btn-locate');
+    if (btnLocate) {
+        btnLocate.addEventListener('click', () => {
+            map.locate({ setView: true, maxZoom: 17 });
+        });
+    }
     map.on('locationfound', (e) => {
         L.circleMarker(e.latlng, {
             radius: 8,
@@ -294,26 +300,25 @@ function setupUIEvents() {
         }).addTo(map).bindPopup('Você está aqui! Precisão: ' + Math.round(e.accuracy) + ' metros').openPopup();
     });
     map.on('locationerror', () => {
-        alert('Não foi possível obter sua localização atual via navegador.');
+        if (window.GeoTools) GeoTools.toast('Não foi possível obter sua localização atual via navegador.', 'err');
+        else alert('Não foi possível obter sua localização atual via navegador.');
     });
 
-    // Botão de Impressão
-    document.getElementById('btn-print').addEventListener('click', () => {
-        if (window.GeoTools) GeoTools.openPanel('print');
-        else window.print();
-    });
+    // Botão de Impressão (se presente no header)
+    const btnPrint = document.getElementById('btn-print');
+    if (btnPrint) {
+        btnPrint.addEventListener('click', () => {
+            if (window.GeoTools) GeoTools.openPanel('print');
+            else window.print();
+        });
+    }
 
-    // Ferramenta de Medição de Distância
+    // Ferramenta de Medição de Distância e Área
     const btnDist = document.getElementById('btn-measure-dist');
-    btnDist.addEventListener('click', () => {
-        toggleMeasureMode('distance');
-    });
+    if (btnDist) btnDist.addEventListener('click', () => toggleMeasureMode('distance'));
 
-    // Ferramenta de Medição de Área
     const btnArea = document.getElementById('btn-measure-area');
-    btnArea.addEventListener('click', () => {
-        toggleMeasureMode('area');
-    });
+    if (btnArea) btnArea.addEventListener('click', () => toggleMeasureMode('area'));
 
     // Fechar medição
     document.getElementById('btn-close-measure').addEventListener('click', () => {
@@ -929,13 +934,19 @@ function toggleMeasureMode(mode) {
     measurePoints = [];
     measureLayerGroup.clearLayers();
 
-    document.getElementById('btn-measure-dist').classList.toggle('active', mode === 'distance');
-    document.getElementById('btn-measure-area').classList.toggle('active', mode === 'area');
+    ['btn-measure-dist', 'dock-measure-dist'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('active', mode === 'distance');
+    });
+    ['btn-measure-area', 'dock-measure-area'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('active', mode === 'area');
+    });
 
     const card = document.getElementById('measure-card');
     card.classList.add('active');
 
-    document.getElementById('measure-mode-title').textContent = mode === 'distance' ? 'Medir Distância' : 'Medir Área';
+    document.getElementById('measure-mode-title').textContent = mode === 'distance' ? 'Medir Distância' : 'Medir Área e Perímetro';
     document.getElementById('measure-result').textContent = mode === 'distance' ? '0.00 m' : '0.00 m²';
     document.getElementById('measure-hint').textContent = 'Clique no mapa para adicionar pontos. Duplo clique para encerrar.';
 }
@@ -944,8 +955,10 @@ function stopMeasureMode() {
     measureMode = null;
     measurePoints = [];
     measureLayerGroup.clearLayers();
-    document.getElementById('btn-measure-dist').classList.remove('active');
-    document.getElementById('btn-measure-area').classList.remove('active');
+    ['btn-measure-dist', 'dock-measure-dist', 'btn-measure-area', 'dock-measure-area'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+    });
     document.getElementById('measure-card').classList.remove('active');
 }
 
