@@ -138,8 +138,8 @@ function initGeoportal() {
 
     // Fabrica de TileLayers — cria uma nova instancia para cada seleção
     const BASEMAP_DEFS = {
-        googleSat: () => L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-            maxZoom: 21, maxNativeZoom: 20, attribution: '&copy; Google Maps'
+        googleSat: () => L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            maxZoom: 21, maxNativeZoom: 20, attribution: '&copy; Google Satellite'
         }),
         esri: () => L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 21, maxNativeZoom: 19, attribution: '&copy; Esri World Imagery'
