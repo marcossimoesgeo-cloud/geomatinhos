@@ -20,6 +20,8 @@ const GeoTools = (() => {
         drawVerts: null,
         drawPreview: null,
         drawColor: '#e63946',
+        showVerts: true,
+        vertexGroup: null,
         minimap: null,
         pickHandler: null,
         coordMarker: null,
@@ -401,6 +403,72 @@ const GeoTools = (() => {
         if (!state.drawVerts) {
             state.drawVerts = new L.LayerGroup().addTo(map);
         }
+        if (!state.vertexGroup) {
+            state.vertexGroup = new L.LayerGroup().addTo(map);
+        }
+    }
+
+    /* ---------- VÉRTICES E COORDENADAS DOS DESENHOS ---------- */
+    function getVertices(l) {
+        const flat = arr => Array.isArray(arr) ? arr.reduce((a, x) => a.concat(Array.isArray(x) ? flat(x) : [x]), []) : [arr];
+        if (l instanceof L.Circle || l instanceof L.Marker) return [l.getLatLng()];
+        if (l.getLatLngs) {
+            let pts = flat(l.getLatLngs());
+            // remove vértice de fechamento duplicado
+            if (l instanceof L.Polygon && pts.length > 1 && pts[0].equals(pts[pts.length - 1])) pts = pts.slice(0, -1);
+            return pts;
+        }
+        return [];
+    }
+
+    function vertexRows() {
+        const rows = [];
+        state.drawnList.forEach(l => {
+            getVertices(l).forEach((ll, i) => {
+                const u = toUTM22S(ll.lat, ll.lng);
+                rows.push({ nome: l._note || l._typeLabel, tipo: l._typeLabel, v: i + 1, lat: ll.lat, lng: ll.lng, e: u.x, n: u.y });
+            });
+        });
+        return rows;
+    }
+
+    function refreshVertices() {
+        if (!state.vertexGroup) return;
+        state.vertexGroup.clearLayers();
+        if (!state.showVerts) return;
+        state.drawnList.forEach(l => {
+            if (l instanceof L.Marker && l._isText) return;
+            getVertices(l).forEach((ll, i) => {
+                const u = toUTM22S(ll.lat, ll.lng);
+                const dd = `${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}`;
+                const m = L.circleMarker(ll, { radius: 6, color: '#111827', weight: 2, fillColor: '#fde047', fillOpacity: 1, bubblingMouseEvents: false });
+                m.bindTooltip(`<b>${esc(l._note || l._typeLabel)} · V${i + 1}</b><br>Lat/Lon: ${dd}<br>UTM 22S: E ${u.x} N ${u.y}<br><small>Clique para copiar</small>`, { direction: 'top', offset: [0, -6] });
+                m.on('click', () => copyText(dd));
+                state.vertexGroup.addLayer(m);
+            });
+        });
+    }
+
+    function buildCoordTable() {
+        const rows = vertexRows();
+        const out = $('vx-out');
+        if (!out) return;
+        if (!rows.length) { out.innerHTML = '<div class="tp-hint">Desenhe ao menos uma poligonal, linha ou ponto para gerar as coordenadas.</div>'; return; }
+        const f = n => n.toFixed(6);
+        out.innerHTML = `<div class="vx-table-wrap"><table class="vx-table"><thead><tr><th>Desenho</th><th>V</th><th>Latitude</th><th>Longitude</th><th>UTM E</th><th>UTM N</th></tr></thead><tbody>${
+            rows.map(r => `<tr><td>${esc(r.nome)}</td><td>${r.v}</td><td>${f(r.lat)}</td><td>${f(r.lng)}</td><td>${r.e}</td><td>${r.n}</td></tr>`).join('')
+        }</tbody></table></div>
+        <div class="tp-row three">
+            <button type="button" class="tp-btn" id="vx-copy"><i class="fa-regular fa-copy"></i> Copiar</button>
+            <button type="button" class="tp-btn" id="vx-csv"><i class="fa-solid fa-file-csv"></i> CSV</button>
+            <button type="button" class="tp-btn" id="vx-txt"><i class="fa-solid fa-file-lines"></i> TXT</button>
+        </div>`;
+        const sep = '\t';
+        const header = ['Desenho', 'Vertice', 'Latitude', 'Longitude', 'UTM_E_22S', 'UTM_N_22S'];
+        const lines = rows.map(r => [r.nome, r.v, f(r.lat), f(r.lng), r.e, r.n]);
+        $('vx-copy').addEventListener('click', () => copyText([header.join(sep)].concat(lines.map(x => x.join(sep))).join('\n')));
+        $('vx-csv').addEventListener('click', () => download('vertices_matinhos.csv', '\ufeff' + [header.join(';')].concat(lines.map(x => x.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';'))).join('\r\n'), 'text/csv;charset=utf-8'));
+        $('vx-txt').addEventListener('click', () => download('vertices_matinhos.txt', [header.join(sep)].concat(lines.map(x => x.join(sep))).join('\r\n'), 'text/plain;charset=utf-8'));
     }
 
     function describeLayer(l) {
@@ -488,6 +556,11 @@ const GeoTools = (() => {
                 <div class="tp-hint">Nenhum desenho adicionado ainda. Selecione uma ferramenta acima e clique no mapa.</div>
             </div>
 
+            <div class="tp-sub">Vértices e Coordenadas</div>
+            <label class="tp-check"><input type="checkbox" id="vx-show" checked> Mostrar vértices (passe o mouse para ver as coordenadas)</label>
+            <div class="tp-row"><button type="button" class="tp-btn primary" id="vx-gen"><i class="fa-solid fa-table-list"></i> Gerar coordenadas de todos os vértices</button></div>
+            <div id="vx-out"></div>
+
             <div class="tp-sub">Exportar Desenhos</div>
             <div class="tp-row three">
                 <button type="button" class="tp-btn" id="ex-geojson"><i class="fa-solid fa-file-code"></i> GeoJSON</button>
@@ -513,6 +586,9 @@ const GeoTools = (() => {
         });
 
         $('draw-btn-finish').addEventListener('click', finishActiveDraw);
+        $('vx-show').checked = state.showVerts;
+        $('vx-show').addEventListener('change', e => { state.showVerts = e.target.checked; refreshVertices(); });
+        $('vx-gen').addEventListener('click', buildCoordTable);
         $('draw-btn-undo').addEventListener('click', undoDrawPoint);
         $('draw-btn-cancel').addEventListener('click', stopActiveDraw);
 
@@ -764,6 +840,7 @@ const GeoTools = (() => {
     }
 
     function renderDrawnList() {
+        refreshVertices();
         const countEl = $('draw-count');
         const listEl = $('draw-items-list');
         if (countEl) countEl.textContent = String(state.drawnList.length);

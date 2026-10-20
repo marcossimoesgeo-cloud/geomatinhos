@@ -134,6 +134,11 @@
 .mini-act.del { color: #b91c1c; }
 .mini-act:hover { background: #e2e8f0; }
 .map-text-box { background: rgba(255,255,255,0.92); border: 2px solid #e63946; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+.vx-table-wrap { max-height: 190px; overflow: auto; border: 1px solid var(--border); border-radius: 7px; margin-bottom: 8px; }
+.vx-table { width: 100%; border-collapse: collapse; font-size: 0.68rem; font-family: Consolas, monospace; }
+.vx-table th { position: sticky; top: 0; background: #f1f5f9; color: var(--primary); padding: 4px 5px; text-align: left; }
+.vx-table td { padding: 3px 5px; border-top: 1px solid var(--border); white-space: nowrap; }
+body.dark .vx-table th { background: #0f172a; color: #5eead4; }
 
 /* ---------- Detalhes: ações e camadas no ponto ---------- */
 .info-sec { font-size: 0.82rem; color: var(--primary); display: block; margin-bottom: 6px; }
