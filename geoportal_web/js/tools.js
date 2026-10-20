@@ -20,10 +20,12 @@ const GeoTools = (() => {
         drawVerts: null,
         drawPreview: null,
         drawColor: '#e63946',
-        snapOn: false,
+        snapOn: true,
         snapMode: 'both',
-        snapTol: 12,
+        snapTol: 18,
+        activeSnap: null,
         snapMarker: null,
+        snapBadge: null,
         vertPick: null,
         extractGroup: null,
         extractRenderer: null,
@@ -479,83 +481,227 @@ const GeoTools = (() => {
         $('vx-txt').addEventListener('click', () => download('vertices_matinhos.txt', [header.join(sep)].concat(lines.map(x => x.join(sep))).join('\r\n'), 'text/plain;charset=utf-8'));
     }
 
-    /* ---------- ADERÊNCIA (SNAP) ---------- */
+    /* ---------- ADERÊNCIA (SNAP MAGNÉTICO DE ALTO DESEMPENHO) ---------- */
+    function ensureSnapPane() {
+        if (!map || map.getPane('snapPane')) return;
+        const pane = map.createPane('snapPane');
+        pane.style.zIndex = '750';
+        pane.style.pointerEvents = 'none';
+    }
+
     function ringsOf(l) {
         const out = [];
+        const isCoord = x => x && (x instanceof L.LatLng || (typeof x.lat === 'number' && typeof x.lng === 'number'));
         const walk = a => {
             if (!Array.isArray(a) || !a.length) return;
-            if (a[0] instanceof L.LatLng) out.push(a); else a.forEach(walk);
+            if (isCoord(a[0])) {
+                out.push(a.map(p => (p instanceof L.LatLng) ? p : L.latLng(p.lat, p.lng)));
+            } else {
+                a.forEach(walk);
+            }
         };
         if (l.getLatLngs) walk(l.getLatLngs());
-        else if (l.getLatLng) out.push([l.getLatLng()]);
+        else if (l.getLatLng) {
+            const ll = l.getLatLng();
+            if (ll) out.push([ll instanceof L.LatLng ? ll : L.latLng(ll.lat, ll.lng)]);
+        }
         return out;
     }
 
-    function snapSources() {
-        const src = [];
-        Object.values(layersMap).forEach(g => {
-            if (g && g.eachLayer && map.hasLayer(g)) g.eachLayer(l => { if (l.getLatLngs || l.getLatLng) src.push(l); });
-        });
-        state.drawnList.forEach(l => { if (!(l instanceof L.Circle) && !l._isText && (l.getLatLngs || l.getLatLng)) src.push(l); });
-        return src;
-    }
-
     function findSnap(latlng) {
+        if (!state.snapOn || !map) return null;
         const p = map.latLngToContainerPoint(latlng);
-        const tol = state.snapTol;
+        const tol = state.snapTol || 18;
         const edges = state.snapMode === 'both';
-        let bestV = null, bestVd = Infinity, bestE = null, bestEd = Infinity;
 
+        // Caixa delimitadora geográfica ao redor do cursor (+/- tol px) para descarte instantâneo
+        const pSw = map.containerPointToLatLng(L.point(p.x - tol, p.y + tol));
+        const pNe = map.containerPointToLatLng(L.point(p.x + tol, p.y - tol));
+        const searchBounds = L.latLngBounds(pSw, pNe);
+
+        let bestV = null, bestVd = Infinity, isStart = false;
+        let bestE = null, bestEd = Infinity;
+
+        // 1. Prioridade máxima: vértices do desenho ativo (e fechamento automático de polígono no 1º vértice)
+        if (state.drawPts && state.drawPts.length) {
+            const pts = state.drawPts;
+            if (state.drawMode === 'polygon' && pts.length >= 3) {
+                const p0 = pts[0];
+                const p0Cp = map.latLngToContainerPoint(p0);
+                const d0 = p0Cp.distanceTo(p);
+                if (d0 <= tol + 5) {
+                    bestV = p0;
+                    bestVd = d0;
+                    isStart = true;
+                }
+            }
+            if (!isStart) {
+                for (let i = 0; i < pts.length; i++) {
+                    const pt = pts[i];
+                    if (searchBounds.contains(pt)) {
+                        const cp = map.latLngToContainerPoint(pt);
+                        const d = cp.distanceTo(p);
+                        if (d < bestVd && d <= tol) {
+                            bestVd = d;
+                            bestV = pt;
+                            if (i === 0 && state.drawMode === 'polygon' && pts.length >= 3) isStart = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Teste de anel de coordenadas com descarte espacial prévio (apenas projeta se dentro do searchBounds)
         const testRing = (pts, closed) => {
-            const cp = pts.map(q => map.latLngToContainerPoint(q));
-            for (let i = 0; i < cp.length; i++) {
-                const d = cp[i].distanceTo(p);
-                if (d < bestVd) { bestVd = d; bestV = pts[i]; }
+            if (!pts || !pts.length) return;
+            const len = pts.length;
+            for (let i = 0; i < len; i++) {
+                const pt = pts[i];
+                if (searchBounds.contains(pt)) {
+                    const cp = map.latLngToContainerPoint(pt);
+                    const d = cp.distanceTo(p);
+                    if (d < bestVd && d <= tol) {
+                        bestVd = d;
+                        bestV = pt;
+                        isStart = false;
+                    }
+                }
                 if (edges) {
-                    let b = null;
-                    if (i + 1 < cp.length) b = cp[i + 1];
-                    else if (closed && cp.length > 2) b = cp[0];
-                    if (b) {
-                        const c = L.LineUtil.closestPointOnSegment(p, cp[i], b);
-                        const dd = c.distanceTo(p);
-                        if (dd < bestEd) { bestEd = dd; bestE = map.containerPointToLatLng(c); }
+                    let next = null;
+                    if (i + 1 < len) next = pts[i + 1];
+                    else if (closed && len > 2) next = pts[0];
+                    if (next) {
+                        const segBounds = L.latLngBounds(pt, next);
+                        if (searchBounds.intersects(segBounds)) {
+                            const cp1 = map.latLngToContainerPoint(pt);
+                            const cp2 = map.latLngToContainerPoint(next);
+                            const c = L.LineUtil.closestPointOnSegment(p, cp1, cp2);
+                            const dd = c.distanceTo(p);
+                            if (dd < bestEd && dd <= tol) {
+                                bestEd = dd;
+                                bestE = map.containerPointToLatLng(c);
+                            }
+                        }
                     }
                 }
             }
         };
 
-        snapSources().forEach(l => {
+        const testFeatureLayer = l => {
+            if (!l) return;
             if (l.getBounds) {
-                const b = l.getBounds();
-                const sw = map.latLngToContainerPoint(b.getSouthWest());
-                const ne = map.latLngToContainerPoint(b.getNorthEast());
-                if (p.x < Math.min(sw.x, ne.x) - tol || p.x > Math.max(sw.x, ne.x) + tol ||
-                    p.y < Math.min(sw.y, ne.y) - tol || p.y > Math.max(sw.y, ne.y) + tol) return;
+                try {
+                    const b = l.getBounds();
+                    if (b && b.isValid && b.isValid() && !searchBounds.intersects(b)) return;
+                } catch (_) {}
             }
             const closed = l instanceof L.Polygon;
-            ringsOf(l).forEach(r => testRing(r, closed));
-        });
-        if (state.drawPts.length) testRing(state.drawPts, false);
+            const rings = ringsOf(l);
+            for (let r = 0; r < rings.length; r++) testRing(rings[r], closed);
+        };
 
-        if (bestV && bestVd <= tol) return { ll: bestV, kind: 'vertex' };
-        if (bestE && bestEd <= tol) return { ll: bestE, kind: 'edge' };
+        // 2. Camadas vetoriais ligadas no mapa (Loteamentos, Zoneamento, Bairros, etc.)
+        if (typeof layersMap !== 'undefined' && layersMap) {
+            Object.values(layersMap).forEach(g => {
+                if (g && map.hasLayer(g)) {
+                    if (g.getBounds) {
+                        try {
+                            const gb = g.getBounds();
+                            if (gb && gb.isValid && gb.isValid() && !searchBounds.intersects(gb)) return;
+                        } catch (_) {}
+                    }
+                    if (g.eachLayer) g.eachLayer(testFeatureLayer);
+                }
+            });
+        }
+
+        // 3. Desenhos já criados e salvos no mapa
+        if (state.drawnList && state.drawnList.length) {
+            state.drawnList.forEach(l => {
+                if (l instanceof L.Circle || l._isText) return;
+                testFeatureLayer(l);
+            });
+        }
+
+        if (bestV && bestVd <= (isStart ? tol + 5 : tol)) {
+            return { ll: bestV, kind: 'vertex', isStartPoint: isStart, dist: bestVd };
+        }
+        if (bestE && bestEd <= tol) {
+            return { ll: bestE, kind: 'edge', isStartPoint: false, dist: bestEd };
+        }
         return null;
     }
 
     function snapLatLng(latlng) {
         if (!state.snapOn) return latlng;
-        const t = findSnap(latlng);
+        const t = state.activeSnap || findSnap(latlng);
         return t ? t.ll : latlng;
     }
 
     function showSnapMarker(t) {
+        ensureSnapPane();
         if (!t) {
             if (state.snapMarker) { state.snapMarker.remove(); state.snapMarker = null; }
+            if (state.snapBadge) { state.snapBadge.remove(); state.snapBadge = null; }
             return;
         }
-        const style = { radius: 9, color: '#d946ef', weight: 2.5, fillColor: '#d946ef', fillOpacity: t.kind === 'vertex' ? 0.55 : 0, interactive: false };
-        if (!state.snapMarker) state.snapMarker = L.circleMarker(t.ll, style).addTo(map);
-        else { state.snapMarker.setLatLng(t.ll); state.snapMarker.setStyle(style); }
+
+        let color = '#d946ef';
+        let fillColor = '#ffffff';
+        let fillOpacity = 0.95;
+        let radius = 7.5;
+        let weight = 2.5;
+        let label = 'Vértice';
+        let badgeCls = 'vertex';
+
+        if (t.isStartPoint) {
+            color = '#10b981';
+            fillColor = '#10b981';
+            fillOpacity = 0.45;
+            radius = 9.5;
+            weight = 3;
+            label = 'Fechar Polígono';
+            badgeCls = 'start-pt';
+        } else if (t.kind === 'edge') {
+            color = '#7c3aed';
+            fillColor = '#7c3aed';
+            fillOpacity = 0.25;
+            radius = 6;
+            weight = 2.5;
+            label = 'Aresta';
+            badgeCls = 'edge';
+        }
+
+        const markerStyle = {
+            pane: 'snapPane',
+            radius,
+            color,
+            weight,
+            fillColor,
+            fillOpacity,
+            interactive: false
+        };
+
+        if (!state.snapMarker) {
+            state.snapMarker = L.circleMarker(t.ll, markerStyle).addTo(map);
+        } else {
+            state.snapMarker.setLatLng(t.ll);
+            state.snapMarker.setStyle(markerStyle);
+        }
+
+        const icon = L.divIcon({
+            className: 'snap-badge-icon',
+            html: `<div class="snap-tooltip ${badgeCls}"><span>${label}</span></div>`,
+            iconSize: [0, 0],
+            iconAnchor: [-10, 10]
+        });
+
+        if (!state.snapBadge) {
+            state.snapBadge = L.marker(t.ll, { pane: 'snapPane', icon, interactive: false }).addTo(map);
+        } else {
+            state.snapBadge.setLatLng(t.ll);
+            state.snapBadge.setIcon(icon);
+        }
     }
 
     /* ---------- EXTRAÇÃO DE VÉRTICES DE LOTES, ZONAS E DEMAIS CAMADAS ---------- */
@@ -771,17 +917,30 @@ const GeoTools = (() => {
                 <button type="button" class="color-swatch" data-color="#111827" style="background:#111827;" title="Preto"></button>
             </div>
 
-            <div class="tp-sub">Aderência (Snap)</div>
-            <label class="tp-check"><input type="checkbox" id="snap-on"> Ativar aderência aos vértices e arestas das camadas e desenhos</label>
+            <div class="tp-sub">Aderência (Snap Magnético)</div>
+            <label class="tp-check"><input type="checkbox" id="snap-on" checked> Ativar aderência automática a vértices e arestas</label>
             <div class="tp-row two">
-                <select id="snap-mode" class="tp-input"><option value="both">Vértices e arestas</option><option value="vertex">Somente vértices</option></select>
-                <select id="snap-tol" class="tp-input"><option value="8">Raio 8 px</option><option value="12" selected>Raio 12 px</option><option value="20">Raio 20 px</option></select>
+                <select id="snap-mode" class="tp-input">
+                    <option value="both" selected>Vértices e arestas</option>
+                    <option value="vertex">Somente vértices</option>
+                </select>
+                <select id="snap-tol" class="tp-input">
+                    <option value="12">Alcance 12 px (Mais fino)</option>
+                    <option value="18" selected>Alcance 18 px (Recomendado)</option>
+                    <option value="26">Alcance 26 px (Mais forte)</option>
+                </select>
             </div>
-            <div class="tp-hint">Com a aderência ativa, o cursor "gruda" no vértice (círculo cheio) ou na aresta (círculo vazado) mais próximo das camadas ligadas.</div>
+            <div class="tp-hint">O cursor "gruda" com precisão nos vértices (anel magenta) ou arestas (anel violeta) das camadas ativas e desenhos. Ao desenhar polígonos, clicar ou aproximar do 1º vértice fecha o polígono automaticamente.</div>
 
             <div id="draw-live-box" class="draw-live-box" style="display:none;">
                 <div id="draw-live-hint" class="draw-live-hint">Clique no mapa para iniciar...</div>
                 <div id="draw-live-metric" class="draw-live-metric"></div>
+                <div class="draw-live-snap-row">
+                    <span style="color:var(--text-muted);font-weight:600;"><i class="fa-solid fa-magnet"></i> Aderência:</span>
+                    <button type="button" id="draw-snap-toggle" class="draw-snap-pill active" title="Alternar aderência magnética">
+                        <i class="fa-solid fa-magnet"></i> <span id="draw-snap-status">Ativa (18px)</span>
+                    </button>
+                </div>
                 <div class="tp-row three" style="margin-top:6px;margin-bottom:0;">
                     <button type="button" class="tp-btn primary" id="draw-btn-finish"><i class="fa-solid fa-check"></i> Concluir</button>
                     <button type="button" class="tp-btn" id="draw-btn-undo"><i class="fa-solid fa-rotate-left"></i> Desfazer</button>
@@ -823,13 +982,41 @@ const GeoTools = (() => {
             });
         });
 
+        function updateSnapUI() {
+            if ($('snap-on')) $('snap-on').checked = state.snapOn;
+            const toggle = $('draw-snap-toggle');
+            const status = $('draw-snap-status');
+            if (toggle) toggle.classList.toggle('active', state.snapOn);
+            if (status) status.textContent = state.snapOn ? `Ativa (${state.snapTol}px)` : 'Desativada';
+            if (!state.snapOn) {
+                state.activeSnap = null;
+                showSnapMarker(null);
+            }
+        }
+
         $('draw-btn-finish').addEventListener('click', finishActiveDraw);
         $('snap-on').checked = state.snapOn;
         $('snap-mode').value = state.snapMode;
         $('snap-tol').value = String(state.snapTol);
-        $('snap-on').addEventListener('change', e => { state.snapOn = e.target.checked; if (!state.snapOn) showSnapMarker(null); toast(state.snapOn ? 'Aderência ativada.' : 'Aderência desativada.', 'info', 1800); });
+        $('snap-on').addEventListener('change', e => {
+            state.snapOn = e.target.checked;
+            updateSnapUI();
+            toast(state.snapOn ? `Aderência ativada (${state.snapTol}px).` : 'Aderência desativada.', 'info', 1600);
+        });
+        const snapToggleBtn = $('draw-snap-toggle');
+        if (snapToggleBtn) {
+            snapToggleBtn.addEventListener('click', () => {
+                state.snapOn = !state.snapOn;
+                updateSnapUI();
+                toast(state.snapOn ? `Aderência ativada (${state.snapTol}px).` : 'Aderência desativada.', 'info', 1600);
+            });
+        }
         $('snap-mode').addEventListener('change', e => { state.snapMode = e.target.value; });
-        $('snap-tol').addEventListener('change', e => { state.snapTol = parseInt(e.target.value, 10) || 12; });
+        $('snap-tol').addEventListener('change', e => {
+            state.snapTol = parseInt(e.target.value, 10) || 18;
+            updateSnapUI();
+        });
+        updateSnapUI();
         $('vx-show').checked = state.showVerts;
         $('vx-show').addEventListener('change', e => { state.showVerts = e.target.checked; refreshVertices(); });
         $('vx-gen').addEventListener('click', buildCoordTable);
@@ -901,6 +1088,7 @@ const GeoTools = (() => {
         map.off('click', onDrawMapClick);
         map.off('mousemove', onDrawMapMove);
         map.off('dblclick', onDrawMapDblClick);
+        state.activeSnap = null;
         showSnapMarker(null);
         if (state.drawPreview) { state.drawPreview.remove(); state.drawPreview = null; }
         if (state.drawVerts) state.drawVerts.clearLayers();
@@ -992,7 +1180,8 @@ const GeoTools = (() => {
 
     function onDrawMapClick(e) {
         if (!state.drawMode) return;
-        const ll = snapLatLng(e.latlng);
+        const snapCandidate = state.snapOn ? (state.activeSnap || findSnap(e.latlng)) : null;
+        const ll = snapCandidate ? snapCandidate.ll : e.latlng;
         const col = state.drawColor;
 
         if (state.drawMode === 'marker') {
@@ -1044,10 +1233,22 @@ const GeoTools = (() => {
         }
 
         // 'line' ou 'polygon'
+        if (state.drawMode === 'polygon' && state.drawPts.length >= 3) {
+            const p0 = state.drawPts[0];
+            const p0Point = map.latLngToContainerPoint(p0);
+            const clickPoint = map.latLngToContainerPoint(ll);
+            const rawClickPoint = map.latLngToContainerPoint(e.latlng);
+            const tol = Math.max(state.snapTol || 18, 18);
+            if (clickPoint.distanceTo(p0Point) <= 1 || rawClickPoint.distanceTo(p0Point) <= (tol + 5) || (snapCandidate && snapCandidate.isStartPoint)) {
+                finishActiveDraw();
+                return;
+            }
+        }
+
         // Se clicou muito próximo do último ponto (ex: segundo clique de um duplo clique), ignora duplicata
         if (state.drawPts.length > 0) {
             const last = state.drawPts[state.drawPts.length - 1];
-            if (map.latLngToContainerPoint(last).distanceTo(map.latLngToContainerPoint(ll)) < 6) {
+            if (map.latLngToContainerPoint(last).distanceTo(map.latLngToContainerPoint(ll)) < 5) {
                 return;
             }
         }
@@ -1059,6 +1260,7 @@ const GeoTools = (() => {
     function onDrawMapMove(e) {
         if (!state.drawMode) return;
         const t = state.snapOn ? findSnap(e.latlng) : null;
+        state.activeSnap = t;
         showSnapMarker(t);
         if (!state.drawPts.length) return;
         updateLivePreview(t ? t.ll : e.latlng);

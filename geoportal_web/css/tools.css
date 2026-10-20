@@ -123,6 +123,16 @@
 .draw-live-box { background: #f0fdfa; border: 1.5px solid #00a896; border-radius: 8px; padding: 8px 10px; margin: 8px 0; }
 .draw-live-hint { font-size: 0.75rem; color: #0f766e; font-weight: 600; line-height: 1.35; }
 .draw-live-metric { font-size: 0.8rem; font-weight: 700; color: #0d3b66; margin-top: 4px; }
+.draw-live-snap-row { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding-top: 6px; border-top: 1px dashed rgba(0, 168, 150, 0.35); font-size: 0.74rem; }
+.draw-snap-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 6px; border: 1.5px solid #cbd5e1; background: #fff; color: #334155; font-size: 0.74rem; font-weight: 700; cursor: pointer; transition: all 0.15s ease; }
+.draw-snap-pill.active { background: #d946ef; border-color: #c026d3; color: #fff; box-shadow: 0 2px 6px rgba(217, 70, 239, 0.35); }
+.draw-snap-pill:hover { filter: brightness(0.96); transform: translateY(-1px); }
+.snap-badge-icon { pointer-events: none !important; }
+.snap-tooltip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 4px; font-size: 0.68rem; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.32); pointer-events: none; transform: translate(8px, -12px); user-select: none; }
+.snap-tooltip.vertex { background: #d946ef; color: #ffffff; border: 1px solid rgba(255,255,255,0.7); }
+.snap-tooltip.edge { background: #7c3aed; color: #ffffff; border: 1px solid rgba(255,255,255,0.7); }
+.snap-tooltip.start-pt { background: #10b981; color: #ffffff; border: 1.5px solid #ffffff; animation: pulseSnap 1.1s infinite ease-in-out; }
+@keyframes pulseSnap { 0%, 100% { transform: translate(8px, -12px) scale(1); } 50% { transform: translate(8px, -12px) scale(1.08); } }
 .draw-items-list { max-height: 150px; overflow-y: auto; border: 1px solid var(--border); border-radius: 7px; padding: 6px; margin-bottom: 8px; background: #f8fafc; }
 .draw-item-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 5px 6px; border-bottom: 1px solid var(--border); font-size: 0.76rem; }
 .draw-item-row:last-child { border-bottom: none; }
