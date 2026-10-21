@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Geoportal Matinhos - Configuração de Estilos e Metadados
  * Secretaria Municipal de Urbanismo - Prefeitura de Matinhos
  */
@@ -169,8 +169,14 @@ function toUTM22S(lat, lon) {
     }
 
     return {
-        x: easting.toFixed(2),
-        y: northing.toFixed(2),
+        x: easting.toFixed(3),
+        y: northing.toFixed(3),
+        easting: easting,
+        northing: northing,
+        x2: easting.toFixed(2),
+        y2: northing.toFixed(2),
+        x3: easting.toFixed(3),
+        y3: northing.toFixed(3),
         zone: "22S"
     };
 }

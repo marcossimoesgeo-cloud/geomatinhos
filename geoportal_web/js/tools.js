@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Ferramentas de SIG do Geoportal de Matinhos
  * - Janela lateral direita unificada (Busca Avançada, Coordenadas, Medir Distância,
  *   Medir Área, Desenhar/Anotar/Exportar, Imprimir Mapa, GPS, Visão Inicial,
@@ -95,35 +95,52 @@ const GeoTools = (() => {
         return false;
     }
 
-    /** Inverso de toUTM22S (Newton sobre a função direta, convergência em milímetros). */
+    /** Inverso de toUTM22S (Newton com convergência sub-milimétrica < 0.1 mm). */
     function fromUTM22S(easting, northing) {
         let lat = (northing - 10000000) / 110574;
         let lon = -51 + (easting - 500000) / (111320 * Math.cos(lat * Math.PI / 180));
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 12; i++) {
             const u = toUTM22S(lat, lon);
-            const dx = easting - parseFloat(u.x);
-            const dy = northing - parseFloat(u.y);
+            const curE = (typeof u.easting === 'number') ? u.easting : parseFloat(u.x);
+            const curN = (typeof u.northing === 'number') ? u.northing : parseFloat(u.y);
+            const dx = easting - curE;
+            const dy = northing - curN;
             lat += dy / 110574;
             lon += dx / (111320 * Math.cos(lat * Math.PI / 180));
-            if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) break;
+            if (Math.abs(dx) < 0.0001 && Math.abs(dy) < 0.0001) break;
         }
         return { lat, lng: lon };
     }
 
     const fmtDist = m => m >= 1000 ? (m / 1000).toFixed(3) + ' km' : m.toFixed(2) + ' m';
-    const fmtArea = a => a >= 10000 ? `${(a / 10000).toFixed(4)} ha (${a.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} m²)` : `${a.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} m²`;
+    const fmtArea = a => a >= 10000 
+        ? `${(a / 10000).toFixed(4)} ha (${a.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 })} m²)` 
+        : `${a.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 })} m²`;
 
-    function calcPerimeter( geometry ) {
+    function calcPerimeter(geometry) {
         if (!geometry || !geometry.coordinates) return 0;
-        const ring = geometry.type === 'MultiPolygon'
-            ? geometry.coordinates[0][0]
-            : (geometry.type === 'Polygon' ? geometry.coordinates[0] : []);
-        if (ring.length < 2) return 0;
-        let p = 0;
-        for (let i = 0; i < ring.length - 1; i++) {
-            p += L.latLng(ring[i][1], ring[i][0]).distanceTo(L.latLng(ring[i + 1][1], ring[i + 1][0]));
+        let rings = [];
+        if (geometry.type === 'Polygon') {
+            rings = geometry.coordinates;
+        } else if (geometry.type === 'MultiPolygon') {
+            geometry.coordinates.forEach(poly => poly.forEach(r => rings.push(r)));
+        } else if (geometry.type === 'LineString') {
+            rings = [geometry.coordinates];
+        } else if (geometry.type === 'MultiLineString') {
+            rings = geometry.coordinates;
         }
-        return p;
+        if (!rings.length) return 0;
+
+        let totalP = 0;
+        rings.forEach(ring => {
+            if (!ring || ring.length < 2) return;
+            const n = ring.length;
+            const utm = ring.map(c => toUTM22S(c[1], c[0]));
+            for (let i = 0; i < n - 1; i++) {
+                totalP += Math.hypot(utm[i + 1].easting - utm[i].easting, utm[i + 1].northing - utm[i].northing);
+            }
+        });
+        return totalP;
     }
 
     function download(name, text, mime) {
@@ -1152,7 +1169,19 @@ const GeoTools = (() => {
         const rows = [];
         geomRings(feature.geometry).forEach(r => r.pts.forEach((c, i) => {
             const u = toUTM22S(c[1], c[0]);
-            rows.push({ camada, nome, anel: `${r.parte}.${r.anel}`, v: i + 1, lat: c[1], lng: c[0], e: u.x, n: u.y });
+            rows.push({
+                camada,
+                nome,
+                anel: `${r.parte}.${r.anel}`,
+                v: i + 1,
+                lat: c[1],
+                lng: c[0],
+                e: u.x,
+                n: u.y,
+                e_num: u.easting,
+                n_num: u.northing,
+                feature
+            });
         }));
         return rows;
     }
@@ -1241,11 +1270,18 @@ const GeoTools = (() => {
         if (!out) return;
         if (state.extractGroup) state.extractGroup.clearLayers();
         if (!rows.length) { out.innerHTML = '<div class="tp-hint">Nenhum vértice encontrado.</div>'; return; }
-        const f = n => n.toFixed(6);
+        const f = n => n.toFixed(7);
         const CAP = 300;
+        let areaInfo = '';
+        if (nFeat === 1 && rows.length >= 3 && rows[0].feature) {
+            const a = calculateApproxArea(rows[0].feature.geometry);
+            const p = calcPerimeter(rows[0].feature.geometry);
+            areaInfo = `<div class="co-cad-info" style="margin:6px 0;background:#f0fdf4;border:1.5px solid #16a34a;padding:8px 12px;border-radius:7px;font-size:0.78rem;"><i class="fa-solid fa-calculator" style="color:#16a34a;"></i> <b>Área Total Calibrada (SIRGAS 2000 UTM 22S):</b> <span style="color:#15803d;font-weight:800;font-size:0.85rem;">${fmtArea(a)}</span> &nbsp;·&nbsp; <b>Perímetro:</b> <span style="color:#0f766e;font-weight:700;">${fmtDist(p)}</span></div>`;
+        }
         out.innerHTML = `<div class="tp-hint"><b>${rows.length.toLocaleString('pt-BR')}</b> vértice(s) em <b>${nFeat}</b> feição(ões)${rows.length > CAP ? ` — tabela mostra os ${CAP} primeiros; a exportação traz todos` : ''}.</div>
-            <div class="vx-table-wrap"><table class="vx-table"><thead><tr><th>Feição</th><th>Anel</th><th>V</th><th>Latitude</th><th>Longitude</th><th>UTM E</th><th>UTM N</th></tr></thead><tbody>${
-                rows.slice(0, CAP).map(r => `<tr><td>${esc(r.nome)}</td><td>${r.anel}</td><td>${r.v}</td><td>${f(r.lat)}</td><td>${f(r.lng)}</td><td>${r.e}</td><td>${r.n}</td></tr>`).join('')
+            ${areaInfo}
+            <div class="vx-table-wrap"><table class="vx-table"><thead><tr><th>Feição</th><th>Anel</th><th>V</th><th>Latitude</th><th>Longitude</th><th>UTM E (m)</th><th>UTM N (m)</th></tr></thead><tbody>${
+                rows.slice(0, CAP).map(r => `<tr><td>${esc(r.nome)}</td><td>${r.anel}</td><td>${r.v}</td><td>${f(r.lat)}</td><td>${f(r.lng)}</td><td><b>${r.e}</b></td><td><b>${r.n}</b></td></tr>`).join('')
             }</tbody></table></div>
             <div class="tp-row three">
                 <button type="button" class="tp-btn" id="vl-copy"><i class="fa-regular fa-copy"></i> Copiar</button>

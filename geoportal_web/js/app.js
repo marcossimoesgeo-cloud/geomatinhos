@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Geoportal Oficial de Matinhos - Script Principal
  * Secretaria Municipal de Urbanismo - Prefeitura de Matinhos
  */
@@ -883,22 +883,46 @@ function displayFeatureDetails(feature, layerDef, latlng) {
  * Cálculo geodésico simples de área para polígonos
  */
 function calculateApproxArea(geometry) {
-    if (!geometry || !geometry.coordinates) return 0;
-    const coords = geometry.type === 'MultiPolygon' 
-        ? geometry.coordinates[0][0] 
-        : (geometry.type === 'Polygon' ? geometry.coordinates[0] : []);
-    
-    if (coords.length < 3) return 0;
-
-    let area = 0;
-    const rad = Math.PI / 180;
-    for (let i = 0; i < coords.length - 1; i++) {
-        const p1 = coords[i];
-        const p2 = coords[i + 1];
-        area += (p2[0] - p1[0]) * rad * (2 + Math.sin(p1[1] * rad) + Math.sin(p2[1] * rad));
+    if (!geometry) return 0;
+    let polys = [];
+    if (Array.isArray(geometry)) {
+        polys = [[[...geometry]]];
+    } else if (geometry.coordinates) {
+        if (geometry.type === 'Polygon') {
+            polys = [geometry.coordinates];
+        } else if (geometry.type === 'MultiPolygon') {
+            polys = geometry.coordinates;
+        } else {
+            return 0;
+        }
     }
-    area = area * 6378137.0 * 6378137.0 / 2.0;
-    return Math.abs(area);
+    if (!polys.length) return 0;
+
+    let totalArea = 0;
+    for (let p = 0; p < polys.length; p++) {
+        const poly = polys[p];
+        if (!poly || !poly.length) continue;
+        for (let j = 0; j < poly.length; j++) {
+            let ring = poly[j];
+            if (!ring || ring.length < 3) continue;
+            if (ring.length > 1 && ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1]) {
+                ring = ring.slice(0, -1);
+            }
+            const n = ring.length;
+            if (n < 3) continue;
+
+            const utm = ring.map(c => toUTM22S(c[1], c[0]));
+            let ringArea = 0;
+            for (let i = 0; i < n; i++) {
+                const k = (i + 1) % n;
+                ringArea += (utm[i].easting * utm[k].northing) - (utm[k].easting * utm[i].northing);
+            }
+            ringArea = Math.abs(ringArea) / 2.0;
+            if (j === 0) totalArea += ringArea;
+            else totalArea -= ringArea;
+        }
+    }
+    return Math.max(0, totalArea);
 }
 
 /**
