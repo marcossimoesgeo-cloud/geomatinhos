@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Geoportal Oficial de Matinhos - Script Principal
  * Secretaria Municipal de Urbanismo - Prefeitura de Matinhos
  */
@@ -167,7 +167,7 @@ function initGeoportal() {
     let orthoUnderlay = null;
     const basemapState = {
         1: { layer: null, key: 'googleSat', zIndex: 1 },
-        2: { layer: null, key: 'none',      zIndex: 2 }
+        2: { layer: null, key: 'ortofoto',  zIndex: 2 }
     };
 
     function syncOrthoUnderlay() {
@@ -197,6 +197,12 @@ function initGeoportal() {
         }
         state.key = key;
         syncOrthoUnderlay();
+
+        const sel = document.getElementById('basemap-select-' + slot);
+        if (sel && sel.value !== key) {
+            sel.value = key;
+        }
+
         if (key === 'none') return;
 
         const layer = BASEMAP_DEFS[key]();
@@ -230,9 +236,9 @@ function initGeoportal() {
         }
     }
 
-    // Inicializar: carregar slot 1 com Google Satélite
+    // Inicializar: carregar slot 1 com Google Satélite e slot 2 com Ortofoto sobreposta
     setBasemap(1, 'googleSat');
-    setBasemap(2, 'none');
+    setBasemap(2, 'ortofoto');
 
     // Eventos dos selects e sliders de basemap
     function setupBasemapControls() {

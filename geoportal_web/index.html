@@ -95,7 +95,7 @@
                             <span class="basemap-slot-label">Camada de Fundo</span>
                         </div>
                         <select id="basemap-select-1" class="basemap-select">
-                            <option value="googleSat">🛰️ Google Satélite</option>
+                            <option value="googleSat" selected>🛰️ Google Satélite</option>
                             <option value="esri">🛰️ Esri Imagens Aéreas</option>
                             <option value="osm">🗺️ OpenStreetMap</option>
                             <option value="topo">⛰️ OpenTopoMap (Relevo)</option>
@@ -127,7 +127,7 @@
                         </div>
                         <select id="basemap-select-2" class="basemap-select">
                             <option value="none">— Nenhuma —</option>
-                            <option value="ortofoto">🛩️ Ortomosaico Matinhos (Aerolevantamento 2025)</option>
+                            <option value="ortofoto" selected>🛩️ Ortomosaico Matinhos (Aerolevantamento 2025)</option>
                             <option value="googleSat">🛰️ Google Satélite</option>
                             <option value="esri">🛰️ Esri Imagens Aéreas</option>
                             <option value="osm">🗺️ OpenStreetMap</option>
@@ -136,8 +136,8 @@
                         </select>
                         <div class="basemap-opacity-row">
                             <span class="basemap-opacity-label"><i class="fa-solid fa-circle-half-stroke"></i> Opacidade</span>
-                            <input type="range" id="basemap-opacity-2" class="basemap-opacity-slider" min="10" max="100" value="80">
-                            <span id="basemap-opacity-2-val" class="basemap-opacity-val">80%</span>
+                            <input type="range" id="basemap-opacity-2" class="basemap-opacity-slider" min="10" max="100" value="100">
+                            <span id="basemap-opacity-2-val" class="basemap-opacity-val">100%</span>
                         </div>
                     </div>
                 </div>
@@ -187,7 +187,7 @@
                                 <span>Limite Municipal</span>
                             </label>
                             <label class="switch">
-                                <input type="checkbox" id="layer-limite_municipal" checked>
+                                <input type="checkbox" id="layer-limite_municipal">
                                 <span class="slider"></span>
                             </label>
                         </div>
@@ -197,7 +197,7 @@
                                 <span>Perímetro Urbano</span>
                             </label>
                             <label class="switch">
-                                <input type="checkbox" id="layer-perimetro_urbano" checked>
+                                <input type="checkbox" id="layer-perimetro_urbano">
                                 <span class="slider"></span>
                             </label>
                         </div>
@@ -207,7 +207,7 @@
                                 <span>Bairros e Balneários</span>
                             </label>
                             <label class="switch">
-                                <input type="checkbox" id="layer-limite_bairros_ipm" checked>
+                                <input type="checkbox" id="layer-limite_bairros_ipm">
                                 <span class="slider"></span>
                             </label>
                         </div>
@@ -237,7 +237,7 @@
                                 <span>Áreas de Preservação / Drenagem</span>
                             </label>
                             <label class="switch">
-                                <input type="checkbox" id="layer-area_de_preservacao" checked>
+                                <input type="checkbox" id="layer-area_de_preservacao">
                                 <span class="slider" style="background-color: #00796b;"></span>
                             </label>
                         </div>
@@ -260,7 +260,7 @@
                                 <span>Camada de Zoneamento</span>
                             </label>
                             <label class="switch">
-                                <input type="checkbox" id="layer-zoneamento_corrigido" checked>
+                                <input type="checkbox" id="layer-zoneamento_corrigido">
                                 <span class="slider"></span>
                             </label>
                         </div>
@@ -284,7 +284,7 @@
                                 <span>Parque Saint-Hilaire/Lange</span>
                             </label>
                             <label class="switch">
-                                <input type="checkbox" id="layer-parque_saint_hilaire" checked>
+                                <input type="checkbox" id="layer-parque_saint_hilaire">
                                 <span class="slider"></span>
                             </label>
                         </div>
@@ -294,7 +294,7 @@
                                 <span>Parque Estadual Rio da Onça</span>
                             </label>
                             <label class="switch">
-                                <input type="checkbox" id="layer-parque_estadual_riodaonca" checked>
+                                <input type="checkbox" id="layer-parque_estadual_riodaonca">
                                 <span class="slider"></span>
                             </label>
                         </div>
@@ -304,7 +304,7 @@
                                 <span>Parque Morro do Boi</span>
                             </label>
                             <label class="switch">
-                                <input type="checkbox" id="layer-parque_municipal_morrodoboi" checked>
+                                <input type="checkbox" id="layer-parque_municipal_morrodoboi">
                                 <span class="slider"></span>
                             </label>
                         </div>
@@ -314,7 +314,7 @@
                                 <span>Parque Praia Grande</span>
                             </label>
                             <label class="switch">
-                                <input type="checkbox" id="layer-parque_municipal_praiagrande" checked>
+                                <input type="checkbox" id="layer-parque_municipal_praiagrande">
                                 <span class="slider"></span>
                             </label>
                         </div>
@@ -324,7 +324,7 @@
                                 <span>Parque Sambaqui</span>
                             </label>
                             <label class="switch">
-                                <input type="checkbox" id="layer-parque_municipal_sambaqui" checked>
+                                <input type="checkbox" id="layer-parque_municipal_sambaqui">
                                 <span class="slider"></span>
                             </label>
                         </div>
@@ -334,7 +334,7 @@
                                 <span>Parque Sertãozinho</span>
                             </label>
                             <label class="switch">
-                                <input type="checkbox" id="layer-parque_municipal_sertaozinho" checked>
+                                <input type="checkbox" id="layer-parque_municipal_sertaozinho">
                                 <span class="slider"></span>
                             </label>
                         </div>
@@ -344,7 +344,7 @@
                                 <span>Parque Tabuleiro</span>
                             </label>
                             <label class="switch">
-                                <input type="checkbox" id="layer-parque_municipal_tabuleiro" checked>
+                                <input type="checkbox" id="layer-parque_municipal_tabuleiro">
                                 <span class="slider"></span>
                             </label>
                         </div>
@@ -374,7 +374,7 @@
                                 <span>Praças Urbanas</span>
                             </label>
                             <label class="switch">
-                                <input type="checkbox" id="layer-pracas_urbanas" checked>
+                                <input type="checkbox" id="layer-pracas_urbanas">
                                 <span class="slider"></span>
                             </label>
                         </div>

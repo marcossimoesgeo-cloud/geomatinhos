@@ -20,7 +20,7 @@
       "weight": 2.5,
       "dashArray": "6, 4",
       "fill": false,
-      "visible_default": true
+      "visible_default": false
     },
     {
       "id": "perimetro_urbano",
@@ -34,7 +34,7 @@
       "fill": true,
       "fillColor": "#e31a1c",
       "fillOpacity": 0.05,
-      "visible_default": true
+      "visible_default": false
     },
     {
       "id": "limite_bairros_ipm",
@@ -49,7 +49,7 @@
       "fillColor": "#33a02c",
       "fillOpacity": 0.08,
       "name_field": "Layer",
-      "visible_default": true
+      "visible_default": false
     },
     {
       "id": "loteamento_por_bairro",
@@ -77,7 +77,7 @@
       "weight": 0.8,
       "fill": true,
       "fillOpacity": 0.55,
-      "visible_default": true
+      "visible_default": false
     },
     {
       "id": "parque_saint_hilaire",
@@ -90,7 +90,7 @@
       "fill": true,
       "fillColor": "#588157",
       "fillOpacity": 0.35,
-      "visible_default": true
+      "visible_default": false
     },
     {
       "id": "parque_estadual_riodaonca",
@@ -103,7 +103,7 @@
       "fill": true,
       "fillColor": "#318d5f",
       "fillOpacity": 0.4,
-      "visible_default": true
+      "visible_default": false
     },
     {
       "id": "parque_municipal_morrodoboi",
@@ -116,7 +116,7 @@
       "fill": true,
       "fillColor": "#0e7e46",
       "fillOpacity": 0.45,
-      "visible_default": true
+      "visible_default": false
     },
     {
       "id": "parque_municipal_praiagrande",
@@ -129,7 +129,7 @@
       "fill": true,
       "fillColor": "#7ac19e",
       "fillOpacity": 0.45,
-      "visible_default": true
+      "visible_default": false
     },
     {
       "id": "parque_municipal_sambaqui",
@@ -142,7 +142,7 @@
       "fill": true,
       "fillColor": "#2d9226",
       "fillOpacity": 0.45,
-      "visible_default": true
+      "visible_default": false
     },
     {
       "id": "parque_municipal_sertaozinho",
@@ -155,7 +155,7 @@
       "fill": true,
       "fillColor": "#47d63d",
       "fillOpacity": 0.45,
-      "visible_default": true
+      "visible_default": false
     },
     {
       "id": "parque_municipal_tabuleiro",
@@ -168,7 +168,7 @@
       "fill": true,
       "fillColor": "#6b8719",
       "fillOpacity": 0.45,
-      "visible_default": true
+      "visible_default": false
     },
     {
       "id": "area_de_preservacao",
@@ -181,7 +181,7 @@
       "fill": true,
       "fillColor": "#0a9396",
       "fillOpacity": 0.65,
-      "visible_default": true
+      "visible_default": false
     },
     {
       "id": "zona_de_amortecimento",
@@ -208,7 +208,7 @@
       "fill": true,
       "fillColor": "#ffaa00",
       "fillOpacity": 0.6,
-      "visible_default": true
+      "visible_default": false
     }
   ],
   "zone_styles": {
