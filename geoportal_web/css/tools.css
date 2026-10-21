@@ -99,10 +99,68 @@
 .adv-item:hover { border-color: var(--accent); background: #f0fdfa; transform: translateX(2px); }
 .adv-item b { display: block; color: var(--primary); }
 .adv-item span { font-size: 0.72rem; color: var(--text-muted); }
-.co-out { font-size: 0.78rem; line-height: 1.7; background: #f8fafc; border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; word-break: break-all; }
+.co-out { font-size: 0.78rem; line-height: 1.6; background: #f8fafc; border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; word-break: break-all; margin-top: 8px; }
 .mini-copy { border: none; background: none; cursor: pointer; color: var(--accent-hover); }
 .pick-cursor { cursor: crosshair !important; }
 .pick-cursor .leaflet-interactive { cursor: crosshair !important; }
+
+/* ---------- Abas e Linhas de Coordenadas (4 Vértices / Ponto Único) ---------- */
+.co-tabs { display: flex; gap: 6px; background: #f1f5f9; padding: 4px; border-radius: 8px; margin-bottom: 6px; }
+.co-tab { flex: 1; border: none; background: transparent; color: #475569; font-size: 0.75rem; font-weight: 700; padding: 7px 8px; border-radius: 6px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.co-tab.active { background: #fff; color: #0284c7; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
+.co-vrow { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.co-vtag { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; background: #0284c7; color: #fff; font-size: 0.72rem; font-weight: 800; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+.co-vtag.v1 { background: #0284c7; }
+.co-vtag.v2 { background: #0ea5e9; }
+.co-vtag.v3 { background: #06b6d4; }
+.co-vtag.v4 { background: #0d9488; }
+.co-paste-btn { border: none; background: none; color: #0284c7; font-size: 0.73rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px; border-radius: 4px; transition: background 0.15s; }
+.co-paste-btn:hover { background: #e0f2fe; }
+.co-paste-wrap { background: #f8fafc; border: 1.5px dashed #0284c7; border-radius: 8px; padding: 8px; margin-bottom: 8px; animation: popIn 0.18s ease; }
+.co-paste-area { width: 100%; height: 68px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: Consolas, monospace; font-size: 0.73rem; padding: 6px; resize: vertical; color: #1e293b; background: #fff; box-sizing: border-box; }
+.co-paste-area:focus { outline: none; border-color: #0284c7; }
+
+/* Marcadores e cotas dos 4 vértices do lote no mapa */
+.lot-vertex-pin-wrap { background: none !important; border: none !important; }
+.lot-vertex-pin {
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #0284c7; color: #ffffff;
+    font-weight: 800; font-size: 0.72rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    border: 2px solid #ffffff;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.45);
+    cursor: pointer; transition: transform 0.15s ease, background 0.15s;
+    user-select: none;
+}
+.lot-vertex-pin:hover { transform: scale(1.18); background: #0369a1; }
+.lot-dim-wrap { background: none !important; border: none !important; }
+.lot-dim-label {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1.5px solid #0284c7;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #0369a1;
+    white-space: nowrap;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.22);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+}
+
+/* Card e Tabela de Verificação do Lote */
+.co-lot-card { background: #f0f9ff; border: 1.5px solid #0284c7; border-radius: 9px; padding: 10px; margin-top: 8px; }
+.co-lot-head { display: flex; align-items: center; gap: 6px; color: #0369a1; font-size: 0.82rem; font-weight: 700; margin-bottom: 6px; }
+.co-lot-metrics { display: flex; gap: 12px; font-size: 0.78rem; margin-bottom: 8px; background: #ffffff; padding: 6px 8px; border-radius: 6px; border: 1px solid #bae6fd; }
+.co-lot-metrics span { color: #64748b; font-weight: 600; }
+.co-lot-metrics b { color: #0284c7; }
+.co-cad-info { font-size: 0.74rem; color: #0f766e; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 5px 8px; margin-bottom: 8px; line-height: 1.35; }
+.co-table-wrap { max-height: 160px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff; margin-bottom: 8px; }
+.co-table { width: 100%; border-collapse: collapse; font-size: 0.68rem; font-family: Consolas, monospace; }
+.co-table th { position: sticky; top: 0; background: #f1f5f9; color: #0f172a; padding: 4px 6px; text-align: left; font-weight: 700; border-bottom: 1px solid #cbd5e1; }
+.co-table td { padding: 4px 6px; border-top: 1px solid #e2e8f0; white-space: nowrap; }
 
 /* ---------- Estúdio de Desenho ---------- */
 .draw-tools-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
@@ -184,6 +242,18 @@ body.dark .dock-btn:hover { background: #334155; }
 body.dark .adv-item:hover { background: #0f172a; }
 body.dark .adv-item b, body.dark .tp-sub, body.dark .info-sec, body.dark .draw-item-info b { color: #5eead4; }
 body.dark .co-out, body.dark .draw-live-box { background: #0f172a; }
+body.dark .co-tabs { background: #0f172a; }
+body.dark .co-tab { color: #94a3b8; }
+body.dark .co-tab.active { background: #1e293b; color: #38bdf8; }
+body.dark .co-paste-wrap { background: #0f172a; border-color: #0284c7; }
+body.dark .co-paste-area { background: #1e293b; color: #e2e8f0; border-color: #475569; }
+body.dark .co-lot-card { background: #082f49; border-color: #0284c7; }
+body.dark .co-lot-head { color: #38bdf8; }
+body.dark .co-lot-metrics, body.dark .co-table-wrap { background: #0f172a; border-color: #334155; }
+body.dark .co-lot-metrics b { color: #38bdf8; }
+body.dark .co-table th { background: #1e293b; color: #38bdf8; border-color: #334155; }
+body.dark .co-table td { border-color: #334155; color: #e2e8f0; }
+body.dark .lot-dim-label { background: #0f172a; color: #38bdf8; border-color: #0284c7; }
 body.dark .staff-tech-card { background: #052e16 !important; border-color: #16a34a !important; }
 body.dark .staff-locked-card { background: #0f172a !important; color: #cbd5e1; }
 body.dark footer.status-bar { background: #0b1220; color: #cbd5e1; }

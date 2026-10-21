@@ -34,6 +34,11 @@ const GeoTools = (() => {
         minimap: null,
         pickHandler: null,
         coordMarker: null,
+        coordLotGroup: null,
+        coordTab: 'lot',
+        coordPickMode: null,
+        coordPickPts: [],
+        coordTempGroup: null,
         lastDetail: null
     };
     const $ = id => document.getElementById(id);
@@ -141,7 +146,7 @@ const GeoTools = (() => {
     /* ---------- JANELA LATERAL DIREITA E PAINÉIS FLUTUANTES ---------- */
     const PANELS = {
         search: { icon: 'fa-magnifying-glass-location', label: 'Busca Avançada', title: 'Busca Avançada', build: buildSearchPanel },
-        coords: { icon: 'fa-location-crosshairs', label: 'Buscar Coordenadas', title: 'Buscar e Capturar Coordenadas', build: buildCoordsPanel, onClose: stopPick },
+        coords: { icon: 'fa-location-crosshairs', label: 'Buscar Coordenadas', title: 'Buscar Coordenadas / Localizar Lote', build: buildCoordsPanel, onClose: stopPick },
         draw:   { icon: 'fa-pen-ruler', label: 'Desenhar no Mapa', title: 'Desenhar, Anotar e Exportar', build: buildDrawPanel, onOpen: onDrawPanelOpen, onClose: stopActiveDraw },
         verts:  { icon: 'fa-vector-square', label: 'Extrair Vértices', title: 'Extrair Vértices das Camadas', build: buildVertsPanel, onOpen: fillLayerSelect, onClose: stopVertPick },
         print:  { icon: 'fa-print', label: 'Imprimir Mapa', title: 'Layout de Impressão / PDF', build: buildPrintPanel }
@@ -324,43 +329,383 @@ const GeoTools = (() => {
         window.GEO_TOOL_BUSY = prev;
     }
 
-    /* ---------- COORDENADAS ---------- */
+    /* ---------- COORDENADAS E LOCALIZADOR DE LOTE (4 VÉRTICES) ---------- */
+    function ensureCoordLotGroup() {
+        if (!state.coordLotGroup) state.coordLotGroup = new L.FeatureGroup().addTo(map);
+        if (!state.coordTempGroup) state.coordTempGroup = new L.FeatureGroup().addTo(map);
+    }
+
+    function updateCoordPlaceholders() {
+        const isUtm = $('co-mode') ? $('co-mode').value === 'utm' : true;
+        if ($('co-a')) $('co-a').placeholder = isUtm ? 'Este (E)  ex.: 752453,75' : 'Latitude  ex.: -25,8175';
+        if ($('co-b')) $('co-b').placeholder = isUtm ? 'Norte (N)  ex.: 7153896,31' : 'Longitude  ex.: -48,536';
+        for (let i = 1; i <= 4; i++) {
+            const ea = $(`co-v${i}-a`), eb = $(`co-v${i}-b`);
+            if (ea) ea.placeholder = isUtm ? `Este (E) V${i} ex: 752400` : `Latitude V${i} ex: -25.8175`;
+            if (eb) eb.placeholder = isUtm ? `Norte (N) V${i} ex: 7153800` : `Longitude V${i} ex: -48.536`;
+        }
+    }
+
+    function parsePastedCoords(raw) {
+        if (!raw || !raw.trim()) return null;
+        let text = raw.replace(/[vV]\d+[:\s]*/g, ' ')
+                      .replace(/[eE][:\s=]+/g, ' ')
+                      .replace(/[nN][:\s=]+/g, ' ')
+                      .replace(/[xX][:\s=]+/g, ' ')
+                      .replace(/[yY][:\s=]+/g, ' ')
+                      .replace(/[lL]at(itude)?[:\s=]+/gi, ' ')
+                      .replace(/[lL]on(gitude)?[:\s=]+/gi, ' ');
+        text = text.replace(/(\d+),(\d+)/g, '$1.$2');
+        const matches = text.match(/-?\d+(?:\.\d+)?/g);
+        if (!matches || matches.length < 8) return null;
+        const nums = matches.map(Number);
+        return [
+            { a: nums[0], b: nums[1] },
+            { a: nums[2], b: nums[3] },
+            { a: nums[4], b: nums[5] },
+            { a: nums[6], b: nums[7] }
+        ];
+    }
+
+    function identifyLotCadastre(center) {
+        const matches = [];
+        if (typeof layersMap !== 'undefined' && layersMap) {
+            ['loteamento_por_bairro', 'zoneamento_corrigido', 'limite_bairros_ipm'].forEach(id => {
+                const group = layersMap[id];
+                if (!group || !group.eachLayer) return;
+                group.eachLayer(l => {
+                    if (l.feature && l.feature.geometry) {
+                        if (pointInGeom(center.lat, center.lng, l.feature.geometry)) {
+                            const p = l.feature.properties || {};
+                            const n = featureName(p, l.layerDef);
+                            matches.push({ id, title: layerTitle(l, id), name: n, p });
+                        }
+                    }
+                });
+            });
+        }
+        return matches;
+    }
+
     function buildCoordsPanel(body) {
         body.innerHTML = `
-            <div class="tp-sub">Ir para uma coordenada</div>
-            <div class="tp-row">
+            <div class="tp-sub" style="margin-top:0;">Localizar por Coordenadas</div>
+            <div class="co-tabs">
+                <button type="button" class="co-tab active" data-tab="lot" id="tab-co-lot"><i class="fa-solid fa-draw-polygon"></i> 4 Vértices (Lote)</button>
+                <button type="button" class="co-tab" data-tab="single" id="tab-co-single"><i class="fa-solid fa-location-dot"></i> Ponto Único</button>
+            </div>
+
+            <div class="tp-row" style="margin-top:6px;margin-bottom:6px;">
                 <select id="co-mode" class="tp-input">
-                    <option value="dd">Graus decimais (Lat, Lon)</option>
-                    <option value="utm">UTM 22S SIRGAS 2000 (Este E, Norte N)</option>
+                    <option value="utm" selected>UTM 22S SIRGAS 2000 (Este E, Norte N)</option>
+                    <option value="dd">Graus decimais (Latitude, Longitude)</option>
                 </select>
             </div>
-            <div class="tp-row two">
-                <input type="text" id="co-a" class="tp-input" placeholder="Latitude  ex.: -25,8175">
-                <input type="text" id="co-b" class="tp-input" placeholder="Longitude  ex.: -48,536">
+
+            <!-- MODO 4 VÉRTICES / LOTE -->
+            <div id="co-lot-box">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin:4px 0 6px;">
+                    <span class="tp-hint" style="margin:0;">Vértices do lote (em ordem do perímetro):</span>
+                    <button type="button" class="co-paste-btn" id="co-toggle-paste" title="Colar memorial descritivo ou lista de coordenadas">
+                        <i class="fa-regular fa-paste"></i> Colar lista / Memorial
+                    </button>
+                </div>
+
+                <div id="co-paste-panel" class="co-paste-wrap" style="display:none;">
+                    <textarea id="co-paste-text" class="co-paste-area" placeholder="Cole aqui as 4 coordenadas do memorial descritivo, Word ou Excel (ex: E1 N1 ... E4 N4 ou Lat/Lon)..."></textarea>
+                    <div class="tp-row two" style="margin-top:6px; margin-bottom:0;">
+                        <button type="button" class="tp-btn primary" id="co-paste-apply"><i class="fa-solid fa-check"></i> Processar Texto</button>
+                        <button type="button" class="tp-btn" id="co-paste-cancel">Fechar</button>
+                    </div>
+                </div>
+
+                <div class="co-vrow">
+                    <span class="co-vtag v1" title="Vértice 1">V1</span>
+                    <input type="text" id="co-v1-a" class="tp-input co-coord-input" placeholder="Este (E) V1 ex: 752400">
+                    <input type="text" id="co-v1-b" class="tp-input co-coord-input" placeholder="Norte (N) V1 ex: 7153800">
+                </div>
+                <div class="co-vrow">
+                    <span class="co-vtag v2" title="Vértice 2">V2</span>
+                    <input type="text" id="co-v2-a" class="tp-input co-coord-input" placeholder="Este (E) V2">
+                    <input type="text" id="co-v2-b" class="tp-input co-coord-input" placeholder="Norte (N) V2">
+                </div>
+                <div class="co-vrow">
+                    <span class="co-vtag v3" title="Vértice 3">V3</span>
+                    <input type="text" id="co-v3-a" class="tp-input co-coord-input" placeholder="Este (E) V3">
+                    <input type="text" id="co-v3-b" class="tp-input co-coord-input" placeholder="Norte (N) V3">
+                </div>
+                <div class="co-vrow">
+                    <span class="co-vtag v4" title="Vértice 4">V4</span>
+                    <input type="text" id="co-v4-a" class="tp-input co-coord-input" placeholder="Este (E) V4">
+                    <input type="text" id="co-v4-b" class="tp-input co-coord-input" placeholder="Norte (N) V4">
+                </div>
+
+                <div class="tp-row two" style="margin-top:8px;">
+                    <button type="button" class="tp-btn primary" id="co-go-lot"><i class="fa-solid fa-map-location-dot"></i> Localizar Lote</button>
+                    <button type="button" class="tp-btn" id="co-clear-inputs"><i class="fa-solid fa-eraser"></i> Limpar</button>
+                </div>
+
+                <div class="tp-sub">Capturar no mapa</div>
+                <div class="tp-row">
+                    <button type="button" class="tp-btn" id="co-pick-lot"><i class="fa-solid fa-crosshairs"></i> Capturar 4 vértices por clique</button>
+                </div>
             </div>
-            <div class="tp-row"><button type="button" class="tp-btn primary" id="co-go"><i class="fa-solid fa-location-arrow"></i> Ir para o ponto</button></div>
-            <div class="tp-sub">Capturar coordenada no mapa</div>
-            <div class="tp-row"><button type="button" class="tp-btn" id="co-pick"><i class="fa-solid fa-crosshairs"></i> Ativar captura por clique</button></div>
-            <div id="co-out" class="co-out">Nenhum ponto selecionado.</div>`;
-        const mode = $('co-mode');
-        mode.addEventListener('change', () => {
-            const utm = mode.value === 'utm';
-            $('co-a').placeholder = utm ? 'Este (E)  ex.: 752453,75' : 'Latitude  ex.: -25,8175';
-            $('co-b').placeholder = utm ? 'Norte (N)  ex.: 7153896,31' : 'Longitude  ex.: -48,536';
+
+            <!-- MODO PONTO ÚNICO -->
+            <div id="co-single-box" style="display:none;">
+                <div class="tp-row two">
+                    <input type="text" id="co-a" class="tp-input" placeholder="Este (E)  ex.: 752453,75">
+                    <input type="text" id="co-b" class="tp-input" placeholder="Norte (N)  ex.: 7153896,31">
+                </div>
+                <div class="tp-row">
+                    <button type="button" class="tp-btn primary" id="co-go"><i class="fa-solid fa-location-arrow"></i> Ir para o ponto</button>
+                </div>
+                <div class="tp-sub">Capturar coordenada no mapa</div>
+                <div class="tp-row">
+                    <button type="button" class="tp-btn" id="co-pick"><i class="fa-solid fa-crosshairs"></i> Ativar captura por clique</button>
+                </div>
+            </div>
+
+            <div id="co-out" class="co-out">Nenhum lote ou coordenada localizado.</div>`;
+
+        const setTab = tab => {
+            state.coordTab = tab;
+            $('tab-co-lot').classList.toggle('active', tab === 'lot');
+            $('tab-co-single').classList.toggle('active', tab === 'single');
+            $('co-lot-box').style.display = tab === 'lot' ? 'block' : 'none';
+            $('co-single-box').style.display = tab === 'single' ? 'block' : 'none';
+            stopPick();
+        };
+
+        $('tab-co-lot').addEventListener('click', () => setTab('lot'));
+        $('tab-co-single').addEventListener('click', () => setTab('single'));
+        $('co-mode').addEventListener('change', updateCoordPlaceholders);
+
+        // Painel colar memorial
+        $('co-toggle-paste').addEventListener('click', () => {
+            const p = $('co-paste-panel');
+            p.style.display = p.style.display === 'none' ? 'block' : 'none';
+            if (p.style.display === 'block') $('co-paste-text').focus();
         });
+        $('co-paste-cancel').addEventListener('click', () => { $('co-paste-panel').style.display = 'none'; });
+        $('co-paste-apply').addEventListener('click', () => {
+            const raw = $('co-paste-text').value;
+            const parsed = parsePastedCoords(raw);
+            if (!parsed) {
+                toast('Não foi possível identificar 4 pares de coordenadas no texto colado. Verifique os valores.', 'err', 4000);
+                return;
+            }
+            // Auto detectar UTM vs DD se primeiro valor for grande
+            const isUtm = Math.abs(parsed[0].a) > 90 || Math.abs(parsed[0].b) > 90;
+            $('co-mode').value = isUtm ? 'utm' : 'dd';
+            updateCoordPlaceholders();
+            parsed.forEach((pt, i) => {
+                $(`co-v${i + 1}-a`).value = String(pt.a);
+                $(`co-v${i + 1}-b`).value = String(pt.b);
+            });
+            $('co-paste-panel').style.display = 'none';
+            $('co-paste-text').value = '';
+            toast('4 vértices preenchidos com sucesso!', 'ok', 2000);
+            locateLot();
+        });
+
+        $('co-clear-inputs').addEventListener('click', () => {
+            for (let i = 1; i <= 4; i++) {
+                $(`co-v${i}-a`).value = '';
+                $(`co-v${i}-b`).value = '';
+            }
+            clearCoordLot();
+        });
+
+        $('co-go-lot').addEventListener('click', locateLot);
+        body.querySelectorAll('.co-coord-input').forEach(inp => inp.addEventListener('keydown', e => {
+            if (e.key === 'Enter') locateLot();
+        }));
+
+        $('co-pick-lot').addEventListener('click', () => togglePick('lot'));
         $('co-go').addEventListener('click', goToCoord);
         ['co-a', 'co-b'].forEach(i => $(i).addEventListener('keydown', e => { if (e.key === 'Enter') goToCoord(); }));
-        $('co-pick').addEventListener('click', togglePick);
+        $('co-pick').addEventListener('click', () => togglePick('single'));
+
+        updateCoordPlaceholders();
     }
 
     const num = s => parseFloat(String(s).trim().replace(/\s/g, '').replace(',', '.'));
 
+    function locateLot() {
+        const coords = [];
+        const isUtm = $('co-mode').value === 'utm';
+        for (let i = 1; i <= 4; i++) {
+            const ea = $(`co-v${i}-a`), eb = $(`co-v${i}-b`);
+            if (!ea || !eb) return;
+            const a = num(ea.value), b = num(eb.value);
+            if (!isFinite(a) || !isFinite(b)) {
+                toast(`Informe as coordenadas numéricas do Vértice V${i}.`, 'err');
+                ea.focus();
+                return;
+            }
+            if (isUtm) {
+                if (a < 100000 || a > 900000 || b < 6000000 || b > 8000000) {
+                    toast(`Vértice V${i}: Coordenadas UTM fora da faixa de Matinhos (E 100000–900000, N 6000000–8000000).`, 'err');
+                    return;
+                }
+                const ll = fromUTM22S(a, b);
+                coords.push({ v: i, e: a, n: b, lat: ll.lat, lng: ll.lng, ll: L.latLng(ll.lat, ll.lng) });
+            } else {
+                if (Math.abs(a) > 90 || Math.abs(b) > 180) {
+                    toast(`Vértice V${i}: Latitude (-90 a 90) ou Longitude (-180 a 180) inválida.`, 'err');
+                    return;
+                }
+                const u = toUTM22S(a, b);
+                coords.push({ v: i, e: parseFloat(u.x), n: parseFloat(u.y), lat: a, lng: b, ll: L.latLng(a, b) });
+            }
+        }
+
+        ensureCoordLotGroup();
+        state.coordLotGroup.clearLayers();
+        if (state.coordMarker) { state.coordMarker.remove(); state.coordMarker = null; }
+        if (state.coordTempGroup) state.coordTempGroup.clearLayers();
+
+        const pts = coords.map(c => c.ll);
+        const poly = L.polygon(pts, {
+            color: '#0284c7',
+            weight: 3.5,
+            fillColor: '#38bdf8',
+            fillOpacity: 0.28
+        }).addTo(state.coordLotGroup);
+
+        // Distâncias dos 4 lados
+        const sides = [];
+        let perimeter = 0;
+        for (let i = 0; i < 4; i++) {
+            const next = (i + 1) % 4;
+            const d = coords[i].ll.distanceTo(coords[next].ll);
+            sides.push({ from: coords[i].v, to: coords[next].v, d });
+            perimeter += d;
+
+            // Marcador de dimensão na metade da aresta
+            const midLat = (coords[i].lat + coords[next].lat) / 2;
+            const midLng = (coords[i].lng + coords[next].lng) / 2;
+            const dimIcon = L.divIcon({
+                className: 'lot-dim-wrap',
+                html: `<span class="lot-dim-label">${fmtDist(d)}</span>`,
+                iconSize: [0, 0]
+            });
+            L.marker([midLat, midLng], { icon: dimIcon, interactive: false, zIndexOffset: 2000 }).addTo(state.coordLotGroup);
+        }
+
+        // Área plana pelo Shoelace em UTM (área exata de memorial descritivo)
+        let areaShoelace = 0;
+        for (let i = 0; i < 4; i++) {
+            const next = (i + 1) % 4;
+            areaShoelace += (coords[i].e * coords[next].n) - (coords[next].e * coords[i].n);
+        }
+        const area = Math.abs(areaShoelace) / 2.0;
+
+        // Vértices V1, V2, V3, V4 com pinos visíveis no mapa
+        coords.forEach(c => {
+            const pinIcon = L.divIcon({
+                className: 'lot-vertex-pin-wrap',
+                html: `<div class="lot-vertex-pin" title="Vértice V${c.v}"><span>V${c.v}</span></div>`,
+                iconSize: [26, 26],
+                iconAnchor: [13, 13]
+            });
+            const dd = `${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}`;
+            const utmStr = `E ${c.e.toFixed(2)} · N ${c.n.toFixed(2)}`;
+            const m = L.marker(c.ll, { icon: pinIcon, zIndexOffset: 2500 }).addTo(state.coordLotGroup);
+            m.bindTooltip(`<b>Vértice V${c.v}</b><br>UTM 22S: ${utmStr}<br>Lat/Lon: ${dd}<br><small>Clique para copiar</small>`, { direction: 'top', offset: [0, -14] });
+            m.on('click', () => copyText(`${c.e.toFixed(2)}, ${c.n.toFixed(2)}`));
+        });
+
+        // Enquadrar o lote no mapa
+        map.fitBounds(poly.getBounds(), { padding: [55, 55], maxZoom: 19 });
+
+        // Identificação cadastral de loteamentos/zoneamento no centro do lote
+        const center = poly.getBounds().getCenter();
+        const cadMatches = identifyLotCadastre(center);
+        let cadHtml = '';
+        if (cadMatches.length) {
+            const parts = cadMatches.map(m => `<b>${esc(m.title)}:</b> ${esc(m.name)}`);
+            cadHtml = `<div class="co-cad-info"><i class="fa-solid fa-circle-info"></i> ${parts.join(' · ')}</div>`;
+        }
+
+        // Tabela de verificação das 4 coordenadas
+        const out = $('co-out');
+        if (out) {
+            out.innerHTML = `
+                <div class="co-lot-card">
+                    <div class="co-lot-head">
+                        <i class="fa-solid fa-draw-polygon"></i> <b>Lote Localizado (4 Vértices)</b>
+                    </div>
+                    <div class="co-lot-metrics">
+                        <div><span>Área:</span> <b>${fmtArea(area)}</b></div>
+                        <div><span>Perímetro:</span> <b>${fmtDist(perimeter)}</b></div>
+                    </div>
+                    ${cadHtml}
+                    <div class="co-table-wrap">
+                        <table class="co-table">
+                            <thead>
+                                <tr>
+                                    <th>V</th>
+                                    <th>Este (E) / Lat</th>
+                                    <th>Norte (N) / Lon</th>
+                                    <th>Confrontação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${coords.map((c, i) => `<tr>
+                                    <td><b style="color:#0284c7;">V${c.v}</b></td>
+                                    <td>${c.e.toFixed(2)}<br><small style="color:#64748b;">${c.lat.toFixed(6)}</small></td>
+                                    <td>${c.n.toFixed(2)}<br><small style="color:#64748b;">${c.lng.toFixed(6)}</small></td>
+                                    <td>V${c.v}–V${sides[i].to}: <b>${fmtDist(sides[i].d)}</b></td>
+                                </tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="tp-row three" style="margin-top:8px; margin-bottom:0;">
+                        <button type="button" class="tp-btn" id="co-copy-lot"><i class="fa-regular fa-copy"></i> Copiar</button>
+                        <button type="button" class="tp-btn primary" id="co-save-lot"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+                        <button type="button" class="tp-btn danger" id="co-clear-lot"><i class="fa-solid fa-trash-can"></i> Limpar</button>
+                    </div>
+                </div>`;
+
+            $('co-copy-lot').addEventListener('click', () => {
+                const header = ['Vertice', 'UTM_E_22S', 'UTM_N_22S', 'Latitude', 'Longitude', 'Lado_Comprimento'];
+                const lines = coords.map((c, i) => [`V${c.v}`, c.e.toFixed(2), c.n.toFixed(2), c.lat.toFixed(6), c.lng.toFixed(6), `${fmtDist(sides[i].d)}`]);
+                const text = `LOTE LOCALIZADO - GEOPORTAL DE MATINHOS\nÁrea: ${fmtArea(area)} | Perímetro: ${fmtDist(perimeter)}\n\n` + [header.join('\t')].concat(lines.map(x => x.join('\t'))).join('\n');
+                copyText(text);
+            });
+
+            $('co-save-lot').addEventListener('click', () => {
+                const note = `Lote 4V (${fmtArea(area)})`;
+                const saved = L.polygon(pts, { color: '#0284c7', weight: 3, fillColor: '#0284c7', fillOpacity: 0.25 });
+                registerDrawnLayer(saved, 'Lote');
+                saved.bindTooltip(note, { permanent: true, direction: 'center', className: 'draw-note' });
+                toast('Lote salvo na lista de Desenhos com sucesso!', 'ok');
+            });
+
+            $('co-clear-lot').addEventListener('click', clearCoordLot);
+        }
+
+        toast('Lote localizado com sucesso! 4 vértices destacados no mapa.', 'ok', 2600);
+    }
+
+    function clearCoordLot() {
+        if (state.coordLotGroup) state.coordLotGroup.clearLayers();
+        if (state.coordMarker) { state.coordMarker.remove(); state.coordMarker = null; }
+        if (state.coordTempGroup) state.coordTempGroup.clearLayers();
+        const out = $('co-out');
+        if (out) out.innerHTML = 'Nenhum lote ou coordenada localizado.';
+        toast('Lote e marcações limpos do mapa.', 'info', 1600);
+    }
+
     function showCoordInfo(latlng, flyTo) {
+        ensureCoordLotGroup();
         const u = toUTM22S(latlng.lat, latlng.lng);
         const dd = `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`;
         const utm = `E ${u.x} N ${u.y}`;
         if (state.coordMarker) state.coordMarker.remove();
-        state.coordMarker = L.marker(latlng).addTo(map).bindPopup(`<b>Ponto</b><br>Lat/Lon: ${dd}<br>UTM 22S: ${utm}`).openPopup();
+        state.coordMarker = L.marker(latlng).addTo(state.coordLotGroup).bindPopup(`<b>Ponto</b><br>Lat/Lon: ${dd}<br>UTM 22S: ${utm}`).openPopup();
         if (flyTo) map.flyTo(latlng, Math.max(map.getZoom(), 17), { duration: 1 });
         const out = $('co-out');
         if (out) {
@@ -384,25 +729,105 @@ const GeoTools = (() => {
         showCoordInfo(L.latLng(ll.lat, ll.lng), true);
     }
 
-    function togglePick() {
-        const btn = $('co-pick');
-        if (state.pickHandler) { stopPick(); return; }
+    function togglePick(mode) {
+        mode = mode || state.coordTab || 'single';
+        const isLot = mode === 'lot';
+        const btn = isLot ? $('co-pick-lot') : $('co-pick');
+
+        if (state.coordPickMode === mode) {
+            stopPick();
+            return;
+        }
+        stopPick();
+
         window.GEO_TOOL_BUSY = true;
-        state.pickHandler = e => showCoordInfo(e.latlng, false);
-        map.on('click', state.pickHandler);
+        state.coordPickMode = mode;
+        state.coordPickPts = [];
+        ensureCoordLotGroup();
+        if (state.coordTempGroup) state.coordTempGroup.clearLayers();
         map.getContainer().classList.add('pick-cursor');
+
         if (btn) {
             btn.classList.add('active');
-            btn.innerHTML = '<i class="fa-solid fa-hand-pointer"></i> Clique no mapa... (clique p/ parar)';
+            btn.innerHTML = isLot
+                ? '<i class="fa-solid fa-hand-pointer"></i> Clique no Vértice V1... (0/4)'
+                : '<i class="fa-solid fa-hand-pointer"></i> Clique no mapa... (clique p/ parar)';
         }
+
+        state.pickHandler = e => {
+            const ll = (state.activeSnap && state.snapOn) ? state.activeSnap.ll : e.latlng;
+            if (!isLot) {
+                showCoordInfo(ll, false);
+                const isUtm = $('co-mode').value === 'utm';
+                if (isUtm) {
+                    const u = toUTM22S(ll.lat, ll.lng);
+                    $('co-a').value = u.x;
+                    $('co-b').value = u.y;
+                } else {
+                    $('co-a').value = ll.lat.toFixed(6);
+                    $('co-b').value = ll.lng.toFixed(6);
+                }
+                stopPick();
+                return;
+            }
+
+            // Modo 4 vértices do lote
+            state.coordPickPts.push(ll);
+            const idx = state.coordPickPts.length;
+            const isUtm = $('co-mode').value === 'utm';
+            if (isUtm) {
+                const u = toUTM22S(ll.lat, ll.lng);
+                $(`co-v${idx}-a`).value = u.x;
+                $(`co-v${idx}-b`).value = u.y;
+            } else {
+                $(`co-v${idx}-a`).value = ll.lat.toFixed(6);
+                $(`co-v${idx}-b`).value = ll.lng.toFixed(6);
+            }
+
+            // Marcador temporário numerado
+            const tempIcon = L.divIcon({
+                className: 'lot-vertex-pin-wrap',
+                html: `<div class="lot-vertex-pin" style="background:#0ea5e9;"><span>V${idx}</span></div>`,
+                iconSize: [26, 26],
+                iconAnchor: [13, 13]
+            });
+            L.marker(ll, { icon: tempIcon, zIndexOffset: 2400 }).addTo(state.coordTempGroup);
+
+            if (idx > 1) {
+                L.polyline([state.coordPickPts[idx - 2], ll], { color: '#0ea5e9', weight: 2.5, dashArray: '4, 4' }).addTo(state.coordTempGroup);
+            }
+
+            if (idx < 4) {
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> Clique no Vértice V${idx + 1}... (${idx}/4)`;
+            } else {
+                stopPick();
+                toast('4 vértices capturados! Gerando lote...', 'ok', 2000);
+                locateLot();
+            }
+        };
+
+        map.on('click', state.pickHandler);
     }
+
     function stopPick() {
         if (state.pickHandler) map.off('click', state.pickHandler);
         state.pickHandler = null;
+        state.coordPickMode = null;
+        state.coordPickPts = [];
+        if (state.coordTempGroup) state.coordTempGroup.clearLayers();
         window.GEO_TOOL_BUSY = !!state.drawMode;
         map.getContainer().classList.remove('pick-cursor');
-        const btn = $('co-pick');
-        if (btn) { btn.classList.remove('active'); btn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> Ativar captura por clique'; }
+
+        const btnSingle = $('co-pick');
+        if (btnSingle) {
+            btnSingle.classList.remove('active');
+            btnSingle.innerHTML = '<i class="fa-solid fa-crosshairs"></i> Ativar captura por clique';
+        }
+        const btnLot = $('co-pick-lot');
+        if (btnLot) {
+            btnLot.classList.remove('active');
+            btnLot.innerHTML = '<i class="fa-solid fa-crosshairs"></i> Capturar 4 vértices por clique';
+        }
     }
 
     /* ---------- MOTOR DE DESENHO, ANOTAÇÃO E EXPORTAÇÃO ---------- */
