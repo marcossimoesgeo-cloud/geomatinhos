@@ -172,7 +172,7 @@ const GeoTools = (() => {
         coords: { icon: 'fa-location-crosshairs', label: 'Buscar Coordenadas', title: 'Buscar Coordenadas / Localizar Lote', build: buildCoordsPanel, onClose: stopPick },
         draw:   { icon: 'fa-pen-ruler', label: 'Desenhar no Mapa', title: 'Desenhar, Anotar e Exportar', build: buildDrawPanel, onOpen: onDrawPanelOpen, onClose: stopActiveDraw },
         verts:  { icon: 'fa-vector-square', label: 'Extrair Vértices', title: 'Extrair Vértices das Camadas', build: buildVertsPanel, onOpen: fillLayerSelect, onClose: stopVertPick },
-        print:  { icon: 'fa-print', label: 'Imprimir Mapa', title: 'Layout de Impressão / PDF', build: buildPrintPanel }
+        print:  { icon: 'fa-print', label: 'Imprimir Mapa', title: 'Croqui de Impressão Interativo / PDF', build: buildPrintPanel, onOpen: onPrintPanelOpen, onClose: onPrintPanelClose }
     };
 
     function buildDock() {
@@ -2270,19 +2270,110 @@ const GeoTools = (() => {
             .catch(() => toast('Não foi possível gerar o PNG com este mapa base. Use Imprimir Mapa > Salvar como PDF.', 'err', 5000));
     }
 
-    /* ---------- LAYOUT DE IMPRESSÃO ---------- */
+    /* ---------- LAYOUT DE IMPRESSÃO INTERATIVO (CROQUI COM ENQUADRAMENTO MÓVEL) ---------- */
     function buildPrintPanel(body) {
         body.innerHTML = `
-            <div class="tp-row"><input type="text" id="pr-title" class="tp-input" value="Geoportal de Matinhos" placeholder="Título do mapa"></div>
-            <div class="tp-row"><input type="text" id="pr-sub" class="tp-input" placeholder="Subtítulo / observação (opcional)"></div>
-            <div class="tp-row two">
-                <select id="pr-paper" class="tp-input"><option value="A4">Folha A4</option><option value="A3">Folha A3</option></select>
-                <select id="pr-orient" class="tp-input"><option value="landscape">Paisagem</option><option value="portrait">Retrato</option></select>
+            <div class="pr-guide-banner">
+                <i class="fa-solid fa-arrows-up-down-left-right"></i>
+                <div>
+                    <b>Enquadramento Interativo Ativo:</b><br>
+                    Arraste o mapa diretamente dentro da folha ao lado (ou use as setas abaixo) para posicionar a imagem ideal para impressão.
+                </div>
             </div>
-            <label class="tp-check"><input type="checkbox" id="pr-legend" checked> Incluir legenda das camadas visíveis</label>
-            <div class="tp-row"><button type="button" class="tp-btn primary" id="pr-go"><i class="fa-solid fa-print"></i> Imprimir / Salvar como PDF</button></div>
-            <p class="tp-hint">Na janela de impressão escolha "Salvar como PDF". O mapa sai com cabeçalho da Prefeitura, escala, legenda e data.</p>`;
+            <div class="tp-sub" style="margin-top:4px;"><i class="fa-solid fa-heading"></i> 1. Identificação do Croqui</div>
+            <div class="tp-row"><input type="text" id="pr-title" class="tp-input" value="Geoportal de Matinhos" placeholder="Título do croqui / mapa"></div>
+            <div class="tp-row"><input type="text" id="pr-sub" class="tp-input" placeholder="Subtítulo, lote, inscrição ou observação (opcional)"></div>
+
+            <div class="tp-sub"><i class="fa-solid fa-file-lines"></i> 2. Formato da Folha</div>
+            <div class="tp-row two">
+                <select id="pr-paper" class="tp-input" title="Tamanho do papel">
+                    <option value="A4">Folha A4</option>
+                    <option value="A3">Folha A3</option>
+                </select>
+                <select id="pr-orient" class="tp-input" title="Orientação da folha">
+                    <option value="landscape">Paisagem (Horizontal)</option>
+                    <option value="portrait">Retrato (Vertical)</option>
+                </select>
+            </div>
+
+            <div class="tp-sub"><i class="fa-solid fa-up-down-left-right"></i> 3. Mover e Ajustar Imagem no Croqui</div>
+            <div class="pr-nav-box">
+                <div class="pr-pan-grid">
+                    <span></span>
+                    <button type="button" class="pr-nav-btn" data-pan="0,-90" title="Mover imagem para cima (Norte)"><i class="fa-solid fa-arrow-up"></i></button>
+                    <span></span>
+                    <button type="button" class="pr-nav-btn" data-pan="-90,0" title="Mover imagem para a esquerda (Oeste)"><i class="fa-solid fa-arrow-left"></i></button>
+                    <button type="button" class="pr-nav-btn pr-nav-center" id="pr-btn-recenter" title="Manter centro atual"><i class="fa-solid fa-crosshairs"></i></button>
+                    <button type="button" class="pr-nav-btn" data-pan="90,0" title="Mover imagem para a direita (Leste)"><i class="fa-solid fa-arrow-right"></i></button>
+                    <span></span>
+                    <button type="button" class="pr-nav-btn" data-pan="0,90" title="Mover imagem para baixo (Sul)"><i class="fa-solid fa-arrow-down"></i></button>
+                    <span></span>
+                </div>
+                <div class="pr-zoom-col">
+                    <button type="button" class="tp-btn" id="pr-zoom-in"><i class="fa-solid fa-magnifying-glass-plus"></i> Aproximar (+)</button>
+                    <button type="button" class="tp-btn" id="pr-zoom-out"><i class="fa-solid fa-magnifying-glass-minus"></i> Afastar (−)</button>
+                    <div class="pr-live-metrics">
+                        <span>Escala: <b id="pr-scale-live">1:5.000</b></span>
+                        <span id="pr-coord-live">Centro UTM</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tp-sub"><i class="fa-solid fa-list"></i> 4. Legenda no Croqui</div>
+            <div class="tp-row two" style="align-items:center;">
+                <label class="tp-check" style="margin:0;"><input type="checkbox" id="pr-legend" checked> Exibir legenda</label>
+                <select id="pr-legend-pos" class="tp-input" title="Posição da legenda no croqui">
+                    <option value="bl">Canto Inf. Esquerdo</option>
+                    <option value="br">Canto Inf. Direito</option>
+                    <option value="tl">Canto Sup. Esquerdo</option>
+                </select>
+            </div>
+
+            <div class="tp-row" style="margin-top:10px;">
+                <button type="button" class="tp-btn primary" id="pr-go" style="padding:10px;font-size:0.84rem;">
+                    <i class="fa-solid fa-print"></i> Imprimir / Salvar como PDF
+                </button>
+            </div>
+            <p class="tp-hint">O croqui impresso respeitará exatamente o enquadramento posicionado na folha ao lado, incluindo o símbolo oficial da Secretaria de Urbanismo no topo direito.</p>`;
+
         $('pr-go').addEventListener('click', doPrint);
+        $('pr-title').addEventListener('input', refreshPrintFrameContent);
+        $('pr-sub').addEventListener('input', refreshPrintFrameContent);
+        $('pr-legend').addEventListener('change', refreshPrintFrameContent);
+        $('pr-legend-pos').addEventListener('change', refreshPrintFrameContent);
+        $('pr-paper').addEventListener('change', () => {
+            updatePrintSheetGeometry(true);
+            refreshPrintFrameContent();
+        });
+        $('pr-orient').addEventListener('change', () => {
+            updatePrintSheetGeometry(true);
+            refreshPrintFrameContent();
+        });
+
+        body.querySelectorAll('[data-pan]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const [dx, dy] = btn.getAttribute('data-pan').split(',').map(Number);
+                map.panBy([dx, dy], { animate: true, duration: 0.25 });
+            });
+        });
+        $('pr-zoom-in').addEventListener('click', () => map.zoomIn());
+        $('pr-zoom-out').addEventListener('click', () => map.zoomOut());
+        $('pr-btn-recenter').addEventListener('click', () => {
+            toast('Centro do croqui fixado na posição atual!', 'ok', 1600);
+            updateLivePrintMetrics();
+        });
+    }
+
+    function getApproxScale() {
+        if (!window.map) return '1:5.000';
+        const c = map.getCenter();
+        const z = map.getZoom();
+        // Metros por pixel na latitude atual (Web Mercator)
+        const mPerPx = (156543.03392 * Math.cos(c.lat * Math.PI / 180)) / Math.pow(2, z);
+        // 1 metro na tela a 96 DPI = 3779.527559 pixels
+        const rawScale = mPerPx * 3779.527559;
+        const nice = Math.max(100, Math.round(rawScale / 50) * 50);
+        return '1:' + nice.toLocaleString('pt-BR');
     }
 
     function legendEntries() {
@@ -2290,9 +2381,14 @@ const GeoTools = (() => {
         Object.entries(layersMap).forEach(([id, g]) => {
             if (!g || !map.hasLayer(g)) return;
             let def = null;
-            g.eachLayer(l => { if (!def && l.layerDef) def = l.layerDef; });
+            if (g.eachLayer) g.eachLayer(l => { if (!def && l.layerDef) def = l.layerDef; });
             if (id === 'zoneamento_corrigido') {
-                Object.values(ZONE_CONFIG).forEach(z => items.push({ color: z.color, label: z.label }));
+                if (typeof currentZoneFilter !== 'undefined' && currentZoneFilter !== 'ALL' && ZONE_CONFIG[currentZoneFilter]) {
+                    const z = ZONE_CONFIG[currentZoneFilter];
+                    items.push({ color: z.color, label: z.label });
+                } else {
+                    Object.values(ZONE_CONFIG).forEach(z => items.push({ color: z.color, label: z.label }));
+                }
             } else if (id === 'loteamento_por_bairro') {
                 items.push({ color: 'linear-gradient(45deg,#d7191c,#fdae61,#abdda4,#2b83ba)', label: (def && def.title) || 'Loteamentos por Bairro' });
             } else if (def) {
@@ -2302,34 +2398,251 @@ const GeoTools = (() => {
         return items;
     }
 
+    function ensurePrintFrame() {
+        let fr = $('print-frame');
+        if (!fr) {
+            fr = document.createElement('div');
+            fr.id = 'print-frame';
+            const wrap = document.querySelector('.main-wrapper') || document.body;
+            wrap.appendChild(fr);
+        }
+        return fr;
+    }
+
+    function updateLivePrintMetrics() {
+        if (!window.map) return;
+        if (!state.isAdjustingSheet && !state.isPrintingNow) {
+            const c = map.getCenter();
+            const z = map.getZoom();
+            state.printLock = { center: L.latLng(c.lat, c.lng), zoom: z };
+        }
+        const lockC = (state.printLock && state.printLock.center) ? state.printLock.center : map.getCenter();
+        const scaleTxt = getApproxScale();
+        const u = toUTM22S(lockC.lat, lockC.lng);
+
+        const elScale = $('pf-live-scale');
+        if (elScale) elScale.textContent = scaleTxt;
+        const elPanelScale = $('pr-scale-live');
+        if (elPanelScale) elPanelScale.textContent = scaleTxt;
+
+        const elCoordPanel = $('pr-coord-live');
+        if (elCoordPanel) elCoordPanel.textContent = `E ${u.x} · N ${u.y}`;
+
+        const elFootCoords = $('pf-live-coords');
+        if (elFootCoords) {
+            elFootCoords.textContent = `Centro do Croqui: UTM 22S E ${u.x} m, N ${u.y} m (${lockC.lat.toFixed(5)}°, ${lockC.lng.toFixed(5)}°)`;
+        }
+    }
+
+    function refreshPrintFrameContent() {
+        const fr = ensurePrintFrame();
+        const title = ($('pr-title') && $('pr-title').value.trim()) ? $('pr-title').value.trim() : 'Geoportal de Matinhos';
+        const sub = ($('pr-sub') && $('pr-sub').value.trim()) ? $('pr-sub').value.trim() : 'Croqui de Localização e Consulta Territorial';
+        const showLeg = $('pr-legend') ? $('pr-legend').checked : true;
+        const legPos = $('pr-legend-pos') ? $('pr-legend-pos').value : 'bl';
+        const entries = legendEntries();
+        const legendHtml = (showLeg && entries.length)
+            ? `<div class="pf-legend pf-leg-${esc(legPos)}"><b>Legenda</b>${entries.map(i => `<div><span style="background:${i.color};${i.border ? 'border:1px solid ' + i.border : ''}"></span>${esc(i.label)}</div>`).join('')}</div>`
+            : '';
+        const who = GeoAuth.isStaff() ? `Servidor: ${esc(GeoAuth.email())} (Uso Interno)` : 'Consulta Pública';
+        const scaleTxt = getApproxScale();
+        const c = map ? map.getCenter() : { lat: -25.8175, lng: -48.536 };
+        const u = toUTM22S(c.lat, c.lng);
+
+        fr.innerHTML = `
+            <div class="pf-head">
+                <div class="pf-head-left">
+                    <div class="pf-title">${esc(title)}</div>
+                    <div class="pf-sub">${esc(sub)}</div>
+                </div>
+                <div class="pf-head-right">
+                    <div class="pf-meta">
+                        <div class="pf-org">Prefeitura Municipal de Matinhos</div>
+                        <div class="pf-sec">Secretaria Municipal de Urbanismo</div>
+                        <div class="pf-meta-line">${new Date().toLocaleDateString('pt-BR')} &bull; ${who} &bull; Escala aprox. <b id="pf-live-scale">${esc(scaleTxt)}</b></div>
+                    </div>
+                    <div class="pf-logo-card">
+                        <img src="img/logo-urbanismo.png" alt="Secretaria Municipal de Urbanismo" class="pf-logo-img">
+                    </div>
+                </div>
+            </div>
+            <div class="pf-map-frame">
+                <div class="pf-screen-banner">
+                    <i class="fa-solid fa-hand-pointer"></i>
+                    <span><b>Enquadramento Interativo:</b> Arraste o mapa com o mouse e use o zoom para posicionar a área ideal no croqui</span>
+                </div>
+                <div class="pf-north" title="Norte Geográfico">
+                    <span>N</span>
+                    <i class="fa-solid fa-location-arrow" style="transform: rotate(-45deg);"></i>
+                </div>
+                <div class="pf-center-cross" title="Centro do Croqui"></div>
+                ${legendHtml}
+            </div>
+            <div class="pf-foot">
+                <span>SIRGAS 2000 &bull; <b id="pf-live-coords">Centro do Croqui: UTM 22S E ${u.x} m, N ${u.y} m (${c.lat.toFixed(5)}°, ${c.lng.toFixed(5)}°)</b></span>
+                <span>Geoportal Oficial de Matinhos &bull; Documento informativo</span>
+            </div>`;
+    }
+
+    function getPaperDimsMM() {
+        const paper = ($('pr-paper') && $('pr-paper').value) || 'A4';
+        const orient = ($('pr-orient') && $('pr-orient').value) || 'landscape';
+        // Dimensões úteis descontando margem de 8mm em cada lado
+        if (paper === 'A3') {
+            return orient === 'landscape'
+                ? { w: 404, h: 281, head: 22, foot: 7, paper, orient }
+                : { w: 281, h: 404, head: 22, foot: 7, paper, orient };
+        }
+        return orient === 'landscape'
+            ? { w: 281, h: 194, head: 21, foot: 6, paper, orient }
+            : { w: 194, h: 281, head: 21, foot: 6, paper, orient };
+    }
+
+    function updatePrintSheetGeometry(preserveCenter) {
+        if (!state.printPreview || !window.map) return;
+        const prevCenter = (preserveCenter && state.printLock && state.printLock.center) ? state.printLock.center : map.getCenter();
+        const prevZoom = (preserveCenter && state.printLock && state.printLock.zoom != null) ? state.printLock.zoom : map.getZoom();
+
+        const wrap = document.querySelector('.main-wrapper');
+        const wrapW = wrap ? wrap.clientWidth : window.innerWidth;
+        const wrapH = wrap ? wrap.clientHeight : (window.innerHeight - 86);
+
+        // Espaço ocupado pela dock + painel aberto à direita
+        const rightReserved = (state.panel === 'print' && window.innerWidth > 900) ? 555 : 200;
+        const availW = Math.max(300, wrapW - rightReserved - 28);
+        const availH = Math.max(240, wrapH - 28);
+
+        const dims = getPaperDimsMM();
+        const sheetRatio = dims.w / dims.h;
+
+        let sheetW = availW;
+        let sheetH = sheetW / sheetRatio;
+        if (sheetH > availH) {
+            sheetH = availH;
+            sheetW = sheetH * sheetRatio;
+        }
+
+        const sheetLeft = Math.max(12, Math.round((availW - sheetW) / 2) + 12);
+        const sheetTop = Math.max(10, Math.round((wrapH - sheetH) / 2));
+        const headH = Math.max(54, Math.min(72, Math.round(sheetH * (dims.head / dims.h))));
+        const footH = Math.max(22, Math.min(30, Math.round(sheetH * (dims.foot / dims.h))));
+
+        const root = document.documentElement;
+        root.style.setProperty('--ps-left', sheetLeft + 'px');
+        root.style.setProperty('--ps-top', sheetTop + 'px');
+        root.style.setProperty('--ps-w', Math.round(sheetW) + 'px');
+        root.style.setProperty('--ps-h', Math.round(sheetH) + 'px');
+        root.style.setProperty('--ps-head-h', headH + 'px');
+        root.style.setProperty('--ps-foot-h', footH + 'px');
+        root.style.setProperty('--pr-w', dims.w + 'mm');
+        root.style.setProperty('--pr-h', dims.h + 'mm');
+        root.style.setProperty('--pr-head-h', dims.head + 'mm');
+        root.style.setProperty('--pr-foot-h', dims.foot + 'mm');
+
+        state.isAdjustingSheet = true;
+        map.invalidateSize({ animate: false });
+        if (map._resetView) {
+            map._resetView(prevCenter, prevZoom);
+        } else {
+            map.setView(prevCenter, prevZoom, { animate: false, reset: true });
+        }
+        state.isAdjustingSheet = false;
+        updateLivePrintMetrics();
+    }
+
+    function onPrintPanelOpen() {
+        const c = map.getCenter();
+        const z = map.getZoom();
+        state.printLock = { center: L.latLng(c.lat, c.lng), zoom: z };
+        state.printPreview = true;
+        state.isAdjustingSheet = true;
+        document.body.classList.add('print-preview-mode');
+        refreshPrintFrameContent();
+        updatePrintSheetGeometry(true);
+        state.isAdjustingSheet = false;
+
+        map.on('move zoomend', updateLivePrintMetrics);
+        if (!state._printResizeHandler) {
+            state._printResizeHandler = () => {
+                if (state.printPreview && !document.body.classList.contains('print-layout')) {
+                    updatePrintSheetGeometry(true);
+                }
+            };
+            window.addEventListener('resize', state._printResizeHandler);
+        }
+    }
+
+    function onPrintPanelClose() {
+        if (state.isPrintingNow) return;
+        const c = (state.printLock && state.printLock.center) ? L.latLng(state.printLock.center.lat, state.printLock.center.lng) : map.getCenter();
+        const z = (state.printLock && state.printLock.zoom != null) ? state.printLock.zoom : map.getZoom();
+        state.printPreview = false;
+        state.isAdjustingSheet = true;
+        document.body.classList.remove('print-preview-mode');
+        map.off('move zoomend', updateLivePrintMetrics);
+        const fr = $('print-frame');
+        if (fr) fr.remove();
+        setTimeout(() => {
+            if (window.map) {
+                map.invalidateSize({ animate: false });
+                if (map._resetView) map._resetView(c, z);
+                else map.setView(c, z, { animate: false, reset: true });
+            }
+            state.isAdjustingSheet = false;
+        }, 50);
+    }
+
+    function syncMapToPrintLock() {
+        if (!state.printLock || !window.map) return;
+        const targetCenter = L.latLng(state.printLock.center.lat, state.printLock.center.lng);
+        const targetZoom = state.printLock.zoom;
+        state.isAdjustingSheet = true;
+        map.invalidateSize({ animate: false });
+        if (map._resetView) {
+            map._resetView(targetCenter, targetZoom);
+        } else {
+            map.setView(targetCenter, targetZoom, { animate: false, reset: true });
+        }
+        state.isAdjustingSheet = false;
+    }
+
     function doPrint() {
-        const title = $('pr-title').value.trim() || 'Geoportal de Matinhos';
-        const sub = $('pr-sub').value.trim();
-        const paper = $('pr-paper').value, orient = $('pr-orient').value;
+        const c = (state.printLock && state.printLock.center) ? L.latLng(state.printLock.center.lat, state.printLock.center.lng) : map.getCenter();
+        const z = (state.printLock && state.printLock.zoom != null) ? state.printLock.zoom : map.getZoom();
+        state.printLock = { center: c, zoom: z };
+        state.isPrintingNow = true;
+        state.isAdjustingSheet = true;
+
+        const dims = getPaperDimsMM();
         let st = $('print-page-style');
         if (!st) { st = document.createElement('style'); st.id = 'print-page-style'; document.head.appendChild(st); }
-        st.textContent = `@page { size: ${paper} ${orient}; margin: 8mm; }`;
-        let fr = $('print-frame');
-        if (fr) fr.remove();
-        fr = document.createElement('div');
-        fr.id = 'print-frame';
-        const legend = $('pr-legend').checked
-            ? `<div class="pf-legend"><b>Legenda</b>${legendEntries().map(i => `<div><span style="background:${i.color};${i.border ? 'border:1px solid ' + i.border : ''}"></span>${esc(i.label)}</div>`).join('')}</div>` : '';
-        const who = GeoAuth.isStaff() ? ` · Servidor: ${esc(GeoAuth.email())} (Uso Interno)` : ' · Consulta Pública';
-        fr.innerHTML = `<div class="pf-head"><div><div class="pf-title">${esc(title)}</div>${sub ? `<div class="pf-sub">${esc(sub)}</div>` : ''}</div>
-            <div class="pf-meta">Prefeitura Municipal de Matinhos<br>Secretaria Municipal de Urbanismo<br>${new Date().toLocaleDateString('pt-BR')}${who}</div></div>
-            ${legend}<div class="pf-foot">SIRGAS 2000 · Geoportal de Matinhos · Documento informativo, sem valor legal.</div>`;
-        document.body.appendChild(fr);
+        st.textContent = `@page { size: ${dims.paper} ${dims.orient}; margin: 8mm; }`;
+
+        const root = document.documentElement;
+        root.style.setProperty('--pr-w', dims.w + 'mm');
+        root.style.setProperty('--pr-h', dims.h + 'mm');
+        root.style.setProperty('--pr-head-h', dims.head + 'mm');
+        root.style.setProperty('--pr-foot-h', dims.foot + 'mm');
+
+        refreshPrintFrameContent();
         document.body.classList.add('print-layout');
-        closePanel();
-        map.invalidateSize();
-        setTimeout(() => window.print(), 400);
+
+        // Recalibrar o tamanho e o centro do mapa nas dimensões exatas da folha ANTES de abrir a impressão
+        syncMapToPrintLock();
+        setTimeout(() => {
+            syncMapToPrintLock();
+            window.print();
+        }, 450);
     }
 
     function endPrint() {
         document.body.classList.remove('print-layout');
-        const fr = $('print-frame'); if (fr) fr.remove();
-        if (window.map) map.invalidateSize();
+        state.isPrintingNow = false;
+        if (state.printPreview && state.panel === 'print') {
+            updatePrintSheetGeometry(true);
+        } else {
+            onPrintPanelClose();
+        }
     }
 
     /* ---------- tela cheia, modo escuro, mini-mapa ---------- */
@@ -2606,7 +2919,7 @@ const GeoTools = (() => {
             @media print{body{padding:0}}
             </style></head><body>
             <div class="head"><div><h1>Ficha de Consulta Territorial</h1><div style="font-size:13px">${esc(featureName(props, layerDef))}</div></div>
-            <div class="org">Prefeitura Municipal de Matinhos<br>Secretaria Municipal de Urbanismo<br>${new Date().toLocaleString('pt-BR')}</div></div>
+            <div style="display:flex;align-items:center;gap:12px;"><div class="org"><b>Prefeitura Municipal de Matinhos</b><br>Secretaria Municipal de Urbanismo<br>${new Date().toLocaleString('pt-BR')}</div><img src="img/logo-urbanismo.png" alt="Secretaria Municipal de Urbanismo" style="height:48px;width:auto;object-fit:contain;border-radius:6px;border:1px solid #cbd5e1;padding:2px;background:#fff;"></div></div>
             ${staff
                 ? `<div class="int"><b>RELATÓRIO TÉCNICO INTERNO (SERVIDOR MUNICIPAL)</b> — Emitido por: ${esc(GeoAuth.email())}</div>`
                 : `<div class="pub"><b>CONSULTA PÚBLICA</b> — Caráter meramente informativo ao cidadão.</div>`}
@@ -2654,7 +2967,20 @@ const GeoTools = (() => {
             }
             setTimeout(() => map.invalidateSize(), 200);
         });
+        window.addEventListener('beforeprint', syncMapToPrintLock);
         window.addEventListener('afterprint', endPrint);
+        if (window.matchMedia) {
+            const mql = window.matchMedia('print');
+            if (mql.addEventListener) {
+                mql.addEventListener('change', e => { if (e.matches) syncMapToPrintLock(); });
+            }
+        }
+        const tabCamadasEl = $('tab-camadas');
+        if (tabCamadasEl) {
+            tabCamadasEl.addEventListener('change', () => {
+                if (state.printPreview) refreshPrintFrameContent();
+            });
+        }
         document.addEventListener('keydown', e => {
             const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || ''));
             if (e.key === 'Escape') {
