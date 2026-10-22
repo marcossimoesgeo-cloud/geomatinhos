@@ -1365,6 +1365,17 @@ function updateLayerCounters() {
 window.updateLayerCounters = updateLayerCounters;
 
 /**
+ * Verifica se o bounding box está dentro da região válida de Matinhos / Litoral do PR
+ * (evita que feições espúrias de legenda CAD fora do município distorçam o enquadramento)
+ */
+function isValidMatinhosBounds(b) {
+    if (!b || !b.isValid()) return false;
+    const sw = b.getSouthWest();
+    const ne = b.getNorthEast();
+    return sw.lat >= -26.2 && ne.lat <= -25.3 && sw.lng >= -49.0 && ne.lng <= -48.0;
+}
+
+/**
  * Liga (se desligada) e enquadra uma camada temática no mapa
  */
 function zoomToThematicLayer(layerId) {
@@ -1374,10 +1385,22 @@ function zoomToThematicLayer(layerId) {
         cb.checked = true;
         cb.dispatchEvent(new Event('change'));
     }
-    if (g && g.getBounds) {
-        const b = g.getBounds();
-        if (b && b.isValid()) {
-            map.fitBounds(b, { padding: [50, 50], maxZoom: 17 });
+    if (g) {
+        let bounds = null;
+        if (g.eachLayer) {
+            g.eachLayer(l => {
+                if (l.getBounds) {
+                    const b = l.getBounds();
+                    if (isValidMatinhosBounds(b)) {
+                        bounds = bounds ? bounds.extend(b) : L.latLngBounds(b.getSouthWest(), b.getNorthEast());
+                    }
+                }
+            });
+        } else if (g.getBounds && isValidMatinhosBounds(g.getBounds())) {
+            bounds = g.getBounds();
+        }
+        if (bounds && bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17 });
             if (window.GeoTools) GeoTools.toast('Camada ativada e enquadrada no mapa!', 'ok', 2000);
         }
     }
@@ -1425,7 +1448,7 @@ function applyZoneFilter(zoneKey, shouldZoom) {
             zLayer.eachLayer(l => {
                 if (l.feature && l.feature.properties && l.feature.properties.Layer === currentZoneFilter && l.getBounds) {
                     const b = l.getBounds();
-                    if (b && b.isValid()) {
+                    if (isValidMatinhosBounds(b)) {
                         bounds = bounds ? bounds.extend(b) : L.latLngBounds(b.getSouthWest(), b.getNorthEast());
                     }
                 }
