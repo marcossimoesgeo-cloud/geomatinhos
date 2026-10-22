@@ -2333,14 +2333,14 @@ const GeoTools = (() => {
                 <button type="button" class="tp-btn primary" id="pr-go" style="padding:10px;font-size:0.84rem;">
                     <i class="fa-solid fa-print"></i> Imprimir / Salvar como PDF
                 </button>
-                <button type="button" class="tp-btn" id="pr-open-window" style="padding:9px;font-size:0.82rem;background:#0d3b66;color:#fff;border:none;" title="Abre o croqui em uma nova janela limpa para impressão segura">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir Croqui em Nova Janela (PDF Limpo)
+                <button type="button" class="tp-btn" id="pr-dl-img" style="padding:8px;font-size:0.78rem;background:#00796b;color:#fff;border:none;" title="Baixar imagem direta em PNG">
+                    <i class="fa-solid fa-file-image"></i> Baixar Imagem do Croqui (PNG)
                 </button>
             </div>
             <p class="tp-hint">O croqui impresso respeitará exatamente o enquadramento posicionado na folha ao lado, incluindo o símbolo oficial da Secretaria Municipal de Urbanismo e Planejamento Urbano no topo direito.</p>`;
 
         $('pr-go').addEventListener('click', doPrint);
-        $('pr-open-window') && $('pr-open-window').addEventListener('click', openCroquiWindow);
+        $('pr-dl-img') && $('pr-dl-img').addEventListener('click', downloadCroquiImage);
         $('pr-title').addEventListener('input', refreshPrintFrameContent);
         $('pr-sub').addEventListener('input', refreshPrintFrameContent);
         $('pr-legend').addEventListener('change', refreshPrintFrameContent);
@@ -2632,197 +2632,42 @@ const GeoTools = (() => {
         window.print();
     }
 
-    function openCroquiWindow() {
-        const c = (state.printLock && state.printLock.center) ? state.printLock.center : map.getCenter();
-        const z = (state.printLock && state.printLock.zoom != null) ? state.printLock.zoom : map.getZoom();
-        const dims = getPaperDimsMM();
-        const title = ($('pr-title') && $('pr-title').value.trim()) ? $('pr-title').value.trim() : 'Geoportal de Matinhos';
-        const sub = ($('pr-sub') && $('pr-sub').value.trim()) ? $('pr-sub').value.trim() : 'Croqui de Localização e Consulta Territorial';
-        const scaleTxt = getApproxScale();
-        const u = toUTM22S(c.lat, c.lng);
-        const dt = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const who = (typeof GeoAuth !== 'undefined' && GeoAuth.isStaff()) ? `Servidor (${esc(GeoAuth.email())})` : 'Consulta Pública';
-
-        // Legenda de zonas e camadas
-        const showLegend = $('pr-legend') ? $('pr-legend').checked : true;
-        let legHtml = '';
-        if (showLegend) {
-            const leg = legendEntries();
-            if (leg.length) {
-                legHtml = `<div class="croqui-legend"><b>LEGENDA DE ZONEAMENTO / CAMADAS</b>${leg.slice(0, 16).map(it => `<div><span style="background:${it.color};${it.border ? `border:1px solid ${it.border};` : ''}"></span>${esc(it.label)}</div>`).join('')}</div>`;
-            }
-        }
-
-        // Camada base ativa
-        const activeBase = (typeof currentBaseKey !== 'undefined') ? currentBaseKey : 'googleSat';
-        let tileUrl = 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}';
-        if (activeBase === 'osm') {
-            tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-        } else if (activeBase === 'carto') {
-            tileUrl = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-        } else if (activeBase === 'esri') {
-            tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-        }
-
-        const html = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="utf-8">
-    <title>Croqui Oficial - ${esc(title)}</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <style>
-        @page { size: ${dims.paper} ${dims.orient}; margin: 8mm; }
-        * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; font-family: 'Segoe UI', Arial, sans-serif; }
-        html, body { margin: 0; padding: 0; background: #f1f5f9; color: #0f172a; height: 100%; }
-        .croqui-toolbar {
-            position: fixed; top: 0; left: 0; right: 0; height: 50px;
-            background: #0d3b66; color: #fff; display: flex; align-items: center; justify-content: space-between;
-            padding: 0 16px; z-index: 99999; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-        .croqui-toolbar button {
-            padding: 8px 16px; font-size: 13px; font-weight: 700; border-radius: 6px; cursor: pointer; border: none;
-        }
-        .btn-print { background: #22c55e; color: #fff; margin-right: 8px; }
-        .btn-close { background: rgba(255,255,255,0.2); color: #fff; }
-        .croqui-sheet-wrap {
-            padding: 70px 20px 40px; display: flex; justify-content: center;
-        }
-        .croqui-sheet {
-            width: ${dims.w}mm; height: ${dims.h}mm; background: #ffffff;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.25); border: 1px solid #cbd5e1;
-            display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;
-        }
-        .pf-head {
-            height: ${dims.head}mm; min-height: ${dims.head}mm; background: #ffffff;
-            border-bottom: 3px solid #0d3b66; padding: 2mm 5mm; display: flex; align-items: center; justify-content: space-between; gap: 12px;
-        }
-        .pf-title { font-size: 16px; font-weight: 800; color: #0d3b66; line-height: 1.2; }
-        .pf-sub { font-size: 11px; color: #475569; font-weight: 600; margin-top: 2px; }
-        .pf-meta { text-align: right; line-height: 1.25; }
-        .pf-org { font-size: 11px; font-weight: 800; color: #0d3b66; text-transform: uppercase; }
-        .pf-sec { font-size: 10px; font-weight: 700; color: #00796b; }
-        .pf-meta-line { font-size: 9px; color: #334155; margin-top: 1px; }
-        .pf-logo-card {
-            height: calc(${dims.head}mm - 6mm); max-height: 16mm; background: #ffffff;
-            border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 2px 5px; display: flex; align-items: center; justify-content: center;
-        }
-        .pf-logo-img { max-height: 14mm; height: 100%; width: auto; display: block; }
-        .pf-map-container {
-            flex: 1 1 auto; position: relative; border-left: 2px solid #0d3b66; border-right: 2px solid #0d3b66;
-            border-bottom: 2px solid #0d3b66; background: #f8fafc; overflow: hidden;
-        }
-        #croqui-map { width: 100%; height: 100%; }
-        .croqui-legend {
-            position: absolute; bottom: 8px; left: 8px; max-width: 250px; max-height: 60%; overflow: hidden;
-            background: rgba(255,255,255,0.96); border: 1.5px solid #0d3b66; border-radius: 5px; padding: 6px 8px;
-            font-size: 9px; color: #0f172a; z-index: 1000; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-        }
-        .croqui-legend b { display: block; font-size: 9.5px; color: #0d3b66; border-bottom: 1px solid #cbd5e1; padding-bottom: 2px; margin-bottom: 4px; }
-        .croqui-legend div { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
-        .croqui-legend span { width: 12px; height: 9px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
-        .pf-north {
-            position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; background: rgba(255,255,255,0.95);
-            border: 1.5px solid #0d3b66; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-size: 8px; font-weight: 800; color: #0d3b66; z-index: 1000; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-        }
-        .pf-foot {
-            height: ${dims.foot}mm; min-height: ${dims.foot}mm; background: #ffffff;
-            padding: 0 4mm; font-size: 9px; color: #334155; display: flex; align-items: center; justify-content: space-between;
-        }
-        @media print {
-            .croqui-toolbar { display: none !important; }
-            .croqui-sheet-wrap { padding: 0 !important; }
-            .croqui-sheet { width: 100% !important; height: 100% !important; border: none !important; box-shadow: none !important; }
-            html, body { background: #ffffff !important; height: 100% !important; }
-        }
-    </style>
-</head>
-<body>
-    <div class="croqui-toolbar">
-        <div>
-            <b>Croqui de Impressão Oficial</b> &bull; Secretaria Municipal de Urbanismo e Planejamento Urbano
-        </div>
-        <div>
-            <button class="btn-print" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir / Salvar como PDF</button>
-            <button class="btn-close" onclick="window.close()"><i class="fa-solid fa-xmark"></i> Fechar Janela</button>
-        </div>
-    </div>
-    <div class="croqui-sheet-wrap">
-        <div class="croqui-sheet">
-            <div class="pf-head">
-                <div>
-                    <div class="pf-title">${esc(title)}</div>
-                    <div class="pf-sub">${esc(sub)}</div>
-                </div>
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <div class="pf-meta">
-                        <div class="pf-org">Prefeitura Municipal de Matinhos</div>
-                        <div class="pf-sec">Secretaria Municipal de Urbanismo e Planejamento Urbano</div>
-                        <div class="pf-meta-line">${dt} &bull; ${who} &bull; Escala aprox. <b>${esc(scaleTxt)}</b></div>
-                    </div>
-                    <div class="pf-logo-card">
-                        <img src="img/logo-urbanismo.png" alt="Secretaria Municipal de Urbanismo e Planejamento Urbano" class="pf-logo-img">
-                    </div>
-                </div>
-            </div>
-            <div class="pf-map-container">
-                <div id="croqui-map"></div>
-                <div class="pf-north"><div>▲</div><div>N</div></div>
-                ${legHtml}
-            </div>
-            <div class="pf-foot">
-                <span>SIRGAS 2000 &bull; <b>Centro: UTM 22S E ${u.x} m, N ${u.y} m (${c.lat.toFixed(5)}°, ${c.lng.toFixed(5)}°)</b></span>
-                <span>Geoportal Oficial de Matinhos &bull; Documento Informativo</span>
-            </div>
-        </div>
-    </div>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
-    <script>
-        const map = L.map('croqui-map', {
-            center: [${c.lat}, ${c.lng}],
-            zoom: ${z},
-            zoomControl: false,
-            attributionControl: false
-        });
-        L.tileLayer('${tileUrl}', { maxZoom: 19 }).addTo(map);
-
-        if (window.opener && window.opener.layersMap) {
-            Object.entries(window.opener.layersMap).forEach(([id, g]) => {
-                if (g && window.opener.map && window.opener.map.hasLayer(g) && g.toGeoJSON) {
-                    try {
-                        const gj = g.toGeoJSON();
-                        L.geoJSON(gj, {
-                            style: feature => {
-                                if (window.opener.ZONE_CONFIG && feature.properties && feature.properties.Layer) {
-                                    const zc = window.opener.ZONE_CONFIG[feature.properties.Layer];
-                                    if (zc) return { color: zc.color, fillColor: zc.color, fillOpacity: 0.45, weight: 1.5 };
-                                }
-                                return { color: '#0d3b66', weight: 1.5, fillOpacity: 0.2 };
-                            }
-                        }).addTo(map);
-                    } catch(e) {}
-                }
-            });
-        }
-        window.onload = function() {
-            setTimeout(function() {
-                map.invalidateSize();
-                window.print();
-            }, 600);
-        };
-    <\/script>
-</body>
-</html>`;
-
-        const w = window.open('', '_blank');
-        if (!w) {
-            toast('Pop-up bloqueado pelo navegador. Permita pop-ups para abrir o croqui em nova janela.', 'info', 6000);
+    async function downloadCroquiImage() {
+        if (typeof html2canvas === 'undefined') {
+            toast('Biblioteca de captura gráfica não carregada.', 'err');
             return;
         }
-        w.document.open();
-        w.document.write(html);
-        w.document.close();
+        const fr = $('print-frame');
+        if (!fr) {
+            toast('Abra o painel de impressão para visualizar o croqui.', 'err');
+            return;
+        }
+        toast('Preparando imagem do croqui (PNG)...', 'info', 2000);
+        try {
+            refreshPrintFrameContent();
+            const wrap = document.querySelector('.main-wrapper') || document.body;
+            const canvas = await html2canvas(wrap, {
+                useCORS: true,
+                scale: 2,
+                logging: false,
+                ignoreElements: el => {
+                    return el.classList.contains('sidebar') ||
+                           el.classList.contains('tools-dock') ||
+                           el.id === 'tool-panels' ||
+                           el.classList.contains('toast-box') ||
+                           el.classList.contains('pf-screen-banner') ||
+                           el.classList.contains('leaflet-control-container');
+                }
+            });
+            const link = document.createElement('a');
+            link.download = `croqui_matinhos_${new Date().toISOString().slice(0, 10)}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            toast('Imagem do croqui baixada com sucesso!', 'ok');
+        } catch (err) {
+            console.error('Erro na exportação PNG:', err);
+            toast('Para salvar com alta fidelidade, use "Imprimir / Salvar como PDF".', 'info', 4000);
+        }
     }
 
     /* ---------- tela cheia, modo escuro, mini-mapa ---------- */
