@@ -14,9 +14,11 @@ const GeoTools = (() => {
         restrictedGroupEl: null,
         drawnItems: null,
         drawnList: [],
+        drawnRedoStack: [],
         drawSeq: 1,
         drawMode: null, // 'line' | 'polygon' | 'rect' | 'circle' | 'marker' | 'text' | null
         drawPts: [],
+        drawRedoPts: [],
         drawVerts: null,
         drawPreview: null,
         drawColor: '#e63946',
@@ -1840,14 +1842,21 @@ const GeoTools = (() => {
                         <i class="fa-solid fa-magnet"></i> <span id="draw-snap-status">Ativa (18px)</span>
                     </button>
                 </div>
-                <div class="tp-row three" style="margin-top:6px;margin-bottom:0;">
-                    <button type="button" class="tp-btn primary" id="draw-btn-finish"><i class="fa-solid fa-check"></i> Concluir</button>
-                    <button type="button" class="tp-btn" id="draw-btn-undo"><i class="fa-solid fa-rotate-left"></i> Desfazer</button>
-                    <button type="button" class="tp-btn danger" id="draw-btn-cancel"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+                <div style="display:flex;gap:4px;margin-top:6px;margin-bottom:0;align-items:center;">
+                    <button type="button" class="tp-btn primary" id="draw-btn-finish" style="flex:1;"><i class="fa-solid fa-check"></i> Concluir</button>
+                    <button type="button" class="tp-btn" id="draw-btn-undo" title="Desfazer" style="padding:6px 10px;"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button type="button" class="tp-btn" id="draw-btn-redo" title="Refazer" style="padding:6px 10px;"><i class="fa-solid fa-rotate-right"></i></button>
+                    <button type="button" class="tp-btn danger" id="draw-btn-cancel" style="flex:1;"><i class="fa-solid fa-xmark"></i> Cancelar</button>
                 </div>
             </div>
 
-            <div class="tp-sub">Desenhos no Mapa (<span id="draw-count">0</span>)</div>
+            <div class="tp-sub" style="display:flex;justify-content:space-between;align-items:center;">
+                <span>Desenhos no Mapa (<span id="draw-count">0</span>)</span>
+                <div style="display:inline-flex;gap:4px;">
+                    <button type="button" class="tp-btn" id="draw-global-undo" title="Desfazer" style="padding:2px 8px;font-size:0.75rem;"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button type="button" class="tp-btn" id="draw-global-redo" title="Refazer" style="padding:2px 8px;font-size:0.75rem;"><i class="fa-solid fa-rotate-right"></i></button>
+                </div>
+            </div>
             <div id="draw-items-list" class="draw-items-list">
                 <div class="tp-hint">Nenhum desenho adicionado ainda. Selecione uma ferramenta acima e clique no mapa.</div>
             </div>
@@ -1919,8 +1928,11 @@ const GeoTools = (() => {
         $('vx-show').checked = state.showVerts;
         $('vx-show').addEventListener('change', e => { state.showVerts = e.target.checked; refreshVertices(); });
         $('vx-gen').addEventListener('click', buildCoordTable);
-        $('draw-btn-undo').addEventListener('click', undoDrawPoint);
-        $('draw-btn-cancel').addEventListener('click', stopActiveDraw);
+        if ($('draw-btn-undo')) $('draw-btn-undo').addEventListener('click', undoDrawPoint);
+        if ($('draw-btn-redo')) $('draw-btn-redo').addEventListener('click', redoDrawPoint);
+        if ($('draw-btn-cancel')) $('draw-btn-cancel').addEventListener('click', stopActiveDraw);
+        if ($('draw-global-undo')) $('draw-global-undo').addEventListener('click', undoLastDrawn);
+        if ($('draw-global-redo')) $('draw-global-redo').addEventListener('click', redoLastDrawn);
 
         const need = () => {
             const fc = drawnToGeoJSON();
@@ -1963,8 +1975,10 @@ const GeoTools = (() => {
         const metric = $('draw-live-metric');
         const finishBtn = $('draw-btn-finish');
         const undoBtn = $('draw-btn-undo');
+        const redoBtn = $('draw-btn-redo');
         if (box) box.style.display = 'block';
         if (metric) metric.textContent = '';
+        state.drawRedoPts = [];
 
         const hints = {
             line: 'Clique no mapa para adicionar pontos da linha. Clique em "Concluir" (ou duplo-clique) para encerrar.',
@@ -1977,6 +1991,7 @@ const GeoTools = (() => {
         if (hint) hint.textContent = hints[mode] || 'Clique no mapa...';
         if (finishBtn) finishBtn.style.display = (mode === 'line' || mode === 'polygon') ? 'inline-block' : 'none';
         if (undoBtn) undoBtn.style.display = (mode === 'line' || mode === 'polygon') ? 'inline-block' : 'none';
+        if (redoBtn) redoBtn.style.display = (mode === 'line' || mode === 'polygon') ? 'inline-block' : 'none';
 
         map.on('click', onDrawMapClick);
         map.on('mousemove', onDrawMapMove);
@@ -1993,6 +2008,7 @@ const GeoTools = (() => {
         if (state.drawVerts) state.drawVerts.clearLayers();
         state.drawMode = null;
         state.drawPts = [];
+        state.drawRedoPts = [];
         window.GEO_TOOL_BUSY = !!state.pickHandler;
         map.getContainer().classList.remove('pick-cursor');
         setTimeout(() => { if (map && map.doubleClickZoom) map.doubleClickZoom.enable(); }, 150);
@@ -2004,7 +2020,16 @@ const GeoTools = (() => {
 
     function undoDrawPoint() {
         if (!state.drawPts.length) return;
-        state.drawPts.pop();
+        const pt = state.drawPts.pop();
+        state.drawRedoPts.push(pt);
+        redrawVertices();
+        updateLivePreview(null);
+    }
+
+    function redoDrawPoint() {
+        if (!state.drawRedoPts.length) return;
+        const pt = state.drawRedoPts.pop();
+        state.drawPts.push(pt);
         redrawVertices();
         updateLivePreview(null);
     }
@@ -2072,9 +2097,34 @@ const GeoTools = (() => {
         layer.bindPopup(() => describeLayer(layer));
         state.drawnItems.addLayer(layer);
         state.drawnList.push(layer);
+        state.drawnRedoStack = [];
         if (labelInput && !layer._isText) labelInput.value = '';
         renderDrawnList();
         toast(`${defaultTypeLabel} adicionado ao mapa!`, 'ok', 2200);
+    }
+
+    function undoLastDrawn() {
+        if (state.drawMode && (state.drawMode === 'line' || state.drawMode === 'polygon')) {
+            undoDrawPoint();
+            return;
+        }
+        if (!state.drawnList.length) return;
+        const last = state.drawnList.pop();
+        state.drawnItems.removeLayer(last);
+        state.drawnRedoStack.push(last);
+        renderDrawnList();
+    }
+
+    function redoLastDrawn() {
+        if (state.drawMode && (state.drawMode === 'line' || state.drawMode === 'polygon')) {
+            redoDrawPoint();
+            return;
+        }
+        if (!state.drawnRedoStack.length) return;
+        const restored = state.drawnRedoStack.pop();
+        state.drawnItems.addLayer(restored);
+        state.drawnList.push(restored);
+        renderDrawnList();
     }
 
     function onDrawMapClick(e) {
@@ -2152,6 +2202,7 @@ const GeoTools = (() => {
             }
         }
         state.drawPts.push(ll);
+        state.drawRedoPts = [];
         redrawVertices();
         updateLivePreview(null);
     }

@@ -14,6 +14,7 @@ let currentOpacity = 0.65;
 let currentZoneFilter = "ALL";
 let measureMode = null; // 'distance' | 'area' | null
 let measurePoints = [];
+let measureRedoPoints = [];
 let measureLayerGroup = null;
 
 const INITIAL_CENTER = [-25.8175, -48.5360];
@@ -579,6 +580,10 @@ function setupUIEvents() {
     document.getElementById('btn-clear-measure').addEventListener('click', () => {
         clearMeasure();
     });
+    const btnMeasureUndo = document.getElementById('btn-measure-undo');
+    if (btnMeasureUndo) btnMeasureUndo.addEventListener('click', undoMeasure);
+    const btnMeasureRedo = document.getElementById('btn-measure-redo');
+    if (btnMeasureRedo) btnMeasureRedo.addEventListener('click', redoMeasure);
 
     // Eventos do mapa para medição
     map.on('click', onMapMeasureClick);
@@ -1248,6 +1253,7 @@ function toggleMeasureMode(mode) {
 function stopMeasureMode() {
     measureMode = null;
     measurePoints = [];
+    measureRedoPoints = [];
     measureLayerGroup.clearLayers();
     ['btn-measure-dist', 'dock-measure-dist', 'btn-measure-area', 'dock-measure-area'].forEach(id => {
         const el = document.getElementById(id);
@@ -1258,31 +1264,27 @@ function stopMeasureMode() {
 
 function clearMeasure() {
     measurePoints = [];
+    measureRedoPoints = [];
     measureLayerGroup.clearLayers();
     document.getElementById('measure-result').textContent = measureMode === 'distance' ? '0.00 m' : '0.00 m²';
 }
 
-function onMapMeasureClick(e) {
-    if (!measureMode) return;
+function renderMeasureGraphics() {
+    if (!measureLayerGroup) return;
+    measureLayerGroup.clearLayers();
 
-    measurePoints.push(e.latlng);
+    if (!measureMode || measurePoints.length === 0) {
+        document.getElementById('measure-result').textContent = measureMode === 'distance' ? '0.00 m' : '0.00 m²';
+        return;
+    }
 
-    // Adicionar marcador no vértice
-    L.circleMarker(e.latlng, {
-        radius: 5,
-        color: '#ffffff',
-        fillColor: '#00a896',
-        fillOpacity: 1,
-        weight: 2
-    }).addTo(measureLayerGroup);
+    // Recriar todos os marcadores
+    measurePoints.forEach(p => {
+        L.circleMarker(p, { radius: 5, color: '#fff', fillColor: '#00a896', fillOpacity: 1, weight: 2 }).addTo(measureLayerGroup);
+    });
 
     if (measureMode === 'distance') {
         if (measurePoints.length > 1) {
-            measureLayerGroup.clearLayers();
-            // Recriar todos os marcadores
-            measurePoints.forEach(p => {
-                L.circleMarker(p, { radius: 5, color: '#fff', fillColor: '#00a896', fillOpacity: 1, weight: 2 }).addTo(measureLayerGroup);
-            });
             L.polyline(measurePoints, { color: '#00a896', weight: 3, dashArray: '4, 4' }).addTo(measureLayerGroup);
 
             let totalDist = 0;
@@ -1291,13 +1293,11 @@ function onMapMeasureClick(e) {
             }
             const formatted = totalDist > 1000 ? `${(totalDist / 1000).toFixed(2)} km` : `${totalDist.toFixed(1)} m`;
             document.getElementById('measure-result').textContent = formatted;
+        } else {
+            document.getElementById('measure-result').textContent = '0.00 m';
         }
     } else if (measureMode === 'area') {
         if (measurePoints.length > 2) {
-            measureLayerGroup.clearLayers();
-            measurePoints.forEach(p => {
-                L.circleMarker(p, { radius: 5, color: '#fff', fillColor: '#00a896', fillOpacity: 1, weight: 2 }).addTo(measureLayerGroup);
-            });
             L.polygon(measurePoints, { color: '#00a896', weight: 2, fillColor: '#00a896', fillOpacity: 0.3 }).addTo(measureLayerGroup);
 
             // Calcular área geodésica
@@ -1315,8 +1315,36 @@ function onMapMeasureClick(e) {
                 ? `${(area / 10000).toFixed(2)} ha (${area.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} m²)`
                 : `${area.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} m²`) + ` | Perímetro: ${perFmt}`;
             document.getElementById('measure-result').textContent = formatted;
+        } else if (measurePoints.length === 2) {
+            L.polyline(measurePoints, { color: '#00a896', weight: 3, dashArray: '4, 4' }).addTo(measureLayerGroup);
+            const dist = measurePoints[0].distanceTo(measurePoints[1]);
+            const formatted = dist > 1000 ? `${(dist / 1000).toFixed(2)} km` : `${dist.toFixed(1)} m`;
+            document.getElementById('measure-result').textContent = `Comprimento: ${formatted} (adicione mais pontos)`;
+        } else {
+            document.getElementById('measure-result').textContent = '0.00 m²';
         }
     }
+}
+
+function undoMeasure() {
+    if (!measurePoints.length) return;
+    const pt = measurePoints.pop();
+    measureRedoPoints.push(pt);
+    renderMeasureGraphics();
+}
+
+function redoMeasure() {
+    if (!measureRedoPoints.length) return;
+    const pt = measureRedoPoints.pop();
+    measurePoints.push(pt);
+    renderMeasureGraphics();
+}
+
+function onMapMeasureClick(e) {
+    if (!measureMode) return;
+    measurePoints.push(e.latlng);
+    measureRedoPoints = [];
+    renderMeasureGraphics();
 }
 
 function onMapMeasureDblClick(e) {
