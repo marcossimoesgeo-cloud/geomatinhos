@@ -2329,14 +2329,18 @@ const GeoTools = (() => {
                 </select>
             </div>
 
-            <div class="tp-row" style="margin-top:10px;">
+            <div class="tp-row" style="margin-top:10px; display:flex; flex-direction:column; gap:6px;">
                 <button type="button" class="tp-btn primary" id="pr-go" style="padding:10px;font-size:0.84rem;">
                     <i class="fa-solid fa-print"></i> Imprimir / Salvar como PDF
+                </button>
+                <button type="button" class="tp-btn" id="pr-dl-img" style="padding:8px;font-size:0.78rem;background:#00796b;color:#fff;border:none;" title="Baixar imagem direta em PNG">
+                    <i class="fa-solid fa-file-image"></i> Baixar Imagem do Croqui (PNG)
                 </button>
             </div>
             <p class="tp-hint">O croqui impresso respeitará exatamente o enquadramento posicionado na folha ao lado, incluindo o símbolo oficial da Secretaria de Urbanismo no topo direito.</p>`;
 
         $('pr-go').addEventListener('click', doPrint);
+        $('pr-dl-img') && $('pr-dl-img').addEventListener('click', downloadCroquiImage);
         $('pr-title').addEventListener('input', refreshPrintFrameContent);
         $('pr-sub').addEventListener('input', refreshPrintFrameContent);
         $('pr-legend').addEventListener('change', refreshPrintFrameContent);
@@ -2611,7 +2615,6 @@ const GeoTools = (() => {
         const z = (state.printLock && state.printLock.zoom != null) ? state.printLock.zoom : map.getZoom();
         state.printLock = { center: c, zoom: z };
         state.isPrintingNow = true;
-        state.isAdjustingSheet = true;
 
         const dims = getPaperDimsMM();
         let st = $('print-page-style');
@@ -2627,21 +2630,72 @@ const GeoTools = (() => {
         refreshPrintFrameContent();
         document.body.classList.add('print-layout');
 
-        // Recalibrar o tamanho e o centro do mapa nas dimensões exatas da folha ANTES de abrir a impressão
+        // Sincroniza enquadramento do mapa nas dimensões exatas de impressão
         syncMapToPrintLock();
         setTimeout(() => {
             syncMapToPrintLock();
             window.print();
-        }, 450);
+        }, 300);
     }
 
     function endPrint() {
-        document.body.classList.remove('print-layout');
-        state.isPrintingNow = false;
-        if (state.printPreview && state.panel === 'print') {
-            updatePrintSheetGeometry(true);
-        } else {
-            onPrintPanelClose();
+        // No Chromium (Edge/Chrome), o evento 'afterprint' é despachado assincronamente
+        // antes mesmo do spooler de PDF concluir a geração do arquivo ou enquanto a caixa
+        // de diálogo de impressão está ativa.
+        // Aguardamos um delay seguro para que o layout de impressão seja preservado e o PDF
+        // gravado sem perda do croqui, mantendo o croqui aberto e editável em tela.
+        setTimeout(() => {
+            document.body.classList.remove('print-layout');
+            state.isPrintingNow = false;
+            if (state.printPreview && window.map) {
+                updatePrintSheetGeometry(true);
+            }
+        }, 1800);
+    }
+
+    async function downloadCroquiImage() {
+        if (typeof html2canvas === 'undefined') {
+            toast('Biblioteca de captura gráfica não carregada.', 'err');
+            return;
+        }
+        const fr = $('print-frame');
+        if (!fr) {
+            toast('Abra o painel de impressão para visualizar o croqui.', 'err');
+            return;
+        }
+        toast('Preparando download do croqui em alta resolução...', 'info', 2500);
+        try {
+            refreshPrintFrameContent();
+            // Adiciona classe de captura temporária para limpar banners visuais
+            document.body.classList.add('print-layout');
+            const wrap = document.querySelector('.main-wrapper') || document.body;
+            const canvas = await html2canvas(wrap, {
+                useCORS: true,
+                allowTaint: true,
+                scale: 2,
+                logging: false,
+                ignoreElements: el => {
+                    return el.classList.contains('sidebar') ||
+                           el.classList.contains('tools-dock') ||
+                           el.id === 'tool-panels' ||
+                           el.classList.contains('toast-box') ||
+                           el.classList.contains('pf-screen-banner') ||
+                           el.classList.contains('leaflet-control-container');
+                }
+            });
+            document.body.classList.remove('print-layout');
+            if (state.printPreview && window.map) updatePrintSheetGeometry(true);
+
+            const link = document.createElement('a');
+            link.download = `croqui_matinhos_${new Date().toISOString().slice(0, 10)}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            toast('Imagem do croqui baixada com sucesso!', 'ok');
+        } catch (err) {
+            console.error('Erro na exportação gráfica do croqui:', err);
+            document.body.classList.remove('print-layout');
+            if (state.printPreview && window.map) updatePrintSheetGeometry(true);
+            toast('Utilize a opção principal: "Imprimir / Salvar como PDF"', 'info', 3000);
         }
     }
 

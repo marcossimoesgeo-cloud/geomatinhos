@@ -667,7 +667,7 @@ body.print-preview-mode #map:active {
     flex-shrink: 0;
 }
 
-/* Modo de Disparo de Impressão (body.print-layout na tela e no @media print com dimensões idênticas) */
+/* Modo de Disparo de Impressão e Estilos Globais de Impressão */
 body.print-layout header.app-header,
 body.print-layout aside.sidebar,
 body.print-layout .tools-dock,
@@ -678,6 +678,7 @@ body.print-layout .measure-card,
 body.print-layout footer.status-bar,
 body.print-layout .pf-screen-banner,
 body.print-layout .pf-center-cross,
+body.print-layout .leaflet-control-container,
 body.print-layout .leaflet-control-zoom,
 body.print-layout .leaflet-draw {
     display: none !important;
@@ -722,32 +723,146 @@ body.print-layout #map {
     z-index: 99990 !important;
 }
 
+/* ============================================================
+   REGRAS INDEPENDENTES E UNIVERSAIS PARA @media print
+   Garante 100% de estabilidade ao salvar em PDF ou imprimir,
+   mesmo em navegadores Chromium onde 'afterprint' dispara cedo.
+   ============================================================ */
 @media print {
     * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
-    .tools-dock, #tool-panels, .toast-box, .user-area, .login-modal, .leaflet-draw, .map-floating-drawer-btn, .pf-screen-banner, .pf-center-cross, .leaflet-control-zoom {
+
+    /* Ocultar rigorosamente toda a interface de aplicação */
+    header.app-header,
+    aside.sidebar,
+    .tools-dock,
+    #tool-panels,
+    footer.status-bar,
+    .toast-box,
+    .user-area,
+    .login-modal,
+    .map-floating-drawer-btn,
+    .measure-card,
+    .leaflet-control-container,
+    .pf-screen-banner,
+    .pf-center-cross {
         display: none !important;
     }
-    body.print-layout #print-frame,
-    body.print-preview-mode #print-frame {
+
+    html, body {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+    }
+
+    .main-wrapper {
+        position: relative !important;
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+    }
+
+    #print-frame {
         display: flex !important;
-        position: fixed !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        position: absolute !important;
         top: 0 !important;
         left: 0 !important;
-        width: var(--pr-w, 281mm) !important;
-        height: var(--pr-h, 194mm) !important;
+        width: var(--pr-w, 100%) !important;
+        height: var(--pr-h, 100%) !important;
         box-shadow: none !important;
         border-radius: 0 !important;
+        z-index: 100000 !important;
+        pointer-events: none !important;
+        background: transparent !important;
+        overflow: hidden !important;
     }
-    body.print-layout #map,
-    body.print-preview-mode #map {
-        position: fixed !important;
-        top: var(--pr-head-h, 21mm) !important;
+
+    .pf-head {
+        height: var(--pr-head-h, 21mm) !important;
+        min-height: var(--pr-head-h, 21mm) !important;
+        max-height: var(--pr-head-h, 21mm) !important;
+        background: #ffffff !important;
+        border-bottom: 3px solid #0d3b66 !important;
+        padding: 2mm 4mm !important;
+        box-sizing: border-box !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+
+    .pf-logo-card {
+        height: calc(var(--pr-head-h, 21mm) - 5mm) !important;
+        max-height: 16mm !important;
+        background: #ffffff !important;
+        border: 1.5px solid #cbd5e1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 2px 4px !important;
+    }
+
+    .pf-logo-img {
+        max-height: 14mm !important;
+        height: 100% !important;
+        width: auto !important;
+        display: block !important;
+    }
+
+    .pf-map-frame {
+        position: relative !important;
+        flex: 1 1 auto !important;
+        border-left: 2px solid #0d3b66 !important;
+        border-right: 2px solid #0d3b66 !important;
+        border-top: none !important;
+        border-bottom: 2px solid #0d3b66 !important;
+        box-sizing: border-box !important;
+        background: transparent !important;
+        pointer-events: none !important;
+    }
+
+    .pf-legend {
+        background: rgba(255, 255, 255, 0.95) !important;
+        border: 1.5px solid #0d3b66 !important;
+        box-shadow: none !important;
+    }
+
+    .pf-foot {
+        height: var(--pr-foot-h, 6mm) !important;
+        min-height: var(--pr-foot-h, 6mm) !important;
+        max-height: var(--pr-foot-h, 6mm) !important;
+        background: #ffffff !important;
+        border-top: 1px solid #cbd5e1 !important;
+        padding: 0 3mm !important;
+        box-sizing: border-box !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+
+    #map {
+        display: block !important;
+        position: absolute !important;
         left: 0 !important;
-        width: var(--pr-w, 281mm) !important;
-        height: calc(var(--pr-h, 194mm) - var(--pr-head-h, 21mm) - var(--pr-foot-h, 6mm)) !important;
+        top: var(--pr-head-h, 21mm) !important;
+        width: var(--pr-w, 100%) !important;
+        height: calc(var(--pr-h, 100%) - var(--pr-head-h, 21mm) - var(--pr-foot-h, 6mm)) !important;
+        margin: 0 !important;
+        z-index: 50000 !important;
+        background: #ffffff !important;
     }
 }
 
