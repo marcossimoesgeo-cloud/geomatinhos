@@ -1,6 +1,6 @@
-﻿/**
+/**
  * Geoportal Matinhos - Configuração de Estilos e Metadados
- * Secretaria Municipal de Urbanismo - Prefeitura de Matinhos
+ * Secretaria Municipal de Urbanismo e Planejamento Urbano - Prefeitura de Matinhos
  */
 
 const ZONE_CONFIG = {

@@ -1,6 +1,6 @@
 /**
  * Geoportal Oficial de Matinhos - Script Principal
- * Secretaria Municipal de Urbanismo - Prefeitura de Matinhos
+ * Secretaria Municipal de Urbanismo e Planejamento Urbano - Prefeitura de Matinhos
  */
 
 document.addEventListener('DOMContentLoaded', () => {

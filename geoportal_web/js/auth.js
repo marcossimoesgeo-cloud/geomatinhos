@@ -106,7 +106,7 @@ const GeoAuth = (() => {
                 <button type="button" class="login-close" id="login-close" title="Fechar"><i class="fa-solid fa-xmark"></i></button>
                 <div class="login-icon"><i class="fa-solid fa-user-shield"></i></div>
                 <h2 id="login-title">Acesso de Servidores</h2>
-                <p class="login-sub">Prefeitura Municipal de Matinhos &bull; Secretaria de Urbanismo</p>
+                <p class="login-sub">Prefeitura Municipal de Matinhos &bull; Secretaria Municipal de Urbanismo e Planejamento Urbano</p>
 
                 <div class="login-tabs">
                     <button type="button" class="login-tab active" data-mode="signin" id="tab-signin">

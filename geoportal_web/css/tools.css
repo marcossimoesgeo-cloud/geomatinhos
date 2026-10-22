@@ -772,6 +772,8 @@ body.print-layout #map {
         background: #ffffff !important;
     }
 
+    body.print-preview-mode #print-frame,
+    body.print-layout #print-frame,
     #print-frame {
         display: flex !important;
         flex-direction: column !important;
@@ -779,8 +781,8 @@ body.print-layout #map {
         position: absolute !important;
         top: 0 !important;
         left: 0 !important;
-        width: var(--pr-w, 100%) !important;
-        height: var(--pr-h, 100%) !important;
+        width: 100% !important;
+        height: 100% !important;
         box-shadow: none !important;
         border-radius: 0 !important;
         z-index: 100000 !important;
@@ -853,16 +855,19 @@ body.print-layout #map {
         justify-content: space-between !important;
     }
 
+    body.print-preview-mode #map,
+    body.print-layout #map,
     #map {
         display: block !important;
         position: absolute !important;
         left: 0 !important;
         top: var(--pr-head-h, 21mm) !important;
-        width: var(--pr-w, 100%) !important;
-        height: calc(var(--pr-h, 100%) - var(--pr-head-h, 21mm) - var(--pr-foot-h, 6mm)) !important;
+        width: 100% !important;
+        height: calc(100% - var(--pr-head-h, 21mm) - var(--pr-foot-h, 6mm)) !important;
         margin: 0 !important;
         z-index: 50000 !important;
-        background: #ffffff !important;
+        background: transparent !important;
+    }
     }
 }
 
