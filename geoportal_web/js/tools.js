@@ -2461,10 +2461,14 @@ const GeoTools = (() => {
             const cb = $('layer-' + def.id);
             const g = layersMap[def.id];
             if (cb && g) {
-                cb.addEventListener('change', () => cb.checked ? g.addTo(map) : map.removeLayer(g));
+                cb.addEventListener('change', () => {
+                    cb.checked ? g.addTo(map) : map.removeLayer(g);
+                    if (window.updateLayerCounters) window.updateLayerCounters();
+                });
                 if (def.visible_default) { cb.checked = true; g.addTo(map); }
             }
         });
+        if (window.updateLayerCounters) window.updateLayerCounters();
     }
 
     function unloadRestricted() {
@@ -2476,6 +2480,7 @@ const GeoTools = (() => {
         if (typeof activeHighlight !== 'undefined' && activeHighlight && activeHighlight.layerDef && state.restrictedIds.has(activeHighlight.layerDef.id)) activeHighlight = null;
         state.restrictedIds.clear();
         if (state.restrictedGroupEl) { state.restrictedGroupEl.remove(); state.restrictedGroupEl = null; }
+        if (window.updateLayerCounters) window.updateLayerCounters();
         const d = $('info-details');
         if (d && state.lastDetail && state.lastDetail.restricted) {
             d.style.display = 'none';

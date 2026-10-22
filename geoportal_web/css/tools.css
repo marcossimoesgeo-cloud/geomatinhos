@@ -3,7 +3,7 @@
    ============================================================ */
 
 /* ---------- Área do usuário (cabeçalho) ---------- */
-.user-area { display: flex; align-items: center; gap: 0.5rem; margin-left: 0.4rem; padding-left: 0.75rem; border-left: 1px solid rgba(255,255,255,0.25); }
+.user-area { display: flex; align-items: center; gap: 0.5rem; }
 .user-chip {
     font-size: 0.76rem; font-weight: 600; padding: 6px 12px; border-radius: 999px;
     background: rgba(255,255,255,0.14); color: #fff; border: 1.5px solid rgba(255,255,255,0.3);
@@ -327,6 +327,16 @@ body.dark .btn-bulk { background: #0f172a; color: #e2e8f0; border-color: #475569
 body.dark .btn-bulk-off { background: #3b1a1a; color: #fca5a5; border-color: #7f1d1d; }
 body.dark .info-label { color: #94a3b8; }
 body.dark .info-value { color: #e2e8f0; }
+body.dark .didactic-guide-card { background: #0f172a; border-color: #334155; border-left-color: #38bdf8; }
+body.dark .didactic-guide-title, body.dark .didactic-guide-steps b, body.dark .thematic-header-title, body.dark .zone-filter-header label, body.dark .zone-legend-header { color: #38bdf8; }
+body.dark .didactic-guide-steps { color: #cbd5e1; }
+body.dark .basemap-presets, body.dark .thematic-header-card, body.dark .zone-operational-panel, body.dark .layer-item-featured, body.dark .didactic-empty-state { background: #0f172a; border-color: #334155; }
+body.dark .bm-preset-btn, body.dark .layer-filter-input, body.dark .btn-zoom-layer, body.dark .zone-legend-item, body.dark .zone-operational-panel .opacity-box, body.dark .zone-operational-panel .zone-filter-box { background: #1e293b; border-color: #475569; color: #e2e8f0; }
+body.dark .bm-preset-btn.active { background: #00a896; border-color: #00a896; color: #fff; }
+body.dark .zone-legend-item.active-zone-filter { background: #082f49; border-color: #38bdf8; }
+body.dark .group-header { background: #0f172a; border-color: #334155; }
+body.dark .group-title-text, body.dark .layer-name, body.dark .zone-legend-name { color: #e2e8f0; }
+
 
 /* ---------- Layout de impressão ---------- */
 #print-frame { display: none; }

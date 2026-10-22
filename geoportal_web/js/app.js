@@ -240,7 +240,55 @@ function initGeoportal() {
     setBasemap(1, 'googleSat');
     setBasemap(2, 'ortofoto');
 
-    // Eventos dos selects e sliders de basemap
+    function syncBasemapPresetHighlight() {
+        const k1 = basemapState[1].key;
+        const k2 = basemapState[2].key;
+        const op2 = document.getElementById('basemap-opacity-2') ? parseInt(document.getElementById('basemap-opacity-2').value, 10) : 100;
+        let activePreset = '';
+        if (k1 === 'googleSat' && k2 === 'ortofoto' && op2 >= 95) activePreset = 'ortho_sat';
+        else if (k1 === 'googleSat' && k2 === 'ortofoto' && op2 >= 40 && op2 <= 60) activePreset = 'compare_50';
+        else if (k1 === 'googleSat' && k2 === 'none') activePreset = 'sat_only';
+        else if (k1 === 'osm' && k2 === 'none') activePreset = 'osm_only';
+
+        document.querySelectorAll('.bm-preset-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-bm-preset') === activePreset);
+        });
+    }
+
+    function applyBasemapPreset(preset) {
+        const s1 = document.getElementById('basemap-opacity-1');
+        const v1 = document.getElementById('basemap-opacity-1-val');
+        const s2 = document.getElementById('basemap-opacity-2');
+        const v2 = document.getElementById('basemap-opacity-2-val');
+
+        // Garantir ordem padrão (Base = 1, Sobreposta = 2)
+        basemapState[1].zIndex = 1;
+        basemapState[2].zIndex = 2;
+
+        if (s1 && v1) { s1.value = 100; v1.textContent = '100%'; }
+
+        if (preset === 'ortho_sat') {
+            if (s2 && v2) { s2.value = 100; v2.textContent = '100%'; }
+            setBasemap(1, 'googleSat');
+            setBasemap(2, 'ortofoto');
+        } else if (preset === 'compare_50') {
+            if (s2 && v2) { s2.value = 50; v2.textContent = '50%'; }
+            setBasemap(1, 'googleSat');
+            setBasemap(2, 'ortofoto');
+            if (basemapState[2].layer) basemapState[2].layer.setOpacity(0.5);
+        } else if (preset === 'sat_only') {
+            if (s2 && v2) { s2.value = 100; v2.textContent = '100%'; }
+            setBasemap(1, 'googleSat');
+            setBasemap(2, 'none');
+        } else if (preset === 'osm_only') {
+            if (s2 && v2) { s2.value = 100; v2.textContent = '100%'; }
+            setBasemap(1, 'osm');
+            setBasemap(2, 'none');
+        }
+        syncBasemapPresetHighlight();
+    }
+
+    // Eventos dos selects, sliders e presets de basemap
     function setupBasemapControls() {
         [1, 2].forEach(slot => {
             const sel = document.getElementById(`basemap-select-${slot}`);
@@ -248,7 +296,10 @@ function initGeoportal() {
             const valLabel = document.getElementById(`basemap-opacity-${slot}-val`);
 
             if (sel) {
-                sel.addEventListener('change', () => setBasemap(slot, sel.value));
+                sel.addEventListener('change', () => {
+                    setBasemap(slot, sel.value);
+                    syncBasemapPresetHighlight();
+                });
             }
             if (slider && valLabel) {
                 slider.addEventListener('input', () => {
@@ -257,8 +308,15 @@ function initGeoportal() {
                     if (basemapState[slot].layer) {
                         basemapState[slot].layer.setOpacity(pct / 100);
                     }
+                    syncBasemapPresetHighlight();
                 });
             }
+        });
+
+        document.querySelectorAll('.bm-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                applyBasemapPreset(btn.getAttribute('data-bm-preset'));
+            });
         });
 
         const swapBtn = document.getElementById('btn-swap-basemaps');
@@ -294,22 +352,19 @@ function setupUIEvents() {
         });
     });
 
-    // Controle da Gaveta Flutuante de Camadas (Inicia Oculta)
+    // Controle da Gaveta Flutuante de Camadas e Legendas (Inicia Oculta)
     const sidebar = document.getElementById('sidebar');
-    const btnToggleCamadas = document.getElementById('btn-toggle-camadas');
     const floatingLayersBtn = document.getElementById('floating-layers-btn');
     const btnCloseSidebar = document.getElementById('btn-close-sidebar');
 
     function openLayersPanel() {
         sidebar.classList.remove('collapsed');
-        if (btnToggleCamadas) btnToggleCamadas.classList.add('active');
         const tabCamadasBtn = document.getElementById('tab-btn-camadas');
         if (tabCamadasBtn) tabCamadasBtn.click();
     }
 
     function closeSidebar() {
         sidebar.classList.add('collapsed');
-        if (btnToggleCamadas) btnToggleCamadas.classList.remove('active');
     }
 
     function toggleLayersPanel() {
@@ -320,11 +375,8 @@ function setupUIEvents() {
         }
     }
 
-    if (btnToggleCamadas) {
-        btnToggleCamadas.addEventListener('click', toggleLayersPanel);
-    }
     if (floatingLayersBtn) {
-        floatingLayersBtn.addEventListener('click', openLayersPanel);
+        floatingLayersBtn.addEventListener('click', toggleLayersPanel);
     }
     if (btnCloseSidebar) {
         btnCloseSidebar.addEventListener('click', closeSidebar);
@@ -372,14 +424,93 @@ function setupUIEvents() {
         }
     });
 
-    // Filtro de Zonas no Select
+    // Filtro de Zonas no Select e Botão Reset
     const zoneFilterSelect = document.getElementById('zone-filter-select');
+    const btnResetZoneFilter = document.getElementById('btn-reset-zone-filter');
     zoneFilterSelect.addEventListener('change', (e) => {
-        currentZoneFilter = e.target.value;
-        if (layersMap['zoneamento_corrigido']) {
-            layersMap['zoneamento_corrigido'].setStyle(feature => getZoneFeatureStyle(feature));
-        }
+        applyZoneFilter(e.target.value, true);
     });
+    if (btnResetZoneFilter) {
+        btnResetZoneFilter.addEventListener('click', () => {
+            applyZoneFilter('ALL', false);
+        });
+    }
+
+    // Botões de Enquadrar Camada no Mapa (Lupa)
+    document.querySelectorAll('.btn-zoom-layer').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const layerId = btn.getAttribute('data-zoom-layer');
+            zoomToThematicLayer(layerId);
+        });
+    });
+
+    // Filtro rápido por texto de camadas e zonas
+    const layerFilterInput = document.getElementById('layer-filter-input');
+    const layerFilterClear = document.getElementById('layer-filter-clear');
+    if (layerFilterInput) {
+        const runLayerFilter = () => {
+            const raw = layerFilterInput.value.trim();
+            if (layerFilterClear) layerFilterClear.style.display = raw ? 'block' : 'none';
+            const q = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+            document.querySelectorAll('#tab-camadas .layer-group').forEach(group => {
+                const items = group.querySelectorAll('.layer-item');
+                let anyMatch = false;
+                items.forEach(item => {
+                    const txt = (item.textContent || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                    const match = !q || txt.includes(q);
+                    item.style.display = match ? 'flex' : 'none';
+                    if (match) anyMatch = true;
+                });
+
+                // Se for o grupo de zoneamento, filtrar também os itens da legenda de zonas
+                if (group.getAttribute('data-group-container') === 'group-zoneamento') {
+                    const zItems = group.querySelectorAll('.zone-legend-item');
+                    let anyZoneMatch = false;
+                    zItems.forEach(zi => {
+                        const zTxt = (zi.textContent || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                        const zMatch = !q || zTxt.includes(q);
+                        zi.style.display = zMatch ? 'flex' : 'none';
+                        if (zMatch) anyZoneMatch = true;
+                    });
+                    if (anyZoneMatch) {
+                        anyMatch = true;
+                        const mainZoneRow = group.querySelector('[data-layer-row="zoneamento_corrigido"]');
+                        if (mainZoneRow) mainZoneRow.style.display = 'flex';
+                    }
+                }
+
+                group.style.display = anyMatch ? 'block' : 'none';
+                if (q && anyMatch) {
+                    const content = group.querySelector('.group-content');
+                    const icon = group.querySelector('.toggle-icon');
+                    if (content) content.style.display = 'block';
+                    if (icon) icon.className = 'fa-solid fa-chevron-down toggle-icon';
+                }
+            });
+        };
+        layerFilterInput.addEventListener('input', runLayerFilter);
+        if (layerFilterClear) {
+            layerFilterClear.addEventListener('click', () => {
+                layerFilterInput.value = '';
+                runLayerFilter();
+                layerFilterInput.focus();
+            });
+        }
+    }
+
+    // Atualizar contadores sempre que qualquer checkbox de camada mudar
+    const tabCamadas = document.getElementById('tab-camadas');
+    if (tabCamadas) {
+        tabCamadas.addEventListener('change', (e) => {
+            if (e.target && e.target.type === 'checkbox') {
+                updateLayerCounters();
+            }
+        });
+    }
+    updateLayerCounters();
 
     // Coordenadas em tempo real na barra de status
     map.on('mousemove', (e) => {
@@ -496,34 +627,50 @@ async function loadVectorLayers() {
             // Opção no select
             const opt = document.createElement('option');
             opt.value = zk;
-            opt.textContent = zk;
+            opt.textContent = `${z.badge} — ${z.label}`;
             filterSelect.appendChild(opt);
 
-            // Item na legenda da sidebar
+            // Item interativo na legenda da sidebar (clique isola a zona no mapa!)
             const legItem = document.createElement('div');
-            legItem.style.display = 'flex';
-            legItem.style.alignItems = 'center';
-            legItem.style.gap = '6px';
-            legItem.style.padding = '3px 0';
-            legItem.style.fontSize = '0.78rem';
+            legItem.className = 'zone-legend-item';
+            legItem.setAttribute('data-zone-key', zk);
+            legItem.title = `${z.desc} (Clique para ativar e isolar no mapa)`;
             legItem.innerHTML = `
-                <span class="layer-badge" style="background: ${z.color};"></span>
-                <span title="${z.desc}">${z.label}</span>
+                <div class="zone-legend-left">
+                    <span class="zone-legend-code" style="background: ${z.color};">${z.badge}</span>
+                    <span class="zone-legend-name">${z.label}</span>
+                </div>
+                <span class="zone-legend-action">Isolar</span>
             `;
+            legItem.addEventListener('click', () => {
+                const nextZone = (currentZoneFilter === zk) ? 'ALL' : zk;
+                applyZoneFilter(nextZone, nextZone !== 'ALL');
+            });
             legendList.appendChild(legItem);
 
-            // Card na aba de estatísticas
+            // Card interativo na aba Guia de Zonas
             const statCard = document.createElement('div');
             statCard.className = 'info-card';
             statCard.style.padding = '10px';
             statCard.style.marginBottom = '8px';
             statCard.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                    <span class="info-badge" style="background: ${z.color};">${z.badge}</span>
-                    <b style="font-size: 0.85rem; color: var(--primary);">${z.label}</b>
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span class="info-badge" style="background: ${z.color};">${z.badge}</span>
+                        <b style="font-size: 0.84rem; color: var(--primary);">${z.label}</b>
+                    </div>
+                    <button type="button" class="btn-reset-zone-filter" data-guide-zone="${zk}" title="Ativar Zoneamento e isolar esta zona no mapa">
+                        <i class="fa-solid fa-magnifying-glass-location"></i> Isolar no mapa
+                    </button>
                 </div>
-                <p style="font-size: 0.76rem; color: var(--text-muted); line-height: 1.3;">${z.desc}</p>
+                <p style="font-size: 0.76rem; color: var(--text-muted); line-height: 1.35;">${z.desc}</p>
             `;
+            const guideBtn = statCard.querySelector('[data-guide-zone]');
+            if (guideBtn) {
+                guideBtn.addEventListener('click', () => {
+                    applyZoneFilter(zk, true);
+                });
+            }
             statsList.appendChild(statCard);
         });
 
@@ -651,8 +798,10 @@ async function loadGeoJsonLayer(layerDef) {
                 } else {
                     map.removeLayer(geojsonLayer);
                 }
+                updateLayerCounters();
             });
         }
+        updateLayerCounters();
 
     } catch (err) {
         console.error(`Erro ao carregar camada ${layerId}:`, err);
@@ -1174,4 +1323,120 @@ function onMapMeasureDblClick(e) {
     if (!measureMode) return;
     L.DomEvent.stopPropagation(e);
     document.getElementById('measure-hint').textContent = 'Medição concluída! Clique em limpar para nova medição.';
+}
+
+
+/**
+ * Atualiza os contadores de camadas ativas no botão flutuante, no cabeçalho e em cada grupo
+ */
+function updateLayerCounters() {
+    const allCbs = document.querySelectorAll('#tab-camadas .group-content input[type="checkbox"]');
+    let totalActive = 0;
+    allCbs.forEach(cb => {
+        if (cb.checked) totalActive++;
+    });
+
+    const labelText = totalActive === 1 ? '1 ativa' : `${totalActive} ativas`;
+    const floatBadge = document.getElementById('floating-layers-badge');
+    if (floatBadge) {
+        floatBadge.textContent = labelText;
+        floatBadge.classList.toggle('has-active', totalActive > 0);
+    }
+
+    const sideBadge = document.getElementById('sidebar-active-badge');
+    if (sideBadge) {
+        sideBadge.textContent = labelText;
+        sideBadge.classList.toggle('has-active', totalActive > 0);
+    }
+
+    const groupIds = ['group-zoneamento', 'group-admin', 'group-preservacao', 'group-ambiental', 'group-publicos'];
+    groupIds.forEach(gid => {
+        const container = document.getElementById(gid);
+        const pill = document.getElementById('count-' + gid);
+        if (container && pill) {
+            const cbs = container.querySelectorAll('input[type="checkbox"]');
+            let act = 0;
+            cbs.forEach(c => { if (c.checked) act++; });
+            pill.textContent = `${act}/${cbs.length}`;
+            pill.classList.toggle('active-group', act > 0);
+        }
+    });
+}
+window.updateLayerCounters = updateLayerCounters;
+
+/**
+ * Liga (se desligada) e enquadra uma camada temática no mapa
+ */
+function zoomToThematicLayer(layerId) {
+    const g = layersMap[layerId];
+    const cb = document.getElementById('layer-' + layerId);
+    if (cb && !cb.checked) {
+        cb.checked = true;
+        cb.dispatchEvent(new Event('change'));
+    }
+    if (g && g.getBounds) {
+        const b = g.getBounds();
+        if (b && b.isValid()) {
+            map.fitBounds(b, { padding: [50, 50], maxZoom: 17 });
+            if (window.GeoTools) GeoTools.toast('Camada ativada e enquadrada no mapa!', 'ok', 2000);
+        }
+    }
+}
+
+/**
+ * Aplica filtro de zona específica (ativando automaticamente a camada de Zoneamento se estiver desligada)
+ */
+function applyZoneFilter(zoneKey, shouldZoom) {
+    currentZoneFilter = zoneKey || 'ALL';
+    const sel = document.getElementById('zone-filter-select');
+    if (sel && sel.value !== currentZoneFilter) {
+        sel.value = currentZoneFilter;
+    }
+
+    const resetBtn = document.getElementById('btn-reset-zone-filter');
+    if (resetBtn) {
+        resetBtn.style.display = currentZoneFilter === 'ALL' ? 'none' : 'inline-flex';
+    }
+
+    // Se filtrou uma zona específica e a camada de zoneamento está desligada, liga automaticamente!
+    const zCb = document.getElementById('layer-zoneamento_corrigido');
+    if (currentZoneFilter !== 'ALL' && zCb && !zCb.checked) {
+        zCb.checked = true;
+        zCb.dispatchEvent(new Event('change'));
+    }
+
+    // Atualizar destaque na legenda interativa
+    document.querySelectorAll('.zone-legend-item').forEach(item => {
+        const zk = item.getAttribute('data-zone-key');
+        const isCurrent = (currentZoneFilter !== 'ALL' && zk === currentZoneFilter);
+        item.classList.toggle('active-zone-filter', isCurrent);
+        const actSpan = item.querySelector('.zone-legend-action');
+        if (actSpan) {
+            actSpan.textContent = isCurrent ? 'Isolada ✓' : 'Isolar';
+        }
+    });
+
+    const zLayer = layersMap['zoneamento_corrigido'];
+    if (zLayer) {
+        zLayer.setStyle(feature => getZoneFeatureStyle(feature));
+
+        if (shouldZoom && currentZoneFilter !== 'ALL') {
+            let bounds = null;
+            zLayer.eachLayer(l => {
+                if (l.feature && l.feature.properties && l.feature.properties.Layer === currentZoneFilter && l.getBounds) {
+                    const b = l.getBounds();
+                    if (b && b.isValid()) {
+                        bounds = bounds ? bounds.extend(b) : L.latLngBounds(b.getSouthWest(), b.getNorthEast());
+                    }
+                }
+            });
+            if (bounds && bounds.isValid()) {
+                map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
+            }
+            const zCfg = ZONE_CONFIG[currentZoneFilter];
+            if (window.GeoTools && zCfg) {
+                GeoTools.toast(`Zona isolada no mapa: ${zCfg.badge} — ${zCfg.label}`, 'ok', 2400);
+            }
+        }
+    }
 }

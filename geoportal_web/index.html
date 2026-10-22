@@ -46,9 +46,6 @@
 
         <!-- Botões de Ação e Acesso -->
         <div class="header-actions">
-            <button type="button" class="btn-tool" id="btn-toggle-camadas" title="Exibir / Ocultar Painel de Camadas">
-                <i class="fa-solid fa-layer-group"></i> <b>Camadas</b>
-            </button>
             <div class="user-area">
                 <button type="button" id="user-chip" class="user-chip public active-mode" title="Clique para alternar ou ver status do Acesso Público">
                     <i class="fa-solid fa-globe"></i> Acesso público
@@ -62,52 +59,86 @@
 
     <!-- Estrutura Principal -->
     <div class="main-wrapper">
-        <!-- Barra Lateral / Gaveta Flutuante de Camadas (Inicia Oculta) -->
+        <!-- Barra Lateral / Gaveta Flutuante de Camadas e Legendas (Inicia Oculta) -->
         <aside class="sidebar collapsed" id="sidebar">
             <div class="sidebar-top-bar">
-                <span><i class="fa-solid fa-layer-group"></i> Painel de Camadas & Consulta</span>
-                <button class="btn-close-sidebar" id="btn-close-sidebar" title="Ocultar Painel">
-                    <i class="fa-solid fa-xmark"></i> Ocultar
+                <span><i class="fa-solid fa-layer-group"></i> Camadas e Legendas</span>
+                <button class="btn-close-sidebar" id="btn-close-sidebar" title="Recolher Painel (Esc)">
+                    <i class="fa-solid fa-chevron-left"></i> Recolher
                 </button>
             </div>
             <div class="sidebar-tabs">
                 <button class="tab-btn active" data-tab="tab-camadas" id="tab-btn-camadas">
-                    <i class="fa-solid fa-layer-group"></i> Camadas
+                    <i class="fa-solid fa-layer-group"></i> Camadas & Legendas
                 </button>
                 <button class="tab-btn" data-tab="tab-consulta" id="tab-btn-consulta">
                     <i class="fa-solid fa-circle-info"></i> Detalhes
                 </button>
                 <button class="tab-btn" data-tab="tab-estatisticas" id="tab-btn-estatisticas">
-                    <i class="fa-solid fa-chart-pie"></i> Zoneamento
+                    <i class="fa-solid fa-book-open"></i> Guia de Zonas
                 </button>
             </div>
 
-            <!-- Aba 1: Camadas & Legenda -->
+            <!-- Aba 1: Camadas & Legendas (Reelaborada, Didática e Operacional) -->
             <div class="tab-content active" id="tab-camadas">
 
-                <!-- ===== PAINEL DE BASEMAPS DUPLOS ===== -->
+                <!-- Guia Rápido Didático -->
+                <div class="didactic-guide-card">
+                    <div class="didactic-guide-title">
+                        <i class="fa-solid fa-graduation-cap"></i> Como operar este painel:
+                    </div>
+                    <div class="didactic-guide-steps">
+                        <span><b>1.</b> Ajuste o <em>Mapa de Fundo</em> (Ortofoto/Satélite).</span>
+                        <span><b>2.</b> Ative as <em>Camadas</em> no interruptor ou clique em <i class="fa-solid fa-magnifying-glass-location"></i> para focar no mapa.</span>
+                        <span><b>3.</b> Clique sobre qualquer lote ou zona no mapa para ver seus <em>Detalhes</em>.</span>
+                    </div>
+                </div>
+
+                <!-- ===== PASSO 1: PAINEL DE BASEMAPS DUPLOS E PRESETS ===== -->
                 <div class="basemap-panel">
                     <div class="basemap-panel-title">
-                        <i class="fa-solid fa-satellite-dish"></i> Imagens de Fundo
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span class="step-pill">PASSO 1</span>
+                            <span><i class="fa-solid fa-satellite-dish"></i> Mapa de Fundo & Ortofoto</span>
+                        </div>
+                    </div>
+
+                    <!-- Atalhos Rápidos de Visualização (1 clique) -->
+                    <div class="basemap-presets">
+                        <span class="basemap-presets-label">Combinações rápidas:</span>
+                        <div class="basemap-presets-grid">
+                            <button type="button" class="bm-preset-btn active" data-bm-preset="ortho_sat" title="Ortomosaico 2025 sobreposto ao Google Satélite">
+                                🛩️ Ortofoto + Satélite
+                            </button>
+                            <button type="button" class="bm-preset-btn" data-bm-preset="compare_50" title="Ortofoto com 50% de transparência para comparar com o Satélite">
+                                🔀 Comparar 50%
+                            </button>
+                            <button type="button" class="bm-preset-btn" data-bm-preset="sat_only" title="Exibir apenas Google Satélite">
+                                🛰️ Só Satélite
+                            </button>
+                            <button type="button" class="bm-preset-btn" data-bm-preset="osm_only" title="Exibir Mapa de Ruas (OpenStreetMap)">
+                                🗺️ Mapa de Ruas
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Slot 1: Camada Base -->
                     <div class="basemap-slot">
                         <div class="basemap-slot-header">
-                            <span class="basemap-slot-badge base">BASE</span>
-                            <span class="basemap-slot-label">Camada de Fundo</span>
+                            <span class="basemap-slot-badge base">1. BASE</span>
+                            <span class="basemap-slot-label">Imagem de Fundo Principal</span>
                         </div>
                         <select id="basemap-select-1" class="basemap-select">
                             <option value="googleSat" selected>🛰️ Google Satélite</option>
                             <option value="esri">🛰️ Esri Imagens Aéreas</option>
-                            <option value="osm">🗺️ OpenStreetMap</option>
+                            <option value="osm">🗺️ OpenStreetMap (Ruas)</option>
                             <option value="topo">⛰️ OpenTopoMap (Relevo)</option>
-                            <option value="carto">⚪ CartoDB Positron (Claro)</option>
+                            <option value="carto">⚪ CartoDB Positron (Mapa Claro)</option>
                             <option value="ortofoto">🛩️ Ortomosaico Matinhos (Aerolevantamento 2025)</option>
                             <option value="none">— Nenhuma —</option>
                         </select>
                         <div class="basemap-opacity-row">
-                            <span class="basemap-opacity-label"><i class="fa-solid fa-circle-half-stroke"></i> Opacidade</span>
+                            <span class="basemap-opacity-label"><i class="fa-solid fa-circle-half-stroke"></i> Visibilidade</span>
                             <input type="range" id="basemap-opacity-1" class="basemap-opacity-slider" min="10" max="100" value="100">
                             <span id="basemap-opacity-1-val" class="basemap-opacity-val">100%</span>
                         </div>
@@ -116,8 +147,8 @@
                     <!-- Botão de troca de sobreposição -->
                     <div class="basemap-swap-row">
                         <div class="basemap-swap-line"></div>
-                        <button id="btn-swap-basemaps" class="btn-swap-basemaps" title="Inverter qual camada fica por cima">
-                            <i class="fa-solid fa-arrows-up-down"></i> Inverter Sobreposição
+                        <button id="btn-swap-basemaps" class="btn-swap-basemaps" title="Inverter qual imagem fica por cima">
+                            <i class="fa-solid fa-arrows-up-down"></i> Inverter Ordem (Base ↔ Sobreposta)
                         </button>
                         <div class="basemap-swap-line"></div>
                     </div>
@@ -125,20 +156,20 @@
                     <!-- Slot 2: Camada Sobreposta -->
                     <div class="basemap-slot basemap-slot-overlay">
                         <div class="basemap-slot-header">
-                            <span class="basemap-slot-badge overlay">SOBRE</span>
-                            <span class="basemap-slot-label">Sobreposta à Base</span>
+                            <span class="basemap-slot-badge overlay">2. SOBREPOSTA</span>
+                            <span class="basemap-slot-label">Imagem Acima da Base</span>
                         </div>
                         <select id="basemap-select-2" class="basemap-select">
-                            <option value="none">— Nenhuma —</option>
+                            <option value="none">— Nenhuma (Desativada) —</option>
                             <option value="ortofoto" selected>🛩️ Ortomosaico Matinhos (Aerolevantamento 2025)</option>
                             <option value="googleSat">🛰️ Google Satélite</option>
                             <option value="esri">🛰️ Esri Imagens Aéreas</option>
-                            <option value="osm">🗺️ OpenStreetMap</option>
+                            <option value="osm">🗺️ OpenStreetMap (Ruas)</option>
                             <option value="topo">⛰️ OpenTopoMap (Relevo)</option>
-                            <option value="carto">⚪ CartoDB Positron (Claro)</option>
+                            <option value="carto">⚪ CartoDB Positron (Mapa Claro)</option>
                         </select>
                         <div class="basemap-opacity-row">
-                            <span class="basemap-opacity-label"><i class="fa-solid fa-circle-half-stroke"></i> Opacidade</span>
+                            <span class="basemap-opacity-label"><i class="fa-solid fa-circle-half-stroke"></i> Visibilidade</span>
                             <input type="range" id="basemap-opacity-2" class="basemap-opacity-slider" min="10" max="100" value="100">
                             <span id="basemap-opacity-2-val" class="basemap-opacity-val">100%</span>
                         </div>
@@ -146,240 +177,435 @@
                 </div>
                 <!-- ===== FIM PAINEL BASEMAPS ===== -->
 
-                <!-- Controle Deslizante de Opacidade do Zoneamento -->
-                <div class="opacity-box">
-                    <div class="opacity-header">
-                        <span><i class="fa-solid fa-circle-half-stroke"></i> Transparência do Zoneamento</span>
-                        <span id="opacity-val">65%</span>
+                <!-- ===== PASSO 2: CAMADAS TEMÁTICAS E LEGENDAS ===== -->
+                <div class="thematic-header-card">
+                    <div class="thematic-header-top">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span class="step-pill step-2">PASSO 2</span>
+                            <span class="thematic-header-title"><i class="fa-solid fa-map-location-dot"></i> Camadas & Legendas</span>
+                        </div>
+                        <span class="sidebar-active-badge" id="sidebar-active-badge">0 ativas</span>
                     </div>
-                    <input type="range" id="opacity-slider" class="opacity-slider" min="10" max="100" value="65">
-                </div>
 
-                <!-- Filtro Dinâmico de Zoneamento -->
-                <div class="zone-filter-box">
-                    <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">
-                        <i class="fa-solid fa-filter"></i> Filtrar Zona Específica:
-                    </label>
-                    <select id="zone-filter-select">
-                        <option value="ALL">Exibir Todas as Zonas</option>
-                    </select>
-                </div>
-
-                <div class="section-title">
-                    <span>Camadas Temáticas</span>
-                </div>
-                <div class="layers-bulk-actions">
-                    <button type="button" class="btn-bulk" id="btn-layers-on" title="Ligar todas as camadas">
-                        <i class="fa-solid fa-eye"></i> Ligar todas
-                    </button>
-                    <button type="button" class="btn-bulk btn-bulk-off" id="btn-layers-off" title="Desligar todas as camadas de uma vez">
-                        <i class="fa-solid fa-eye-slash"></i> Desligar todas
-                    </button>
-                </div>
-
-                <!-- Grupo 1: Divisão Administrativa -->
-                <div class="layer-group">
-                    <div class="group-header" data-toggle="group-admin">
-                        <span><i class="fa-solid fa-landmark"></i> Divisão Administrativa</span>
-                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                    <!-- Busca rápida de camadas / legendas -->
+                    <div class="layer-search-box">
+                        <i class="fa-solid fa-magnifying-glass layer-search-ico"></i>
+                        <input type="text" id="layer-filter-input" class="layer-filter-input" placeholder="Buscar camada ou zona (ex: ZR 1, Parque, Bairro)..." autocomplete="off">
+                        <button type="button" id="layer-filter-clear" class="layer-filter-clear" title="Limpar filtro" style="display:none;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
-                    <div class="group-content" id="group-admin">
-                        <div class="layer-item">
-                            <label class="layer-label">
-                                <span class="layer-badge" style="border: 2px dashed #000000; background: transparent;"></span>
-                                <span>Limite Municipal</span>
-                            </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-limite_municipal">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <div class="layer-item">
-                            <label class="layer-label">
-                                <span class="layer-badge" style="border: 2px dashed #e31a1c; background: rgba(227,26,28,0.1);"></span>
-                                <span>Perímetro Urbano</span>
-                            </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-perimetro_urbano">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <div class="layer-item">
-                            <label class="layer-label">
-                                <span class="layer-badge" style="border: 1px solid #1f78b4; background: rgba(51,160,44,0.2);"></span>
-                                <span>Bairros e Balneários</span>
-                            </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-limite_bairros_ipm">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <div class="layer-item">
-                            <label class="layer-label">
-                                <span class="layer-badge" style="background: linear-gradient(45deg, #d7191c, #fdae61, #abdda4, #2b83ba); border: 1px solid #333;"></span>
-                                <span>Loteamentos por Bairro</span>
-                            </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-loteamento_por_bairro">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+
+                    <!-- Ações em massa -->
+                    <div class="layers-bulk-actions">
+                        <button type="button" class="btn-bulk" id="btn-layers-on" title="Ativar todas as camadas no mapa">
+                            <i class="fa-solid fa-eye"></i> Ligar todas
+                        </button>
+                        <button type="button" class="btn-bulk btn-bulk-off" id="btn-layers-off" title="Desativar todas as camadas do mapa">
+                            <i class="fa-solid fa-eye-slash"></i> Desligar todas
+                        </button>
                     </div>
                 </div>
 
-                <!-- Camada Especial Isolada: Áreas de Preservação / Drenagem (Sobreposição Prioritária) -->
-                <div class="layer-group" style="border: 2px solid #009688; background: #e0f2f1; margin-bottom: 0.75rem;">
-                    <div class="group-header" style="background: rgba(0, 150, 136, 0.15); color: #004d40; border-bottom: 1px solid #b2dfdb; cursor: default;">
-                        <span><i class="fa-solid fa-water" style="color: #00796b;"></i> <b>Preservação & Drenagem</b></span>
-                        <span style="font-size: 0.65rem; background: #00796b; color: #ffffff; padding: 2px 6px; border-radius: 4px; font-weight: 700; letter-spacing: 0.5px;">SOBREPOSTA</span>
-                    </div>
-                    <div class="group-content" style="padding: 8px 10px;">
-                        <div class="layer-item" style="border-bottom: none; padding: 2px 0;">
-                            <label class="layer-label" style="font-weight: 600; color: #004d40;">
-                                <span class="layer-badge" style="background: #0a9396; border: 1.5px solid #005f73;"></span>
-                                <span>Áreas de Preservação / Drenagem</span>
-                            </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-area_de_preservacao">
-                                <span class="slider" style="background-color: #00796b;"></span>
-                            </label>
-                        </div>
-                        <div style="font-size: 0.72rem; color: #00695c; margin-top: 4px; line-height: 1.3;">
-                            <i class="fa-solid fa-shield-halved"></i> Camada prioritária isolada das demais e sobreposta no topo de todo o mapa.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Grupo 2: Zoneamento de Uso do Solo -->
-                <div class="layer-group">
+                <!-- Grupo 1: Zoneamento Municipal (Integrado com Transparência, Filtro e Legenda Clicável) -->
+                <div class="layer-group group-zoneamento-card" data-group-container="group-zoneamento">
                     <div class="group-header" data-toggle="group-zoneamento">
-                        <span><i class="fa-solid fa-shapes"></i> Zoneamento Municipal</span>
-                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                        <div class="group-header-left">
+                            <i class="fa-solid fa-shapes group-ico" style="color: #72075e;"></i>
+                            <div>
+                                <div class="group-title-text">Zoneamento Municipal</div>
+                                <div class="group-subtitle-text">Plano Diretor &bull; Uso e Ocupação do Solo</div>
+                            </div>
+                        </div>
+                        <div class="group-header-right">
+                            <span class="group-count-pill" id="count-group-zoneamento">0/1</span>
+                            <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                        </div>
                     </div>
                     <div class="group-content" id="group-zoneamento">
-                        <div class="layer-item" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 4px;">
-                            <label class="layer-label" style="font-weight: 600;">
+                        <!-- Interruptor Principal do Zoneamento -->
+                        <div class="layer-item layer-item-featured" data-layer-row="zoneamento_corrigido">
+                            <label class="layer-label" for="layer-zoneamento_corrigido">
                                 <span class="layer-badge" style="background: linear-gradient(45deg, #72075e, #ff7d00, #437600);"></span>
-                                <span>Camada de Zoneamento</span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Malha de Zoneamento Urbano</span>
+                                    <span class="layer-desc-sub">Exibe todas as zonas do Plano Diretor no mapa</span>
+                                </div>
                             </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-zoneamento_corrigido">
-                                <span class="slider"></span>
-                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="zoneamento_corrigido" title="Ligar e enquadrar Zoneamento no mapa">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch" title="Ligar / Desligar camada de Zoneamento">
+                                    <input type="checkbox" id="layer-zoneamento_corrigido">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
-                        <!-- Subitens da legenda de zoneamento -->
-                        <div id="zone-legend-list" style="max-height: 230px; overflow-y: auto; padding-right: 4px;">
-                            <!-- Preenchido dinamicamente via JS -->
+
+                        <!-- Controles Operacionais do Zoneamento (Integrados ao Grupo!) -->
+                        <div class="zone-operational-panel">
+                            <!-- Controle Deslizante de Opacidade do Zoneamento -->
+                            <div class="opacity-box">
+                                <div class="opacity-header">
+                                    <span><i class="fa-solid fa-circle-half-stroke"></i> Opacidade das Cores das Zonas</span>
+                                    <span id="opacity-val">65%</span>
+                                </div>
+                                <input type="range" id="opacity-slider" class="opacity-slider" min="10" max="100" value="65">
+                            </div>
+
+                            <!-- Filtro Dinâmico de Zoneamento -->
+                            <div class="zone-filter-box">
+                                <div class="zone-filter-header">
+                                    <label for="zone-filter-select">
+                                        <i class="fa-solid fa-filter"></i> Isolar / Destacar Zona Específica:
+                                    </label>
+                                    <button type="button" id="btn-reset-zone-filter" class="btn-reset-zone-filter" style="display:none;" title="Voltar a exibir todas as zonas">
+                                        <i class="fa-solid fa-rotate-left"></i> Mostrar todas
+                                    </button>
+                                </div>
+                                <select id="zone-filter-select">
+                                    <option value="ALL">Exibir Todas as Zonas (Sem Filtro)</option>
+                                </select>
+                            </div>
+
+                            <!-- Legenda Interativa do Zoneamento -->
+                            <div class="zone-legend-header">
+                                <span><i class="fa-solid fa-list-check"></i> <b>Legenda Interativa de Zonas</b></span>
+                                <small>Clique em uma zona para isolá-la no mapa</small>
+                            </div>
+                            <div id="zone-legend-list" class="zone-legend-list">
+                                <!-- Preenchido dinamicamente via JS -->
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Grupo 3: Meio Ambiente & Parques -->
-                <div class="layer-group">
+                <!-- Grupo 2: Divisão Administrativa & Cadastro -->
+                <div class="layer-group" data-group-container="group-admin">
+                    <div class="group-header" data-toggle="group-admin">
+                        <div class="group-header-left">
+                            <i class="fa-solid fa-landmark group-ico" style="color: #0d3b66;"></i>
+                            <div>
+                                <div class="group-title-text">Divisão Administrativa</div>
+                                <div class="group-subtitle-text">Limites Oficiais, Bairros e Loteamentos</div>
+                            </div>
+                        </div>
+                        <div class="group-header-right">
+                            <span class="group-count-pill" id="count-group-admin">0/4</span>
+                            <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                        </div>
+                    </div>
+                    <div class="group-content" id="group-admin">
+                        <div class="layer-item" data-layer-row="limite_municipal">
+                            <label class="layer-label" for="layer-limite_municipal">
+                                <span class="layer-badge" style="border: 2px dashed #000000; background: transparent;"></span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Limite Municipal</span>
+                                    <span class="layer-desc-sub">Divisa territorial oficial de Matinhos</span>
+                                </div>
+                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="limite_municipal" title="Ligar e enquadrar Limite Municipal">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-limite_municipal">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="layer-item" data-layer-row="perimetro_urbano">
+                            <label class="layer-label" for="layer-perimetro_urbano">
+                                <span class="layer-badge" style="border: 2px dashed #e31a1c; background: rgba(227,26,28,0.12);"></span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Perímetro Urbano</span>
+                                    <span class="layer-desc-sub">Poligonal da área urbana municipal</span>
+                                </div>
+                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="perimetro_urbano" title="Ligar e enquadrar Perímetro Urbano">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-perimetro_urbano">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="layer-item" data-layer-row="limite_bairros_ipm">
+                            <label class="layer-label" for="layer-limite_bairros_ipm">
+                                <span class="layer-badge" style="border: 1.5px solid #1f78b4; background: rgba(51,160,44,0.22);"></span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Bairros e Balneários</span>
+                                    <span class="layer-desc-sub">Delimitação de bairros e balneários (IPM)</span>
+                                </div>
+                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="limite_bairros_ipm" title="Ligar e enquadrar Bairros e Balneários">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-limite_bairros_ipm">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="layer-item" data-layer-row="loteamento_por_bairro">
+                            <label class="layer-label" for="layer-loteamento_por_bairro">
+                                <span class="layer-badge" style="background: linear-gradient(45deg, #d7191c, #fdae61, #abdda4, #2b83ba); border: 1px solid #333;"></span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Loteamentos por Bairro</span>
+                                    <span class="layer-desc-sub">Malha de plantas e loteamentos aprovados</span>
+                                </div>
+                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="loteamento_por_bairro" title="Ligar e enquadrar Loteamentos">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-loteamento_por_bairro">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grupo 3: Áreas de Preservação / Drenagem (Sobreposição Prioritária) -->
+                <div class="layer-group priority-preservation-group" data-group-container="group-preservacao">
+                    <div class="group-header" data-toggle="group-preservacao">
+                        <div class="group-header-left">
+                            <i class="fa-solid fa-water group-ico" style="color: #00796b;"></i>
+                            <div>
+                                <div class="group-title-text" style="color: #004d40;">Preservação & Drenagem</div>
+                                <div class="group-subtitle-text" style="color: #00695c;">Faixas Não Edificáveis e Cursos Hídricos</div>
+                            </div>
+                        </div>
+                        <div class="group-header-right">
+                            <span class="priority-badge-pill">SOBREPOSTA</span>
+                            <span class="group-count-pill" id="count-group-preservacao">0/1</span>
+                            <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                        </div>
+                    </div>
+                    <div class="group-content" id="group-preservacao">
+                        <div class="layer-item" data-layer-row="area_de_preservacao" style="border-bottom: none;">
+                            <label class="layer-label" for="layer-area_de_preservacao" style="font-weight: 600; color: #004d40;">
+                                <span class="layer-badge" style="background: #0a9396; border: 1.5px solid #005f73;"></span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Áreas de Preservação / Drenagem</span>
+                                    <span class="layer-desc-sub" style="color:#00695c;">Sempre desenhada no topo das demais camadas</span>
+                                </div>
+                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="area_de_preservacao" title="Ligar e enquadrar Áreas de Preservação">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-area_de_preservacao">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grupo 4: Meio Ambiente & Parques -->
+                <div class="layer-group" data-group-container="group-ambiental">
                     <div class="group-header" data-toggle="group-ambiental">
-                        <span><i class="fa-solid fa-tree"></i> Meio Ambiente & Parques</span>
-                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                        <div class="group-header-left">
+                            <i class="fa-solid fa-tree group-ico" style="color: #2d9226;"></i>
+                            <div>
+                                <div class="group-title-text">Meio Ambiente & Parques</div>
+                                <div class="group-subtitle-text">Unidades de Conservação e Amortecimento</div>
+                            </div>
+                        </div>
+                        <div class="group-header-right">
+                            <span class="group-count-pill" id="count-group-ambiental">0/8</span>
+                            <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                        </div>
                     </div>
                     <div class="group-content" id="group-ambiental">
-                        <div class="layer-item">
-                            <label class="layer-label">
+                        <div class="layer-item" data-layer-row="parque_saint_hilaire">
+                            <label class="layer-label" for="layer-parque_saint_hilaire">
                                 <span class="layer-badge" style="background: #588157;"></span>
-                                <span>Parque Saint-Hilaire/Lange</span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Parque Saint-Hilaire/Lange</span>
+                                    <span class="layer-desc-sub">Parque Nacional Federal</span>
+                                </div>
                             </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-parque_saint_hilaire">
-                                <span class="slider"></span>
-                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="parque_saint_hilaire" title="Ligar e focar no Parque Saint-Hilaire/Lange">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-parque_saint_hilaire">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="layer-item">
-                            <label class="layer-label">
+                        <div class="layer-item" data-layer-row="parque_estadual_riodaonca">
+                            <label class="layer-label" for="layer-parque_estadual_riodaonca">
                                 <span class="layer-badge" style="background: #318d5f;"></span>
-                                <span>Parque Estadual Rio da Onça</span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Parque Estadual Rio da Onça</span>
+                                    <span class="layer-desc-sub">Unidade de Conservação Estadual</span>
+                                </div>
                             </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-parque_estadual_riodaonca">
-                                <span class="slider"></span>
-                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="parque_estadual_riodaonca" title="Ligar e focar no Parque Estadual Rio da Onça">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-parque_estadual_riodaonca">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="layer-item">
-                            <label class="layer-label">
+                        <div class="layer-item" data-layer-row="parque_municipal_morrodoboi">
+                            <label class="layer-label" for="layer-parque_municipal_morrodoboi">
                                 <span class="layer-badge" style="background: #0e7e46;"></span>
-                                <span>Parque Morro do Boi</span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Parque Morro do Boi</span>
+                                    <span class="layer-desc-sub">Parque Natural Municipal</span>
+                                </div>
                             </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-parque_municipal_morrodoboi">
-                                <span class="slider"></span>
-                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="parque_municipal_morrodoboi" title="Ligar e focar no Parque Morro do Boi">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-parque_municipal_morrodoboi">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="layer-item">
-                            <label class="layer-label">
+                        <div class="layer-item" data-layer-row="parque_municipal_praiagrande">
+                            <label class="layer-label" for="layer-parque_municipal_praiagrande">
                                 <span class="layer-badge" style="background: #7ac19e;"></span>
-                                <span>Parque Praia Grande</span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Parque Praia Grande</span>
+                                    <span class="layer-desc-sub">Unidade de Conservação Municipal</span>
+                                </div>
                             </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-parque_municipal_praiagrande">
-                                <span class="slider"></span>
-                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="parque_municipal_praiagrande" title="Ligar e focar no Parque Praia Grande">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-parque_municipal_praiagrande">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="layer-item">
-                            <label class="layer-label">
+                        <div class="layer-item" data-layer-row="parque_municipal_sambaqui">
+                            <label class="layer-label" for="layer-parque_municipal_sambaqui">
                                 <span class="layer-badge" style="background: #2d9226;"></span>
-                                <span>Parque Sambaqui</span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Parque Sambaqui</span>
+                                    <span class="layer-desc-sub">Patrimônio Arqueológico e Ambiental</span>
+                                </div>
                             </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-parque_municipal_sambaqui">
-                                <span class="slider"></span>
-                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="parque_municipal_sambaqui" title="Ligar e focar no Parque Sambaqui">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-parque_municipal_sambaqui">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="layer-item">
-                            <label class="layer-label">
+                        <div class="layer-item" data-layer-row="parque_municipal_sertaozinho">
+                            <label class="layer-label" for="layer-parque_municipal_sertaozinho">
                                 <span class="layer-badge" style="background: #47d63d;"></span>
-                                <span>Parque Sertãozinho</span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Parque Sertãozinho</span>
+                                    <span class="layer-desc-sub">Unidade de Conservação Municipal</span>
+                                </div>
                             </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-parque_municipal_sertaozinho">
-                                <span class="slider"></span>
-                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="parque_municipal_sertaozinho" title="Ligar e focar no Parque Sertãozinho">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-parque_municipal_sertaozinho">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="layer-item">
-                            <label class="layer-label">
+                        <div class="layer-item" data-layer-row="parque_municipal_tabuleiro">
+                            <label class="layer-label" for="layer-parque_municipal_tabuleiro">
                                 <span class="layer-badge" style="background: #6b8719;"></span>
-                                <span>Parque Tabuleiro</span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Parque Tabuleiro</span>
+                                    <span class="layer-desc-sub">Unidade de Conservação Municipal</span>
+                                </div>
                             </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-parque_municipal_tabuleiro">
-                                <span class="slider"></span>
-                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="parque_municipal_tabuleiro" title="Ligar e focar no Parque Tabuleiro">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-parque_municipal_tabuleiro">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="layer-item">
-                            <label class="layer-label">
+                        <div class="layer-item" data-layer-row="zona_de_amortecimento">
+                            <label class="layer-label" for="layer-zona_de_amortecimento">
                                 <span class="layer-badge" style="border: 2px dashed #33a02c; background: rgba(51,160,44,0.15);"></span>
-                                <span>Zona de Amortecimento</span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Zona de Amortecimento</span>
+                                    <span class="layer-desc-sub">Faixa de transição de proteção ambiental</span>
+                                </div>
                             </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-zona_de_amortecimento">
-                                <span class="slider"></span>
-                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="zona_de_amortecimento" title="Ligar e enquadrar Zona de Amortecimento">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-zona_de_amortecimento">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Grupo 4: Espaços Públicos -->
-                <div class="layer-group">
+                <!-- Grupo 5: Espaços Públicos -->
+                <div class="layer-group" data-group-container="group-publicos">
                     <div class="group-header" data-toggle="group-publicos">
-                        <span><i class="fa-solid fa-person-shelter"></i> Espaços Públicos</span>
-                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                        <div class="group-header-left">
+                            <i class="fa-solid fa-person-shelter group-ico" style="color: #d97706;"></i>
+                            <div>
+                                <div class="group-title-text">Espaços Públicos</div>
+                                <div class="group-subtitle-text">Áreas de Lazer e Convívio Urbano</div>
+                            </div>
+                        </div>
+                        <div class="group-header-right">
+                            <span class="group-count-pill" id="count-group-publicos">0/1</span>
+                            <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                        </div>
                     </div>
                     <div class="group-content" id="group-publicos">
-                        <div class="layer-item">
-                            <label class="layer-label">
+                        <div class="layer-item" data-layer-row="pracas_urbanas">
+                            <label class="layer-label" for="layer-pracas_urbanas">
                                 <span class="layer-badge" style="background: #ffaa00; border: 1px solid #7b6b6b;"></span>
-                                <span>Praças Urbanas</span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Praças Urbanas</span>
+                                    <span class="layer-desc-sub">Praças e largos públicos cadastrados</span>
+                                </div>
                             </label>
-                            <label class="switch">
-                                <input type="checkbox" id="layer-pracas_urbanas">
-                                <span class="slider"></span>
-                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="pracas_urbanas" title="Ligar e enquadrar Praças Urbanas">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-pracas_urbanas">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -387,20 +613,28 @@
 
             <!-- Aba 2: Consulta & Detalhes -->
             <div class="tab-content" id="tab-consulta">
-                <div id="info-placeholder" style="text-align: center; color: var(--text-muted); padding: 3rem 1rem;">
-                    <i class="fa-solid fa-hand-pointer" style="font-size: 2.5rem; margin-bottom: 1rem; color: #cbd5e1;"></i>
-                    <p style="font-size: 0.9rem; font-weight: 500;">Clique em qualquer ponto do mapa para consultar as informações urbanísticas e ambientais do lote ou região.</p>
+                <div id="info-placeholder" class="didactic-empty-state">
+                    <div class="didactic-empty-icon">
+                        <i class="fa-solid fa-hand-pointer"></i>
+                    </div>
+                    <h4>Como consultar um local no mapa</h4>
+                    <p>Siga os passos abaixo para inspecionar informações urbanísticas, ambientais e cadastrais:</p>
+                    <ol class="didactic-empty-steps">
+                        <li>Na aba <b>Camadas & Legendas</b>, ative uma ou mais camadas (ex: <em>Zoneamento</em> ou <em>Loteamentos</em>).</li>
+                        <li>Clique diretamente sobre o polígono ou lote desejado no mapa.</li>
+                        <li>Os dados de área, perímetro, zona incidente e botão para <b>Emitir Ficha (PDF)</b> aparecerão aqui automaticamente!</li>
+                    </ol>
                 </div>
                 <div id="info-details" style="display: none;">
                     <!-- Preenchido dinamicamente via JS -->
                 </div>
             </div>
 
-            <!-- Aba 3: Estatísticas & Resumo de Zonas -->
+            <!-- Aba 3: Guia & Resumo de Zonas -->
             <div class="tab-content" id="tab-estatisticas">
-                <div class="section-title">Quadro de Zonas Urbanas</div>
-                <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-                    Classificação e zoneamento conforme o Plano Diretor de Matinhos.
+                <div class="section-title">Quadro Descritivo de Zonas Urbanas</div>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.4;">
+                    Significado de cada sigla do Plano Diretor de Matinhos. Clique em <b>"Isolar no mapa"</b> em qualquer cartão para visualizar onde a zona se localiza:
                 </p>
                 <div id="zone-stats-container">
                     <!-- Preenchido dinamicamente via JS -->
@@ -408,9 +642,11 @@
             </div>
         </aside>
 
-        <!-- Botão Flutuante no Mapa para Acionar as Camadas -->
-        <button class="map-floating-drawer-btn" id="floating-layers-btn" title="Abrir Painel de Camadas">
-            <i class="fa-solid fa-layer-group"></i> <span>Camadas & Legenda</span>
+        <!-- Botão Flutuante Único no Mapa para Acionar Camadas e Legendas -->
+        <button class="map-floating-drawer-btn" id="floating-layers-btn" title="Abrir ou Fechar Painel de Camadas e Legendas">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Camadas e Legendas</span>
+            <span class="floating-layers-badge" id="floating-layers-badge">0 ativas</span>
         </button>
 
         <!-- Container do Mapa -->

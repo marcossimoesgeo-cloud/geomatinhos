@@ -737,13 +737,81 @@ input:checked + .slider:before {
 }
 
 /* ============================================================
-   PAINEL DE BASEMAPS DUPLOS
+   PAINEL DE BASEMAPS DUPLOS & SIDEBAR DIDÁTICA E OPERACIONAL
    ============================================================ */
+.floating-layers-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: #e2e8f0;
+    color: #475569;
+    transition: all 0.2s ease;
+}
+
+.floating-layers-badge.has-active {
+    background: var(--accent);
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 168, 150, 0.35);
+}
+
+/* Guia Rápido Didático */
+.didactic-guide-card {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #bae6fd;
+    border-left: 4px solid var(--primary);
+    border-radius: 9px;
+    padding: 9px 11px;
+    margin-bottom: 0.75rem;
+}
+
+.didactic-guide-title {
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.didactic-guide-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 0.72rem;
+    color: #1e3a5f;
+    line-height: 1.35;
+}
+
+.didactic-guide-steps b {
+    color: var(--primary-dark);
+}
+
+.step-pill {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    text-transform: uppercase;
+}
+
+.step-pill.step-2 {
+    background: var(--accent);
+    color: #ffffff;
+}
+
 .basemap-panel {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 10px;
-    margin: 0.75rem 0.75rem 0.6rem;
+    margin: 0 0 0.85rem 0;
     overflow: hidden;
     box-shadow: var(--shadow-sm);
 }
@@ -753,11 +821,63 @@ input:checked + .slider:before {
     color: #ffffff;
     font-size: 0.78rem;
     font-weight: 700;
-    letter-spacing: 0.5px;
-    padding: 7px 12px;
+    letter-spacing: 0.4px;
+    padding: 8px 12px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 6px;
+}
+
+/* Atalhos Rápidos de Mapa Base */
+.basemap-presets {
+    padding: 8px 10px;
+    background: #f1f5f9;
+    border-bottom: 1px solid var(--border);
+}
+
+.basemap-presets-label {
+    display: block;
+    font-size: 0.69rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 5px;
+}
+
+.basemap-presets-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+}
+
+.bm-preset-btn {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: var(--primary);
+    border-radius: 6px;
+    padding: 5px 7px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bm-preset-btn:hover {
+    border-color: var(--accent);
+    background: #f0fdfa;
+}
+
+.bm-preset-btn.active {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+    box-shadow: 0 2px 5px rgba(13, 59, 102, 0.22);
 }
 
 .basemap-slot {
@@ -768,6 +888,7 @@ input:checked + .slider:before {
 
 .basemap-slot-overlay {
     background: #f0faf9;
+    border-bottom: none;
 }
 
 .basemap-slot-header {
@@ -780,7 +901,7 @@ input:checked + .slider:before {
 .basemap-slot-badge {
     font-size: 0.62rem;
     font-weight: 800;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.6px;
     padding: 2px 7px;
     border-radius: 4px;
     text-transform: uppercase;
@@ -858,8 +979,9 @@ input:checked + .slider:before {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 12px;
+    padding: 5px 12px;
     background: #eef2f7;
+    border-bottom: 1px solid var(--border);
 }
 
 .basemap-swap-line {
@@ -872,8 +994,8 @@ input:checked + .slider:before {
     display: flex;
     align-items: center;
     gap: 5px;
-    padding: 4px 12px;
-    font-size: 0.72rem;
+    padding: 4px 10px;
+    font-size: 0.7rem;
     font-weight: 600;
     color: var(--primary);
     background: #ffffff;
@@ -905,20 +1027,99 @@ input:checked + .slider:before {
     transform: rotate(180deg);
 }
 
+/* Cabeçalho e Barra de Operações das Camadas Temáticas (Passo 2) */
+.thematic-header-card {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 0.75rem;
+}
+
+.thematic-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.thematic-header-title {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.sidebar-active-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.sidebar-active-badge.has-active {
+    background: var(--accent);
+    color: #ffffff;
+}
+
+/* Filtro rápido de camadas */
+.layer-search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.layer-search-ico {
+    position: absolute;
+    left: 10px;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.layer-filter-input {
+    width: 100%;
+    padding: 6px 28px 6px 28px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-size: 0.76rem;
+    background: #ffffff;
+    color: var(--text-main);
+}
+
+.layer-filter-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0, 168, 150, 0.15);
+}
+
+.layer-filter-clear {
+    position: absolute;
+    right: 6px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.78rem;
+    padding: 2px 4px;
+}
+
 /* Botões de ligar/desligar todas as camadas */
 .layers-bulk-actions {
     display: flex;
     gap: 8px;
-    margin: 0 0 10px 0;
+    margin: 0;
 }
 .btn-bulk {
     flex: 1;
     padding: 6px 8px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.74rem;
+    font-weight: 700;
     border: 1px solid #cbd5e1;
     border-radius: 6px;
-    background: #f8fafc;
+    background: #ffffff;
     color: #0d3b66;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s;
@@ -926,3 +1127,309 @@ input:checked + .slider:before {
 .btn-bulk:hover { background: #e2e8f0; border-color: #94a3b8; }
 .btn-bulk-off { color: #b91c1c; border-color: #fecaca; background: #fef2f2; }
 .btn-bulk-off:hover { background: #fee2e2; border-color: #f87171; }
+
+/* Cabeçalho Didático dos Grupos */
+.group-header-left {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.group-ico {
+    font-size: 0.95rem;
+    width: 18px;
+    text-align: center;
+}
+
+.group-title-text {
+    font-size: 0.83rem;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.2;
+}
+
+.group-subtitle-text {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+
+.group-header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.group-count-pill {
+    font-size: 0.66rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.group-count-pill.active-group {
+    background: #00a896;
+    color: #ffffff;
+}
+
+/* Linhas de Camadas Didáticas */
+.layer-text-wrap {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.layer-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-main);
+    line-height: 1.2;
+}
+
+.layer-desc-sub {
+    font-size: 0.67rem;
+    color: var(--text-muted);
+    line-height: 1.2;
+    margin-top: 1px;
+}
+
+.layer-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.btn-zoom-layer {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: var(--primary);
+    font-size: 0.72rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.btn-zoom-layer:hover {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+}
+
+/* Destaque do grupo de Preservação Prioritária */
+.priority-preservation-group {
+    border: 1.5px solid #009688 !important;
+    background: #f0fdf4;
+}
+
+.priority-preservation-group .group-header {
+    background: rgba(0, 150, 136, 0.12);
+    border-bottom: 1px solid #b2dfdb;
+}
+
+.priority-badge-pill {
+    font-size: 0.6rem;
+    background: #00796b;
+    color: #ffffff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+}
+
+/* Painel Operacional Integrado do Zoneamento */
+.group-zoneamento-card {
+    border: 1.5px solid #cbd5e1;
+}
+
+.layer-item-featured {
+    background: #f8fafc;
+    border-radius: 7px;
+    padding: 7px 8px !important;
+    margin-bottom: 8px;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.zone-operational-panel {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.zone-operational-panel .opacity-box {
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+.zone-operational-panel .zone-filter-box {
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    background: #ffffff;
+}
+
+.zone-filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.zone-filter-header label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.btn-reset-zone-filter {
+    border: 1px solid #cbd5e1;
+    background: #f1f5f9;
+    color: var(--primary);
+    border-radius: 5px;
+    padding: 2px 6px;
+    font-size: 0.67rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-reset-zone-filter:hover {
+    background: #e2e8f0;
+}
+
+.zone-legend-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.73rem;
+    color: var(--primary);
+    margin: 6px 2px 4px;
+}
+
+.zone-legend-header small {
+    font-size: 0.66rem;
+    color: var(--text-muted);
+}
+
+.zone-legend-list {
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.zone-legend-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 5px 7px;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.zone-legend-item:hover {
+    border-color: var(--accent);
+    background: #f0fdfa;
+    transform: translateX(2px);
+}
+
+.zone-legend-item.active-zone-filter {
+    border-color: var(--primary);
+    background: #e0f2fe;
+    font-weight: 700;
+    box-shadow: 0 1px 4px rgba(13, 59, 102, 0.15);
+}
+
+.zone-legend-left {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+}
+
+.zone-legend-code {
+    font-size: 0.66rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+.zone-legend-name {
+    font-size: 0.73rem;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.zone-legend-action {
+    font-size: 0.66rem;
+    color: var(--accent-hover);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* Estado vazio didático na aba Detalhes */
+.didactic-empty-state {
+    background: #f8fafc;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 1.5rem 1.1rem;
+    text-align: left;
+    color: var(--text-main);
+}
+
+.didactic-empty-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #e0f2fe;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin: 0 auto 0.75rem;
+}
+
+.didactic-empty-state h4 {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--primary);
+    margin-bottom: 0.4rem;
+}
+
+.didactic-empty-state p {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 0.6rem;
+    text-align: center;
+}
+
+.didactic-empty-steps {
+    padding-left: 1.1rem;
+    font-size: 0.76rem;
+    color: var(--text-main);
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
