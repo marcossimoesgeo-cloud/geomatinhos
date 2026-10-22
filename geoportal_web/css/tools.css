@@ -162,6 +162,62 @@
 .co-table th { position: sticky; top: 0; background: #f1f5f9; color: #0f172a; padding: 4px 6px; text-align: left; font-weight: 700; border-bottom: 1px solid #cbd5e1; }
 .co-table td { padding: 4px 6px; border-top: 1px solid #e2e8f0; white-space: nowrap; }
 
+/* Botão '+' de Adicionar Vértices e Lista de Salvos p/ Comparação */
+.co-add-vrow { display: flex; align-items: center; margin: 2px 0 8px; }
+.co-add-vbtn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; padding: 6px 10px;
+    border: 1.5px dashed #0284c7; border-radius: 7px;
+    background: #f0f9ff; color: #0284c7;
+    font-size: 0.74rem; font-weight: 700; cursor: pointer;
+    transition: all 0.15s ease;
+}
+.co-add-vbtn:hover { background: #e0f2fe; border-color: #0369a1; color: #0369a1; }
+.co-plus-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #0284c7; color: #ffffff; font-size: 0.65rem;
+}
+.co-del-vbtn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 6px;
+    border: 1px solid #fecaca; background: #fef2f2; color: #dc2626;
+    font-size: 0.72rem; cursor: pointer; flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+.co-del-vbtn:hover { background: #fee2e2; border-color: #f87171; }
+
+.co-saved-wrap { margin-top: 10px; border-top: 1.5px solid #cbd5e1; padding-top: 10px; }
+.co-saved-header {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.76rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;
+}
+.co-saved-actions { display: flex; gap: 4px; }
+.co-mini-btn {
+    border: 1px solid #cbd5e1; background: #ffffff; color: #334155;
+    border-radius: 5px; padding: 3px 6px; font-size: 0.68rem; font-weight: 700;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+    transition: all 0.15s;
+}
+.co-mini-btn:hover { background: #f1f5f9; border-color: #94a3b8; color: #0284c7; }
+.co-mini-btn.danger:hover { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
+.co-compare-banner {
+    background: #f0fdf4; border: 1px solid #86efac; border-radius: 7px;
+    padding: 6px 8px; margin-bottom: 8px; font-size: 0.71rem; color: #14532d;
+    line-height: 1.4;
+}
+.co-saved-item {
+    background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid #10b981;
+    border-radius: 7px; padding: 7px 8px; margin-bottom: 6px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.co-saved-item.hidden-map { opacity: 0.55; }
+.co-saved-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.co-saved-title { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; color: #0f172a; }
+.co-saved-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.co-saved-meta { font-size: 0.71rem; color: #475569; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 8px; }
+.co-saved-meta b { color: #0f172a; }
+
 /* ---------- Estúdio de Desenho ---------- */
 .draw-tools-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
 .draw-tool-btn {
@@ -254,6 +310,15 @@ body.dark .co-lot-metrics b { color: #38bdf8; }
 body.dark .co-table th { background: #1e293b; color: #38bdf8; border-color: #334155; }
 body.dark .co-table td { border-color: #334155; color: #e2e8f0; }
 body.dark .lot-dim-label { background: #0f172a; color: #38bdf8; border-color: #0284c7; }
+body.dark .co-add-vbtn { background: #0f172a; border-color: #0284c7; color: #38bdf8; }
+body.dark .co-add-vbtn:hover { background: #1e293b; }
+body.dark .co-del-vbtn { background: #3b1a1a; border-color: #7f1d1d; color: #fca5a5; }
+body.dark .co-saved-wrap { border-color: #334155; }
+body.dark .co-saved-header, body.dark .co-saved-title, body.dark .co-saved-meta b { color: #e2e8f0; }
+body.dark .co-saved-meta { color: #94a3b8; }
+body.dark .co-saved-item { background: #0f172a; border-color: #334155; }
+body.dark .co-mini-btn { background: #1e293b; border-color: #475569; color: #e2e8f0; }
+body.dark .co-compare-banner { background: #052e16; border-color: #16a34a; color: #bbf7d0; }
 body.dark .staff-tech-card { background: #052e16 !important; border-color: #16a34a !important; }
 body.dark .staff-locked-card { background: #0f172a !important; color: #cbd5e1; }
 body.dark footer.status-bar { background: #0b1220; color: #cbd5e1; }

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Ferramentas de SIG do Geoportal de Matinhos
  * - Janela lateral direita unificada (Busca Avançada, Coordenadas, Medir Distância,
  *   Medir Área, Desenhar/Anotar/Exportar, Imprimir Mapa, GPS, Visão Inicial,
@@ -35,6 +35,12 @@ const GeoTools = (() => {
         pickHandler: null,
         coordMarker: null,
         coordLotGroup: null,
+        savedCoordLotsGroup: null,
+        savedCoordLots: [],
+        savedCoordSeq: 1,
+        coordVertexCount: 4,
+        lastLocatedLot: null,
+        lastLocatedPoint: null,
         coordTab: 'lot',
         coordPickMode: null,
         coordPickPts: [],
@@ -346,8 +352,11 @@ const GeoTools = (() => {
         window.GEO_TOOL_BUSY = prev;
     }
 
-    /* ---------- COORDENADAS E LOCALIZADOR DE LOTE (4 VÉRTICES) ---------- */
+    /* ---------- COORDENADAS E LOCALIZADOR DE LOTE (MULTI-VÉRTICES & COMPARAÇÃO) ---------- */
+    const SAVED_LOT_COLORS = ['#10b981', '#f59e0b', '#8b5cf6', '#f43f5e', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
+
     function ensureCoordLotGroup() {
+        if (!state.savedCoordLotsGroup) state.savedCoordLotsGroup = new L.FeatureGroup().addTo(map);
         if (!state.coordLotGroup) state.coordLotGroup = new L.FeatureGroup().addTo(map);
         if (!state.coordTempGroup) state.coordTempGroup = new L.FeatureGroup().addTo(map);
     }
@@ -356,16 +365,100 @@ const GeoTools = (() => {
         const isUtm = $('co-mode') ? $('co-mode').value === 'utm' : true;
         if ($('co-a')) $('co-a').placeholder = isUtm ? 'Este (E)  ex.: 752453,75' : 'Latitude  ex.: -25,8175';
         if ($('co-b')) $('co-b').placeholder = isUtm ? 'Norte (N)  ex.: 7153896,31' : 'Longitude  ex.: -48,536';
-        for (let i = 1; i <= 4; i++) {
+        const n = state.coordVertexCount || 4;
+        for (let i = 1; i <= n; i++) {
             const ea = $(`co-v${i}-a`), eb = $(`co-v${i}-b`);
-            if (ea) ea.placeholder = isUtm ? `Este (E) V${i} ex: 752400` : `Latitude V${i} ex: -25.8175`;
-            if (eb) eb.placeholder = isUtm ? `Norte (N) V${i} ex: 7153800` : `Longitude V${i} ex: -48.536`;
+            if (ea) ea.placeholder = isUtm ? (i === 1 ? `Este (E) V1 ex: 752400` : `Este (E) V${i}`) : (i === 1 ? `Latitude V1 ex: -25.8175` : `Latitude V${i}`);
+            if (eb) eb.placeholder = isUtm ? (i === 1 ? `Norte (N) V1 ex: 7153800` : `Norte (N) V${i}`) : (i === 1 ? `Longitude V1 ex: -48.536` : `Longitude V${i}`);
         }
+        const nextLbl = $('co-next-vlabel');
+        if (nextLbl) nextLbl.textContent = `V${n + 1}`;
+        const btnLot = $('co-pick-lot');
+        if (btnLot && state.coordPickMode !== 'lot') {
+            btnLot.innerHTML = `<i class="fa-solid fa-crosshairs"></i> Capturar ${n} vértices por clique`;
+        }
+    }
+
+    function readCurrentVertexInputs() {
+        const vals = [];
+        const n = state.coordVertexCount || 4;
+        for (let i = 1; i <= n; i++) {
+            const ea = $(`co-v${i}-a`), eb = $(`co-v${i}-b`);
+            vals.push({
+                a: ea ? ea.value : '',
+                b: eb ? eb.value : ''
+            });
+        }
+        return vals;
+    }
+
+    function renderVertexRows(preservedValues) {
+        const container = $('co-vertices-list');
+        if (!container) return;
+        const vals = preservedValues || readCurrentVertexInputs();
+        const n = state.coordVertexCount || 4;
+        let html = '';
+        for (let i = 1; i <= n; i++) {
+            const vA = vals[i - 1] ? vals[i - 1].a : '';
+            const vB = vals[i - 1] ? vals[i - 1].b : '';
+            const tagClass = `v${((i - 1) % 4) + 1}`;
+            const delBtn = i > 4
+                ? `<button type="button" class="co-del-vbtn" data-del-v="${i}" title="Remover Vértice V${i}"><i class="fa-solid fa-xmark"></i></button>`
+                : '';
+            html += `
+                <div class="co-vrow" data-v="${i}">
+                    <span class="co-vtag ${tagClass}" title="Vértice ${i}">V${i}</span>
+                    <input type="text" id="co-v${i}-a" class="tp-input co-coord-input" value="${esc(vA)}">
+                    <input type="text" id="co-v${i}-b" class="tp-input co-coord-input" value="${esc(vB)}">
+                    ${delBtn}
+                </div>`;
+        }
+        container.innerHTML = html;
+
+        container.querySelectorAll('.co-coord-input').forEach(inp => {
+            inp.addEventListener('keydown', e => {
+                if (e.key === 'Enter') locateLot();
+            });
+        });
+
+        container.querySelectorAll('.co-del-vbtn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.getAttribute('data-del-v'), 10);
+                removeVertexRow(idx);
+            });
+        });
+
+        updateCoordPlaceholders();
+    }
+
+    function addVertexRow() {
+        const vals = readCurrentVertexInputs();
+        state.coordVertexCount = (state.coordVertexCount || 4) + 1;
+        vals.push({ a: '', b: '' });
+        renderVertexRows(vals);
+        const newInput = $(`co-v${state.coordVertexCount}-a`);
+        if (newInput) newInput.focus();
+        toast(`Vértice V${state.coordVertexCount} adicionado!`, 'info', 1400);
+    }
+
+    function removeVertexRow(idx) {
+        if ((state.coordVertexCount || 4) <= 4) return;
+        const vals = readCurrentVertexInputs();
+        vals.splice(idx - 1, 1);
+        state.coordVertexCount = Math.max(4, vals.length);
+        renderVertexRows(vals);
+        toast(`Vértice V${idx} removido. Total: ${state.coordVertexCount} vértices.`, 'info', 1400);
+    }
+
+    function setVertexRowCount(count, valuesArray) {
+        state.coordVertexCount = Math.max(4, count);
+        renderVertexRows(valuesArray || []);
     }
 
     function parsePastedCoords(raw) {
         if (!raw || !raw.trim()) return null;
         let text = raw.replace(/[vV]\d+[:\s]*/g, ' ')
+                      .replace(/[pP]\d+[:\s]*/g, ' ')
                       .replace(/[eE][:\s=]+/g, ' ')
                       .replace(/[nN][:\s=]+/g, ' ')
                       .replace(/[xX][:\s=]+/g, ' ')
@@ -374,14 +467,20 @@ const GeoTools = (() => {
                       .replace(/[lL]on(gitude)?[:\s=]+/gi, ' ');
         text = text.replace(/(\d+),(\d+)/g, '$1.$2');
         const matches = text.match(/-?\d+(?:\.\d+)?/g);
-        if (!matches || matches.length < 8) return null;
+        if (!matches || matches.length < 6) return null;
         const nums = matches.map(Number);
-        return [
-            { a: nums[0], b: nums[1] },
-            { a: nums[2], b: nums[3] },
-            { a: nums[4], b: nums[5] },
-            { a: nums[6], b: nums[7] }
-        ];
+        const pairCount = Math.floor(nums.length / 2);
+        const pairs = [];
+        for (let i = 0; i < pairCount; i++) {
+            pairs.push({ a: nums[i * 2], b: nums[i * 2 + 1] });
+        }
+        if (pairs.length > 4) {
+            const first = pairs[0], last = pairs[pairs.length - 1];
+            if (Math.abs(first.a - last.a) < 1e-6 && Math.abs(first.b - last.b) < 1e-6) {
+                pairs.pop();
+            }
+        }
+        return pairs;
     }
 
     function identifyLotCadastre(center) {
@@ -405,6 +504,7 @@ const GeoTools = (() => {
     }
 
     function buildCoordsPanel(body) {
+        state.coordVertexCount = state.coordVertexCount || 4;
         body.innerHTML = `
             <div class="tp-sub" style="margin-top:0;">Localizar por Coordenadas</div>
             <div class="co-tabs">
@@ -419,7 +519,7 @@ const GeoTools = (() => {
                 </select>
             </div>
 
-            <!-- MODO 4 VÉRTICES / LOTE -->
+            <!-- MODO VÉRTICES / LOTE -->
             <div id="co-lot-box">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin:4px 0 6px;">
                     <span class="tp-hint" style="margin:0;">Vértices do lote (em ordem do perímetro):</span>
@@ -429,32 +529,19 @@ const GeoTools = (() => {
                 </div>
 
                 <div id="co-paste-panel" class="co-paste-wrap" style="display:none;">
-                    <textarea id="co-paste-text" class="co-paste-area" placeholder="Cole aqui as 4 coordenadas do memorial descritivo, Word ou Excel (ex: E1 N1 ... E4 N4 ou Lat/Lon)..."></textarea>
+                    <textarea id="co-paste-text" class="co-paste-area" placeholder="Cole aqui as coordenadas do memorial descritivo, Word ou Excel (4 ou mais pares de coordenadas E/N ou Lat/Lon)..."></textarea>
                     <div class="tp-row two" style="margin-top:6px; margin-bottom:0;">
                         <button type="button" class="tp-btn primary" id="co-paste-apply"><i class="fa-solid fa-check"></i> Processar Texto</button>
                         <button type="button" class="tp-btn" id="co-paste-cancel">Fechar</button>
                     </div>
                 </div>
 
-                <div class="co-vrow">
-                    <span class="co-vtag v1" title="Vértice 1">V1</span>
-                    <input type="text" id="co-v1-a" class="tp-input co-coord-input" placeholder="Este (E) V1 ex: 752400">
-                    <input type="text" id="co-v1-b" class="tp-input co-coord-input" placeholder="Norte (N) V1 ex: 7153800">
-                </div>
-                <div class="co-vrow">
-                    <span class="co-vtag v2" title="Vértice 2">V2</span>
-                    <input type="text" id="co-v2-a" class="tp-input co-coord-input" placeholder="Este (E) V2">
-                    <input type="text" id="co-v2-b" class="tp-input co-coord-input" placeholder="Norte (N) V2">
-                </div>
-                <div class="co-vrow">
-                    <span class="co-vtag v3" title="Vértice 3">V3</span>
-                    <input type="text" id="co-v3-a" class="tp-input co-coord-input" placeholder="Este (E) V3">
-                    <input type="text" id="co-v3-b" class="tp-input co-coord-input" placeholder="Norte (N) V3">
-                </div>
-                <div class="co-vrow">
-                    <span class="co-vtag v4" title="Vértice 4">V4</span>
-                    <input type="text" id="co-v4-a" class="tp-input co-coord-input" placeholder="Este (E) V4">
-                    <input type="text" id="co-v4-b" class="tp-input co-coord-input" placeholder="Norte (N) V4">
+                <div id="co-vertices-list"></div>
+
+                <div class="co-add-vrow">
+                    <button type="button" class="co-add-vbtn" id="co-add-vertex" title="Adicionar mais um vértice conforme necessidade técnica de análise">
+                        <span class="co-plus-badge"><i class="fa-solid fa-plus"></i></span> Adicionar Vértice (<span id="co-next-vlabel">V5</span>)
+                    </button>
                 </div>
 
                 <div class="tp-row two" style="margin-top:8px;">
@@ -483,7 +570,11 @@ const GeoTools = (() => {
                 </div>
             </div>
 
-            <div id="co-out" class="co-out">Nenhum lote ou coordenada localizado.</div>`;
+            <div id="co-out" class="co-out">Nenhum lote ou coordenada localizado.</div>
+            <div id="co-saved-section"></div>`;
+
+        renderVertexRows();
+        renderSavedCoordLots();
 
         const setTab = tab => {
             state.coordTab = tab;
@@ -497,6 +588,7 @@ const GeoTools = (() => {
         $('tab-co-lot').addEventListener('click', () => setTab('lot'));
         $('tab-co-single').addEventListener('click', () => setTab('single'));
         $('co-mode').addEventListener('change', updateCoordPlaceholders);
+        $('co-add-vertex').addEventListener('click', addVertexRow);
 
         // Painel colar memorial
         $('co-toggle-paste').addEventListener('click', () => {
@@ -508,37 +600,30 @@ const GeoTools = (() => {
         $('co-paste-apply').addEventListener('click', () => {
             const raw = $('co-paste-text').value;
             const parsed = parsePastedCoords(raw);
-            if (!parsed) {
-                toast('Não foi possível identificar 4 pares de coordenadas no texto colado. Verifique os valores.', 'err', 4000);
+            if (!parsed || parsed.length < 3) {
+                toast('Não foi possível identificar pares suficientes de coordenadas no texto colado. Verifique os valores.', 'err', 4000);
                 return;
             }
-            // Auto detectar UTM vs DD se primeiro valor for grande
             const isUtm = Math.abs(parsed[0].a) > 90 || Math.abs(parsed[0].b) > 90;
             $('co-mode').value = isUtm ? 'utm' : 'dd';
-            updateCoordPlaceholders();
-            parsed.forEach((pt, i) => {
-                $(`co-v${i + 1}-a`).value = String(pt.a);
-                $(`co-v${i + 1}-b`).value = String(pt.b);
-            });
+            const formattedVals = parsed.map(pt => ({ a: String(pt.a), b: String(pt.b) }));
+            setVertexRowCount(Math.max(4, parsed.length), formattedVals);
             $('co-paste-panel').style.display = 'none';
             $('co-paste-text').value = '';
-            toast('4 vértices preenchidos com sucesso!', 'ok', 2000);
+            toast(`${parsed.length} vértices preenchidos com sucesso!`, 'ok', 2000);
             locateLot();
         });
 
         $('co-clear-inputs').addEventListener('click', () => {
-            for (let i = 1; i <= 4; i++) {
-                $(`co-v${i}-a`).value = '';
-                $(`co-v${i}-b`).value = '';
+            const n = state.coordVertexCount || 4;
+            for (let i = 1; i <= n; i++) {
+                if ($(`co-v${i}-a`)) $(`co-v${i}-a`).value = '';
+                if ($(`co-v${i}-b`)) $(`co-v${i}-b`).value = '';
             }
             clearCoordLot();
         });
 
         $('co-go-lot').addEventListener('click', locateLot);
-        body.querySelectorAll('.co-coord-input').forEach(inp => inp.addEventListener('keydown', e => {
-            if (e.key === 'Enter') locateLot();
-        }));
-
         $('co-pick-lot').addEventListener('click', () => togglePick('lot'));
         $('co-go').addEventListener('click', goToCoord);
         ['co-a', 'co-b'].forEach(i => $(i).addEventListener('keydown', e => { if (e.key === 'Enter') goToCoord(); }));
@@ -552,10 +637,30 @@ const GeoTools = (() => {
     function locateLot() {
         const coords = [];
         const isUtm = $('co-mode').value === 'utm';
-        for (let i = 1; i <= 4; i++) {
+        const totalRows = state.coordVertexCount || 4;
+
+        for (let i = 1; i <= totalRows; i++) {
             const ea = $(`co-v${i}-a`), eb = $(`co-v${i}-b`);
-            if (!ea || !eb) return;
-            const a = num(ea.value), b = num(eb.value);
+            if (!ea || !eb) continue;
+            const rawA = ea.value.trim(), rawB = eb.value.trim();
+
+            if (i > 4 && rawA === '' && rawB === '' && coords.length >= 3) {
+                let anyLaterFilled = false;
+                for (let j = i + 1; j <= totalRows; j++) {
+                    const ja = $(`co-v${j}-a`), jb = $(`co-v${j}-b`);
+                    if ((ja && ja.value.trim() !== '') || (jb && jb.value.trim() !== '')) {
+                        anyLaterFilled = true;
+                        break;
+                    }
+                }
+                if (!anyLaterFilled) {
+                    toast(`Informe as coordenadas do Vértice V${i} ou remova-o no botão (×).`, 'err');
+                    ea.focus();
+                    return;
+                }
+            }
+
+            const a = num(rawA), b = num(rawB);
             if (!isFinite(a) || !isFinite(b)) {
                 toast(`Informe as coordenadas numéricas do Vértice V${i}.`, 'err');
                 ea.focus();
@@ -578,6 +683,12 @@ const GeoTools = (() => {
             }
         }
 
+        if (coords.length < 3) {
+            toast('Informe ao menos 3 vértices para delimitar o polígono/lote.', 'err');
+            return;
+        }
+
+        const nVerts = coords.length;
         ensureCoordLotGroup();
         state.coordLotGroup.clearLayers();
         if (state.coordMarker) { state.coordMarker.remove(); state.coordMarker = null; }
@@ -591,16 +702,15 @@ const GeoTools = (() => {
             fillOpacity: 0.28
         }).addTo(state.coordLotGroup);
 
-        // Distâncias dos 4 lados
+        // Distâncias dos N lados
         const sides = [];
         let perimeter = 0;
-        for (let i = 0; i < 4; i++) {
-            const next = (i + 1) % 4;
+        for (let i = 0; i < nVerts; i++) {
+            const next = (i + 1) % nVerts;
             const d = coords[i].ll.distanceTo(coords[next].ll);
             sides.push({ from: coords[i].v, to: coords[next].v, d });
             perimeter += d;
 
-            // Marcador de dimensão na metade da aresta
             const midLat = (coords[i].lat + coords[next].lat) / 2;
             const midLng = (coords[i].lng + coords[next].lng) / 2;
             const dimIcon = L.divIcon({
@@ -613,13 +723,13 @@ const GeoTools = (() => {
 
         // Área plana pelo Shoelace em UTM (área exata de memorial descritivo)
         let areaShoelace = 0;
-        for (let i = 0; i < 4; i++) {
-            const next = (i + 1) % 4;
+        for (let i = 0; i < nVerts; i++) {
+            const next = (i + 1) % nVerts;
             areaShoelace += (coords[i].e * coords[next].n) - (coords[next].e * coords[i].n);
         }
         const area = Math.abs(areaShoelace) / 2.0;
 
-        // Vértices V1, V2, V3, V4 com pinos visíveis no mapa
+        // Vértices V1..Vn com pinos visíveis no mapa
         coords.forEach(c => {
             const pinIcon = L.divIcon({
                 className: 'lot-vertex-pin-wrap',
@@ -646,13 +756,22 @@ const GeoTools = (() => {
             cadHtml = `<div class="co-cad-info"><i class="fa-solid fa-circle-info"></i> ${parts.join(' · ')}</div>`;
         }
 
-        // Tabela de verificação das 4 coordenadas
+        state.lastLocatedLot = {
+            coords: coords.map(c => ({ ...c })),
+            pts: pts.slice(),
+            area,
+            perimeter,
+            sides: sides.map(s => ({ ...s })),
+            cadHtml
+        };
+
+        // Tabela de verificação das N coordenadas
         const out = $('co-out');
         if (out) {
             out.innerHTML = `
                 <div class="co-lot-card">
                     <div class="co-lot-head">
-                        <i class="fa-solid fa-draw-polygon"></i> <b>Lote Localizado (4 Vértices)</b>
+                        <i class="fa-solid fa-draw-polygon"></i> <b>Lote Localizado (${nVerts} Vértices)</b>
                     </div>
                     <div class="co-lot-metrics">
                         <div><span>Área:</span> <b>${fmtArea(area)}</b></div>
@@ -680,40 +799,345 @@ const GeoTools = (() => {
                         </table>
                     </div>
                     <div class="tp-row three" style="margin-top:8px; margin-bottom:0;">
-                        <button type="button" class="tp-btn" id="co-copy-lot"><i class="fa-regular fa-copy"></i> Copiar</button>
-                        <button type="button" class="tp-btn primary" id="co-save-lot"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
-                        <button type="button" class="tp-btn danger" id="co-clear-lot"><i class="fa-solid fa-trash-can"></i> Limpar</button>
+                        <button type="button" class="tp-btn" id="co-copy-lot" title="Copiar memorial/tabela de vértices"><i class="fa-regular fa-copy"></i> Copiar</button>
+                        <button type="button" class="tp-btn primary" id="co-save-lot" title="Salvar este lote e seus vértices no mapa para gerar outro e comparar"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+                        <button type="button" class="tp-btn danger" id="co-clear-lot" title="Limpar visualização atual"><i class="fa-solid fa-trash-can"></i> Limpar</button>
                     </div>
                 </div>`;
 
             $('co-copy-lot').addEventListener('click', () => {
                 const header = ['Vertice', 'UTM_E_22S', 'UTM_N_22S', 'Latitude', 'Longitude', 'Lado_Comprimento'];
                 const lines = coords.map((c, i) => [`V${c.v}`, c.e.toFixed(2), c.n.toFixed(2), c.lat.toFixed(6), c.lng.toFixed(6), `${fmtDist(sides[i].d)}`]);
-                const text = `LOTE LOCALIZADO - GEOPORTAL DE MATINHOS\nÁrea: ${fmtArea(area)} | Perímetro: ${fmtDist(perimeter)}\n\n` + [header.join('\t')].concat(lines.map(x => x.join('\t'))).join('\n');
+                const text = `LOTE LOCALIZADO (${nVerts} VÉRTICES) - GEOPORTAL DE MATINHOS\nÁrea: ${fmtArea(area)} | Perímetro: ${fmtDist(perimeter)}\n\n` + [header.join('\t')].concat(lines.map(x => x.join('\t'))).join('\n');
                 copyText(text);
             });
 
-            $('co-save-lot').addEventListener('click', () => {
-                const note = `Lote 4V (${fmtArea(area)})`;
-                const saved = L.polygon(pts, { color: '#0284c7', weight: 3, fillColor: '#0284c7', fillOpacity: 0.25 });
-                registerDrawnLayer(saved, 'Lote');
-                saved.bindTooltip(note, { permanent: true, direction: 'center', className: 'draw-note' });
-                toast('Lote salvo na lista de Desenhos com sucesso!', 'ok');
-            });
-
+            $('co-save-lot').addEventListener('click', saveCurrentCoordLot);
             $('co-clear-lot').addEventListener('click', clearCoordLot);
         }
 
-        toast('Lote localizado com sucesso! 4 vértices destacados no mapa.', 'ok', 2600);
+        renderSavedCoordLots();
+        toast(`Lote localizado com sucesso! ${nVerts} vértices destacados no mapa.`, 'ok', 2600);
+    }
+
+    function saveCurrentCoordLot() {
+        if (!state.lastLocatedLot) {
+            toast('Localize um lote primeiro antes de salvar.', 'err');
+            return;
+        }
+        ensureCoordLotGroup();
+        const data = state.lastLocatedLot;
+        const seq = state.savedCoordSeq++;
+        const color = SAVED_LOT_COLORS[(seq - 1) % SAVED_LOT_COLORS.length];
+        const nVerts = data.coords.length;
+        const lotName = `Lote #${seq} (${nVerts}V)`;
+
+        const itemGroup = new L.FeatureGroup().addTo(state.savedCoordLotsGroup);
+
+        const poly = L.polygon(data.pts, {
+            color: color,
+            weight: 3.5,
+            fillColor: color,
+            fillOpacity: 0.24
+        }).addTo(itemGroup);
+        poly.bindTooltip(`<b>${esc(lotName)}</b><br>Área: ${fmtArea(data.area)} · Perímetro: ${fmtDist(data.perimeter)}`, { sticky: true });
+
+        for (let i = 0; i < nVerts; i++) {
+            const next = (i + 1) % nVerts;
+            const d = data.sides[i].d;
+            const midLat = (data.coords[i].lat + data.coords[next].lat) / 2;
+            const midLng = (data.coords[i].lng + data.coords[next].lng) / 2;
+            const dimIcon = L.divIcon({
+                className: 'lot-dim-wrap',
+                html: `<span class="lot-dim-label" style="border-color:${color};color:${color};">${fmtDist(d)}</span>`,
+                iconSize: [0, 0]
+            });
+            L.marker([midLat, midLng], { icon: dimIcon, interactive: false, zIndexOffset: 1900 }).addTo(itemGroup);
+        }
+
+        data.coords.forEach(c => {
+            const pinIcon = L.divIcon({
+                className: 'lot-vertex-pin-wrap',
+                html: `<div class="lot-vertex-pin" style="background:${color};" title="${esc(lotName)} - Vértice V${c.v}"><span>V${c.v}</span></div>`,
+                iconSize: [26, 26],
+                iconAnchor: [13, 13]
+            });
+            const dd = `${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}`;
+            const utmStr = `E ${c.e.toFixed(2)} · N ${c.n.toFixed(2)}`;
+            const m = L.marker(c.ll, { icon: pinIcon, zIndexOffset: 2450 }).addTo(itemGroup);
+            m.bindTooltip(`<b>${esc(lotName)} — Vértice V${c.v}</b><br>UTM 22S: ${utmStr}<br>Lat/Lon: ${dd}<br><small>Clique para copiar</small>`, { direction: 'top', offset: [0, -14] });
+            m.on('click', () => copyText(`${c.e.toFixed(2)}, ${c.n.toFixed(2)}`));
+        });
+
+        state.savedCoordLots.push({
+            id: 'saved-lot-' + seq,
+            seq,
+            type: 'lot',
+            name: lotName,
+            color,
+            coords: data.coords.map(c => ({ ...c })),
+            pts: data.pts.slice(),
+            area: data.area,
+            perimeter: data.perimeter,
+            sides: data.sides.map(s => ({ ...s })),
+            cadHtml: data.cadHtml,
+            group: itemGroup,
+            bounds: poly.getBounds(),
+            visible: true,
+            expanded: false
+        });
+
+        const drawnCopy = L.polygon(data.pts, { color, weight: 3, fillColor: color, fillOpacity: 0.2 });
+        registerDrawnLayer(drawnCopy, lotName);
+
+        state.coordLotGroup.clearLayers();
+        state.lastLocatedLot = null;
+
+        renderSavedCoordLots();
+        toast(`${lotName} salvo no mapa! Você já pode inserir outro lote/vértices para comparar.`, 'ok', 3200);
+    }
+
+    function saveCurrentCoordPoint() {
+        if (!state.lastLocatedPoint) {
+            toast('Localize um ponto primeiro antes de salvar.', 'err');
+            return;
+        }
+        ensureCoordLotGroup();
+        const pt = state.lastLocatedPoint;
+        const seq = state.savedCoordSeq++;
+        const color = SAVED_LOT_COLORS[(seq - 1) % SAVED_LOT_COLORS.length];
+        const ptName = `Vértice P${seq}`;
+
+        const itemGroup = new L.FeatureGroup().addTo(state.savedCoordLotsGroup);
+        const pinIcon = L.divIcon({
+            className: 'lot-vertex-pin-wrap',
+            html: `<div class="lot-vertex-pin" style="background:${color};" title="${esc(ptName)}"><span>P${seq}</span></div>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
+        });
+        const dd = `${pt.lat.toFixed(6)}, ${pt.lng.toFixed(6)}`;
+        const utmStr = `E ${pt.e.toFixed(2)} · N ${pt.n.toFixed(2)}`;
+        const m = L.marker(pt.ll, { icon: pinIcon, zIndexOffset: 2480 }).addTo(itemGroup);
+        m.bindTooltip(`<b>${esc(ptName)}</b><br>UTM 22S: ${utmStr}<br>Lat/Lon: ${dd}<br><small>Clique para copiar</small>`, { direction: 'top', offset: [0, -14] });
+        m.on('click', () => copyText(`${pt.e.toFixed(2)}, ${pt.n.toFixed(2)}`));
+
+        state.savedCoordLots.push({
+            id: 'saved-pt-' + seq,
+            seq,
+            type: 'point',
+            name: ptName,
+            color,
+            coords: [{ v: seq, e: pt.e, n: pt.n, lat: pt.lat, lng: pt.lng, ll: pt.ll }],
+            pts: [pt.ll],
+            area: 0,
+            perimeter: 0,
+            sides: [],
+            group: itemGroup,
+            bounds: L.latLngBounds([pt.ll, pt.ll]),
+            visible: true,
+            expanded: false
+        });
+
+        if (state.coordMarker) { state.coordMarker.remove(); state.coordMarker = null; }
+        state.lastLocatedPoint = null;
+
+        renderSavedCoordLots();
+        toast(`${ptName} salvo no mapa! Digite ou capture outro vértice para comparar.`, 'ok', 2800);
+    }
+
+    function renderSavedCoordLots() {
+        const wrap = $('co-saved-section');
+        if (!wrap) return;
+        const list = state.savedCoordLots || [];
+        if (!list.length) {
+            wrap.innerHTML = '';
+            return;
+        }
+
+        const lotsForCompare = list.filter(x => x.type === 'lot').map(x => ({ name: x.name, area: x.area, perimeter: x.perimeter, color: x.color }));
+        if (state.lastLocatedLot) {
+            lotsForCompare.push({ name: 'Lote Atual (Em tela)', area: state.lastLocatedLot.area, perimeter: state.lastLocatedLot.perimeter, color: '#0284c7' });
+        }
+
+        let compareBanner = '';
+        if (lotsForCompare.length >= 2) {
+            const a = lotsForCompare[lotsForCompare.length - 2];
+            const b = lotsForCompare[lotsForCompare.length - 1];
+            const diffArea = b.area - a.area;
+            const diffPerim = b.perimeter - a.perimeter;
+            const pctArea = a.area > 0 ? ((diffArea / a.area) * 100).toFixed(2) : '0.00';
+            const signA = diffArea >= 0 ? '+' : '';
+            const signP = diffPerim >= 0 ? '+' : '';
+            compareBanner = `
+                <div class="co-compare-banner">
+                    <div><i class="fa-solid fa-scale-balanced"></i> <b>Comparativo:</b> ${esc(a.name)} vs ${esc(b.name)}</div>
+                    <div>• Δ Área: <b>${signA}${diffArea.toFixed(2)} m² (${signA}${pctArea}%)</b> · Δ Perímetro: <b>${signP}${diffPerim.toFixed(2)} m</b></div>
+                </div>`;
+        } else {
+            const ptsForCompare = list.filter(x => x.type === 'point').map(x => ({ name: x.name, c: x.coords[0] }));
+            if (state.lastLocatedPoint) {
+                ptsForCompare.push({ name: 'Ponto Atual', c: state.lastLocatedPoint });
+            }
+            if (ptsForCompare.length >= 2) {
+                const p1 = ptsForCompare[ptsForCompare.length - 2];
+                const p2 = ptsForCompare[ptsForCompare.length - 1];
+                const dist = p1.c.ll.distanceTo(p2.c.ll);
+                const dE = p2.c.e - p1.c.e;
+                const dN = p2.c.n - p1.c.n;
+                compareBanner = `
+                    <div class="co-compare-banner">
+                        <div><i class="fa-solid fa-ruler-horizontal"></i> <b>Distância (${esc(p1.name)} → ${esc(p2.name)}):</b> <b>${fmtDist(dist)}</b></div>
+                        <div>• ΔE: <b>${dE >= 0 ? '+' : ''}${dE.toFixed(2)} m</b> · ΔN: <b>${dN >= 0 ? '+' : ''}${dN.toFixed(2)} m</b></div>
+                    </div>`;
+            }
+        }
+
+        wrap.innerHTML = `
+            <div class="co-saved-wrap">
+                <div class="co-saved-header">
+                    <span><i class="fa-solid fa-layer-group"></i> Vértices / Lotes Salvos (${list.length})</span>
+                    <div class="co-saved-actions">
+                        <button type="button" class="co-mini-btn" id="co-fit-all-saved" title="Enquadrar todos os lotes/vértices salvos no mapa"><i class="fa-solid fa-expand"></i> Ver Todos</button>
+                        <button type="button" class="co-mini-btn danger" id="co-clear-all-saved" title="Remover todos os salvos"><i class="fa-solid fa-trash"></i> Limpar</button>
+                    </div>
+                </div>
+                ${compareBanner}
+                <div id="co-saved-items-list">
+                    ${list.map((item, idx) => {
+                        if (item.type === 'point') {
+                            const c = item.coords[0];
+                            return `
+                                <div class="co-saved-item ${item.visible ? '' : 'hidden-map'}" style="border-left-color:${item.color};" data-idx="${idx}">
+                                    <div class="co-saved-top">
+                                        <div class="co-saved-title">
+                                            <span class="co-saved-dot" style="background:${item.color};"></span>
+                                            <span>${esc(item.name)}</span>
+                                        </div>
+                                        <div class="co-saved-actions">
+                                            <button type="button" class="co-mini-btn" data-act="zoom" data-idx="${idx}" title="Focar neste vértice"><i class="fa-solid fa-magnifying-glass-location"></i></button>
+                                            <button type="button" class="co-mini-btn" data-act="vis" data-idx="${idx}" title="Mostrar / Ocultar no mapa"><i class="fa-solid ${item.visible ? 'fa-eye' : 'fa-eye-slash'}"></i></button>
+                                            <button type="button" class="co-mini-btn danger" data-act="del" data-idx="${idx}" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="co-saved-meta">
+                                        <span>UTM: <b>E ${c.e.toFixed(2)} · N ${c.n.toFixed(2)}</b></span>
+                                        <span>Lat/Lon: <b>${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}</b></span>
+                                    </div>
+                                </div>`;
+                        }
+                        return `
+                            <div class="co-saved-item ${item.visible ? '' : 'hidden-map'}" style="border-left-color:${item.color};" data-idx="${idx}">
+                                <div class="co-saved-top">
+                                    <div class="co-saved-title">
+                                        <span class="co-saved-dot" style="background:${item.color};"></span>
+                                        <span>${esc(item.name)}</span>
+                                    </div>
+                                    <div class="co-saved-actions">
+                                        <button type="button" class="co-mini-btn" data-act="zoom" data-idx="${idx}" title="Focar neste lote"><i class="fa-solid fa-magnifying-glass-location"></i></button>
+                                        <button type="button" class="co-mini-btn" data-act="table" data-idx="${idx}" title="Ver / Ocultar coordenadas dos vértices"><i class="fa-solid fa-table-list"></i></button>
+                                        <button type="button" class="co-mini-btn" data-act="load" data-idx="${idx}" title="Carregar estas coordenadas nos campos de edição"><i class="fa-solid fa-pen-to-square"></i></button>
+                                        <button type="button" class="co-mini-btn" data-act="vis" data-idx="${idx}" title="Mostrar / Ocultar no mapa"><i class="fa-solid ${item.visible ? 'fa-eye' : 'fa-eye-slash'}"></i></button>
+                                        <button type="button" class="co-mini-btn danger" data-act="del" data-idx="${idx}" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>
+                                    </div>
+                                </div>
+                                <div class="co-saved-meta">
+                                    <span>Área: <b>${fmtArea(item.area)}</b></span>
+                                    <span>Perímetro: <b>${fmtDist(item.perimeter)}</b></span>
+                                </div>
+                                ${item.expanded ? `
+                                    <div class="co-table-wrap" style="margin-top:6px;margin-bottom:0;">
+                                        <table class="co-table">
+                                            <thead>
+                                                <tr><th>V</th><th>Este (E)</th><th>Norte (N)</th><th>Lado</th></tr>
+                                            </thead>
+                                            <tbody>
+                                                ${item.coords.map((c, i) => `<tr>
+                                                    <td><b style="color:${item.color};">V${c.v}</b></td>
+                                                    <td>${c.e.toFixed(2)}</td>
+                                                    <td>${c.n.toFixed(2)}</td>
+                                                    <td>V${c.v}–V${item.sides[i].to}: <b>${fmtDist(item.sides[i].d)}</b></td>
+                                                </tr>`).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ` : ''}
+                            </div>`;
+                    }).join('')}
+                </div>
+            </div>`;
+
+        $('co-fit-all-saved').addEventListener('click', () => {
+            const bounds = L.latLngBounds([]);
+            list.forEach(item => {
+                if (item.visible && item.bounds) bounds.extend(item.bounds);
+            });
+            if (state.coordLotGroup && state.coordLotGroup.getLayers().length) {
+                bounds.extend(state.coordLotGroup.getBounds());
+            }
+            if (bounds.isValid()) {
+                map.fitBounds(bounds, { padding: [60, 60], maxZoom: 19 });
+            }
+        });
+
+        $('co-clear-all-saved').addEventListener('click', () => {
+            if (state.savedCoordLotsGroup) state.savedCoordLotsGroup.clearLayers();
+            state.savedCoordLots = [];
+            renderSavedCoordLots();
+            toast('Todos os lotes/vértices salvos foram removidos.', 'info', 1800);
+        });
+
+        wrap.querySelectorAll('[data-act]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const act = btn.getAttribute('data-act');
+                const idx = parseInt(btn.getAttribute('data-idx'), 10);
+                const item = state.savedCoordLots[idx];
+                if (!item) return;
+
+                if (act === 'zoom') {
+                    if (item.type === 'point') {
+                        map.flyTo(item.coords[0].ll, Math.max(map.getZoom(), 18), { duration: 0.9 });
+                    } else {
+                        map.fitBounds(item.bounds, { padding: [55, 55], maxZoom: 19 });
+                    }
+                } else if (act === 'table') {
+                    item.expanded = !item.expanded;
+                    renderSavedCoordLots();
+                } else if (act === 'load') {
+                    const isUtm = $('co-mode') ? $('co-mode').value === 'utm' : true;
+                    const vals = item.coords.map(c => ({
+                        a: isUtm ? c.e.toFixed(2) : c.lat.toFixed(6),
+                        b: isUtm ? c.n.toFixed(2) : c.lng.toFixed(6)
+                    }));
+                    setVertexRowCount(Math.max(4, item.coords.length), vals);
+                    toast(`Coordenadas de ${item.name} carregadas nos campos!`, 'info', 2000);
+                } else if (act === 'vis') {
+                    item.visible = !item.visible;
+                    if (item.visible) {
+                        state.savedCoordLotsGroup.addLayer(item.group);
+                    } else {
+                        state.savedCoordLotsGroup.removeLayer(item.group);
+                    }
+                    renderSavedCoordLots();
+                } else if (act === 'del') {
+                    state.savedCoordLotsGroup.removeLayer(item.group);
+                    state.savedCoordLots.splice(idx, 1);
+                    renderSavedCoordLots();
+                    toast(`${item.name} removido.`, 'info', 1600);
+                }
+            });
+        });
     }
 
     function clearCoordLot() {
         if (state.coordLotGroup) state.coordLotGroup.clearLayers();
         if (state.coordMarker) { state.coordMarker.remove(); state.coordMarker = null; }
         if (state.coordTempGroup) state.coordTempGroup.clearLayers();
+        state.lastLocatedLot = null;
+        state.lastLocatedPoint = null;
         const out = $('co-out');
         if (out) out.innerHTML = 'Nenhum lote ou coordenada localizado.';
-        toast('Lote e marcações limpos do mapa.', 'info', 1600);
+        renderSavedCoordLots();
+        toast('Visualização ativa limpa (os lotes salvos permanecem no mapa).', 'info', 1800);
     }
 
     function showCoordInfo(latlng, flyTo) {
@@ -724,12 +1148,26 @@ const GeoTools = (() => {
         if (state.coordMarker) state.coordMarker.remove();
         state.coordMarker = L.marker(latlng).addTo(state.coordLotGroup).bindPopup(`<b>Ponto</b><br>Lat/Lon: ${dd}<br>UTM 22S: ${utm}`).openPopup();
         if (flyTo) map.flyTo(latlng, Math.max(map.getZoom(), 17), { duration: 1 });
+
+        state.lastLocatedPoint = {
+            lat: latlng.lat,
+            lng: latlng.lng,
+            e: parseFloat(u.x),
+            n: parseFloat(u.y),
+            ll: latlng
+        };
+
         const out = $('co-out');
         if (out) {
             out.innerHTML = `<div><b>Lat/Lon:</b> ${dd} <button type="button" class="mini-copy" data-c="${dd}" title="Copiar"><i class="fa-regular fa-copy"></i></button></div>
-                <div><b>UTM 22S:</b> ${utm} <button type="button" class="mini-copy" data-c="${u.x}, ${u.y}" title="Copiar"><i class="fa-regular fa-copy"></i></button></div>`;
+                <div><b>UTM 22S:</b> ${utm} <button type="button" class="mini-copy" data-c="${u.x}, ${u.y}" title="Copiar"><i class="fa-regular fa-copy"></i></button></div>
+                <div style="margin-top:6px;">
+                    <button type="button" class="tp-btn primary" id="co-save-pt" style="width:100%;"><i class="fa-solid fa-floppy-disk"></i> Salvar Vértice p/ Comparar</button>
+                </div>`;
             out.querySelectorAll('.mini-copy').forEach(b => b.addEventListener('click', () => copyText(b.dataset.c)));
+            $('co-save-pt').addEventListener('click', saveCurrentCoordPoint);
         }
+        renderSavedCoordLots();
     }
 
     function goToCoord() {
@@ -750,6 +1188,7 @@ const GeoTools = (() => {
         mode = mode || state.coordTab || 'single';
         const isLot = mode === 'lot';
         const btn = isLot ? $('co-pick-lot') : $('co-pick');
+        const targetCount = state.coordVertexCount || 4;
 
         if (state.coordPickMode === mode) {
             stopPick();
@@ -767,7 +1206,7 @@ const GeoTools = (() => {
         if (btn) {
             btn.classList.add('active');
             btn.innerHTML = isLot
-                ? '<i class="fa-solid fa-hand-pointer"></i> Clique no Vértice V1... (0/4)'
+                ? `<i class="fa-solid fa-hand-pointer"></i> Clique no Vértice V1... (0/${targetCount})`
                 : '<i class="fa-solid fa-hand-pointer"></i> Clique no mapa... (clique p/ parar)';
         }
 
@@ -788,20 +1227,19 @@ const GeoTools = (() => {
                 return;
             }
 
-            // Modo 4 vértices do lote
+            const currentTarget = state.coordVertexCount || 4;
             state.coordPickPts.push(ll);
             const idx = state.coordPickPts.length;
             const isUtm = $('co-mode').value === 'utm';
             if (isUtm) {
                 const u = toUTM22S(ll.lat, ll.lng);
-                $(`co-v${idx}-a`).value = u.x;
-                $(`co-v${idx}-b`).value = u.y;
+                if ($(`co-v${idx}-a`)) $(`co-v${idx}-a`).value = u.x;
+                if ($(`co-v${idx}-b`)) $(`co-v${idx}-b`).value = u.y;
             } else {
-                $(`co-v${idx}-a`).value = ll.lat.toFixed(6);
-                $(`co-v${idx}-b`).value = ll.lng.toFixed(6);
+                if ($(`co-v${idx}-a`)) $(`co-v${idx}-a`).value = ll.lat.toFixed(6);
+                if ($(`co-v${idx}-b`)) $(`co-v${idx}-b`).value = ll.lng.toFixed(6);
             }
 
-            // Marcador temporário numerado
             const tempIcon = L.divIcon({
                 className: 'lot-vertex-pin-wrap',
                 html: `<div class="lot-vertex-pin" style="background:#0ea5e9;"><span>V${idx}</span></div>`,
@@ -814,11 +1252,11 @@ const GeoTools = (() => {
                 L.polyline([state.coordPickPts[idx - 2], ll], { color: '#0ea5e9', weight: 2.5, dashArray: '4, 4' }).addTo(state.coordTempGroup);
             }
 
-            if (idx < 4) {
-                if (btn) btn.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> Clique no Vértice V${idx + 1}... (${idx}/4)`;
+            if (idx < currentTarget) {
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-hand-pointer"></i> Clique no Vértice V${idx + 1}... (${idx}/${currentTarget})`;
             } else {
                 stopPick();
-                toast('4 vértices capturados! Gerando lote...', 'ok', 2000);
+                toast(`${currentTarget} vértices capturados! Gerando lote...`, 'ok', 2000);
                 locateLot();
             }
         };
@@ -842,11 +1280,11 @@ const GeoTools = (() => {
         }
         const btnLot = $('co-pick-lot');
         if (btnLot) {
+            const n = state.coordVertexCount || 4;
             btnLot.classList.remove('active');
-            btnLot.innerHTML = '<i class="fa-solid fa-crosshairs"></i> Capturar 4 vértices por clique';
+            btnLot.innerHTML = `<i class="fa-solid fa-crosshairs"></i> Capturar ${n} vértices por clique`;
         }
     }
-
     /* ---------- MOTOR DE DESENHO, ANOTAÇÃO E EXPORTAÇÃO ---------- */
     function ensureDrawnGroup() {
         if (!state.drawnItems) {
