@@ -428,8 +428,9 @@ body.dark .group-title-text, body.dark .layer-name, body.dark .zone-legend-name 
 body.print-preview-mode .main-wrapper {
     background: radial-gradient(circle at center, #334155 0%, #0f172a 100%);
 }
-body.print-preview-mode #floating-layers-btn {
-    z-index: 1050;
+body.print-preview-mode #floating-layers-btn,
+body.print-preview-mode .map-floating-drawer-btn {
+    display: none !important;
 }
 body.print-preview-mode #print-frame {
     display: flex;
@@ -743,6 +744,7 @@ body.print-layout #map {
     .toast-box,
     .user-area,
     .login-modal,
+    #floating-layers-btn,
     .map-floating-drawer-btn,
     .measure-card,
     .leaflet-control-container,

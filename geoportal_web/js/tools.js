@@ -2555,6 +2555,10 @@ const GeoTools = (() => {
     }
 
     function onPrintPanelOpen() {
+        const sb = $('sidebar');
+        if (sb && !sb.classList.contains('collapsed')) {
+            sb.classList.add('collapsed');
+        }
         const c = map.getCenter();
         const z = map.getZoom();
         state.printLock = { center: L.latLng(c.lat, c.lng), zoom: z };
@@ -2654,6 +2658,8 @@ const GeoTools = (() => {
                     return el.classList.contains('sidebar') ||
                            el.classList.contains('tools-dock') ||
                            el.id === 'tool-panels' ||
+                           el.id === 'floating-layers-btn' ||
+                           el.classList.contains('map-floating-drawer-btn') ||
                            el.classList.contains('toast-box') ||
                            el.classList.contains('pf-screen-banner') ||
                            el.classList.contains('leaflet-control-container');

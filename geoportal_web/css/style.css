@@ -303,18 +303,18 @@ aside.sidebar.collapsed {
     top: 14px;
     left: 14px;
     z-index: 900;
+    width: 38px;
+    height: 38px;
+    padding: 0;
     background: #ffffff;
     border: 1.5px solid var(--border);
     border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 0.82rem;
-    font-weight: 600;
     color: var(--primary);
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
     transition: all 0.2s ease;
 }
 
@@ -328,7 +328,7 @@ aside.sidebar.collapsed {
 
 .map-floating-drawer-btn i {
     color: var(--accent);
-    font-size: 0.95rem;
+    font-size: 1.05rem;
 }
 
 /* Sidebar Tabs */
