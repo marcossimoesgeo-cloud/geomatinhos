@@ -330,6 +330,13 @@ function setupUIEvents() {
         btnCloseSidebar.addEventListener('click', closeSidebar);
     }
 
+    const brandHome = document.getElementById('brand-home');
+    if (brandHome) {
+        brandHome.addEventListener('click', () => {
+            map.flyTo(INITIAL_CENTER, INITIAL_ZOOM, { duration: 1.2 });
+        });
+    }
+
     // Fechar gaveta ao pressionar a tecla ESC
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !sidebar.classList.contains('collapsed')) {
