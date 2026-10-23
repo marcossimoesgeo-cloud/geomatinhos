@@ -2489,6 +2489,7 @@ const GeoTools = (() => {
         if (elFootCoords) {
             elFootCoords.textContent = `Centro do Croqui: UTM 22S E ${u.x} m, N ${u.y} m (${lockC.lat.toFixed(5)}°, ${lockC.lng.toFixed(5)}°)`;
         }
+        updatePrintMiniMap();
     }
 
     function refreshPrintFrameContent() {
@@ -2534,11 +2535,65 @@ const GeoTools = (() => {
                 </div>
                 <div class="pf-center-cross" title="Centro do Croqui"></div>
                 ${legendHtml}
+                <div class="pf-minimap">
+                    <div class="pf-minimap-title">Localização no Município</div>
+                    <div id="pf-minimap-map" class="pf-minimap-map"></div>
+                    <div id="pf-minimap-cap" class="pf-minimap-cap"></div>
+                </div>
             </div>
             <div class="pf-foot">
                 <span>SIRGAS 2000 &bull; <b id="pf-live-coords">Centro do Croqui: UTM 22S E ${u.x} m, N ${u.y} m (${c.lat.toFixed(5)}°, ${c.lng.toFixed(5)}°)</b></span>
                 <span>Geoportal Oficial de Matinhos &bull; Documento informativo</span>
             </div>`;
+        buildPrintMiniMap();
+    }
+
+    /* Mini mapa de referência (canto inferior direito do croqui) */
+    function buildPrintMiniMap() {
+        if (state.printMini) { try { state.printMini.remove(); } catch (e) { /* ignore */ } }
+        state.printMini = null; state.printMiniRect = null; state.printMiniDot = null;
+        state.printMiniTiles = null; state.printMiniBairros = [];
+        const el = $('pf-minimap-map');
+        if (!el || !window.L || !window.map) return;
+        const mm = L.map(el, {
+            zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false,
+            doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false, zoomSnap: 0.25
+        });
+        state.printMini = mm;
+        state.printMiniTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, crossOrigin: true }).addTo(mm);
+
+        const grp = L.featureGroup().addTo(mm);
+        const bg = layersMap && layersMap['limite_bairros_ipm'];
+        if (bg && bg.eachLayer) {
+            bg.eachLayer(l => {
+                if (!l.feature || !l.feature.geometry) return;
+                const gl = L.geoJSON(l.feature, { style: { color: '#0d3b66', weight: 1, fillColor: '#e63946', fillOpacity: 0 }, interactive: false }).addTo(grp);
+                state.printMiniBairros.push({ layer: gl, feature: l.feature });
+            });
+        }
+        if (grp.getLayers().length) mm.fitBounds(grp.getBounds(), { animate: false, padding: [2, 2] });
+        else mm.setView([-25.8175, -48.536], 11, { animate: false });
+
+        state.printMiniRect = L.rectangle(map.getBounds(), { color: '#e63946', weight: 2, fillOpacity: 0.2, interactive: false }).addTo(mm);
+        state.printMiniDot = L.circleMarker(map.getCenter(), { radius: 4, color: '#ffffff', weight: 1.5, fillColor: '#e63946', fillOpacity: 1, interactive: false }).addTo(mm);
+        setTimeout(() => { if (state.printMini === mm) { mm.invalidateSize({ animate: false }); updatePrintMiniMap(); } }, 60);
+        updatePrintMiniMap();
+    }
+
+    function updatePrintMiniMap() {
+        const mm = state.printMini;
+        if (!mm || !window.map) return;
+        const c = (state.printLock && state.printLock.center) ? state.printLock.center : map.getCenter();
+        if (state.printMiniRect) state.printMiniRect.setBounds(map.getBounds());
+        if (state.printMiniDot) state.printMiniDot.setLatLng(c);
+        let nome = '';
+        (state.printMiniBairros || []).forEach(b => {
+            const inside = pointInGeom(c.lat, c.lng, b.feature.geometry);
+            if (inside && !nome) nome = (b.feature.properties && b.feature.properties.Layer) || '';
+            b.layer.setStyle({ weight: inside ? 2 : 1, fillOpacity: inside ? 0.25 : 0 });
+        });
+        const cap = $('pf-minimap-cap');
+        if (cap) cap.textContent = nome ? 'Bairro: ' + nome : 'Matinhos - PR';
     }
 
     function getPaperDimsMM() {
@@ -2667,7 +2722,7 @@ const GeoTools = (() => {
         state.isAdjustingSheet = false;
     }
 
-    function doPrint() {
+    async function doPrint() {
         const c = (state.printLock && state.printLock.center) ? L.latLng(state.printLock.center.lat, state.printLock.center.lng) : map.getCenter();
         const z = (state.printLock && state.printLock.zoom != null) ? state.printLock.zoom : map.getZoom();
         state.printLock = { center: c, zoom: z };
@@ -2684,6 +2739,15 @@ const GeoTools = (() => {
         root.style.setProperty('--pr-foot-h', dims.foot + 'mm');
 
         refreshPrintFrameContent();
+
+        // Aguarda o carregamento dos mapas do mini mapa de referência antes de imprimir
+        await new Promise(res => {
+            const t = state.printMiniTiles;
+            if (t && t._loading) {
+                const to = setTimeout(res, 3500);
+                t.once('load', () => { clearTimeout(to); setTimeout(res, 200); });
+            } else setTimeout(res, 700);
+        });
 
         // Disparo limpo da janela nativa de impressão do navegador
         window.print();
