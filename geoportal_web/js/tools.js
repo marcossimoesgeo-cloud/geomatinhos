@@ -2586,6 +2586,9 @@ const GeoTools = (() => {
         const c = (state.printLock && state.printLock.center) ? state.printLock.center : map.getCenter();
         if (state.printMiniRect) state.printMiniRect.setBounds(map.getBounds());
         if (state.printMiniDot) state.printMiniDot.setLatLng(c);
+        // Aproxima o mini mapa: centraliza no croqui com zoom mais fechado (mantendo o retângulo visível)
+        const fitZ = mm.getBoundsZoom(map.getBounds().pad(1.2), false);
+        mm.setView(c, Math.max(12, Math.min(15, fitZ)), { animate: false });
         let nome = '';
         (state.printMiniBairros || []).forEach(b => {
             const inside = pointInGeom(c.lat, c.lng, b.feature.geometry);
