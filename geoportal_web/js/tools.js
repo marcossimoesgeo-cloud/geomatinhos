@@ -1354,7 +1354,9 @@ const GeoTools = (() => {
             <button type="button" class="tp-btn" id="vx-copy"><i class="fa-regular fa-copy"></i> Copiar</button>
             <button type="button" class="tp-btn" id="vx-csv"><i class="fa-solid fa-file-csv"></i> CSV</button>
             <button type="button" class="tp-btn" id="vx-txt"><i class="fa-solid fa-file-lines"></i> TXT</button>
-        </div>`;
+        </div>
+        <div class="tp-row"><button type="button" class="tp-btn danger" id="vx-clear"><i class="fa-solid fa-eraser"></i> Limpar coordenadas geradas</button></div>`;
+        $('vx-clear').addEventListener('click', () => { out.innerHTML = ''; toast('Coordenadas geradas foram removidas.', 'info', 2200); });
         const sep = '\t';
         const header = ['Desenho', 'Vertice', 'Latitude', 'Longitude', 'UTM_E_22S', 'UTM_N_22S'];
         const lines = rows.map(r => [r.nome, r.v, f(r.lat), f(r.lng), r.e, r.n]);
