@@ -174,8 +174,111 @@ const GeoTools = (() => {
         coords: { icon: 'fa-location-crosshairs', label: 'Buscar Coordenadas', title: 'Buscar Coordenadas / Localizar Lote', build: buildCoordsPanel, onClose: stopPick },
         draw:   { icon: 'fa-pen-ruler', label: 'Desenhar no Mapa', title: 'Desenhar, Anotar e Exportar', build: buildDrawPanel, onOpen: onDrawPanelOpen, onClose: stopActiveDraw },
         verts:  { icon: 'fa-vector-square', label: 'Extrair Vértices', title: 'Extrair Vértices das Camadas', build: buildVertsPanel, onOpen: fillLayerSelect, onClose: stopVertPick },
-        print:  { icon: 'fa-print', label: 'Imprimir Mapa', title: 'Croqui de Impressão Interativo / PDF', build: buildPrintPanel, onOpen: onPrintPanelOpen, onClose: onPrintPanelClose }
+        print:  { icon: 'fa-print', label: 'Imprimir Mapa', title: 'Croqui de Impressão Interativo / PDF', build: buildPrintPanel, onOpen: onPrintPanelOpen, onClose: onPrintPanelClose },
+        historico: { icon: 'fa-clock-rotate-left', label: 'Histórico de Uso', title: 'Histórico de Uso dos Servidores (somente administrador)', build: buildUsagePanel, onOpen: loadUsage }
     };
+
+    /* ---------- HISTÓRICO DE USO (somente administrador) ---------- */
+    function syncAdminUI() {
+        const b = $('dock-historico');
+        const admin = !!(window.GeoAuth && GeoAuth.isAdmin());
+        if (b) b.style.display = admin ? '' : 'none';
+        if (!admin && state.panel === 'historico') closePanel();
+    }
+
+    function buildUsagePanel(body) {
+        body.innerHTML = `
+            <div class="tp-hint">Registro das funções utilizadas pelos servidores logados. Visível somente para o administrador.</div>
+            <div class="tp-row two">
+                <select id="us-user" class="tp-input"><option value="">Todos os servidores</option></select>
+                <button type="button" class="tp-btn primary" id="us-refresh"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+            </div>
+            <div id="us-summary"></div>
+            <div class="tp-sub">Últimos usos registrados</div>
+            <div id="us-log"></div>
+            <div class="tp-row"><button type="button" class="tp-btn" id="us-csv"><i class="fa-solid fa-file-csv"></i> Exportar histórico (CSV)</button></div>`;
+        $('us-refresh').addEventListener('click', loadUsage);
+        $('us-user').addEventListener('change', renderUsage);
+        $('us-csv').addEventListener('click', () => {
+            const rows = state.usageRows || [];
+            if (!rows.length) { toast('Nenhum registro para exportar.', 'err'); return; }
+            const q = c => `"${String(c ?? '').replace(/"/g, '""')}"`;
+            const csv = '\ufeff' + ['Data/Hora;Servidor;Função;Detalhe'].concat(rows.map(r => [new Date(r.criado_em).toLocaleString('pt-BR'), r.email, r.funcao, r.detalhe].map(q).join(';'))).join('\r\n');
+            download('historico_uso_servidores.csv', csv, 'text/csv;charset=utf-8');
+        });
+    }
+
+    async function loadUsage() {
+        const sum = $('us-summary');
+        if (!sum) return;
+        sum.innerHTML = '<div class="tp-hint"><i class="fa-solid fa-spinner fa-spin"></i> Carregando histórico...</div>';
+        try {
+            state.usageRows = await GeoAuth.fetchUsage(2000);
+            const sel = $('us-user');
+            const cur = sel.value;
+            const emails = Array.from(new Set(state.usageRows.map(r => r.email))).sort();
+            sel.innerHTML = '<option value="">Todos os servidores</option>' + emails.map(e => `<option value="${esc(e)}">${esc(e)}</option>`).join('');
+            sel.value = emails.includes(cur) ? cur : '';
+            renderUsage();
+        } catch (e) {
+            sum.innerHTML = `<div class="tp-hint">Não foi possível carregar o histórico: ${esc(e.message)}. Verifique se o SQL de "supabase_historico_uso.sql" foi executado no Supabase e se você entrou com o e-mail de administrador.</div>`;
+            const lg = $('us-log'); if (lg) lg.innerHTML = '';
+        }
+    }
+
+    function renderUsage() {
+        const all = state.usageRows || [];
+        const who = $('us-user').value;
+        const rows = who ? all.filter(r => r.email === who) : all;
+        const fmt = d => new Date(d).toLocaleString('pt-BR');
+        const byUser = {};
+        all.forEach(r => { const u = byUser[r.email] || (byUser[r.email] = { n: 0, last: r.criado_em }); u.n++; if (r.criado_em > u.last) u.last = r.criado_em; });
+        const byFn = {};
+        rows.forEach(r => { byFn[r.funcao] = (byFn[r.funcao] || 0) + 1; });
+        const topFn = Object.entries(byFn).sort((a, b) => b[1] - a[1]).slice(0, 12);
+        $('us-summary').innerHTML = `
+            <div class="tp-sub" style="margin-top:6px;">Servidores (${Object.keys(byUser).length})</div>
+            <div class="vx-table-wrap"><table class="vx-table"><thead><tr><th>Servidor</th><th>Usos</th><th>Último acesso</th></tr></thead><tbody>${
+                Object.entries(byUser).sort((a, b) => b[1].n - a[1].n).map(([e, u]) => `<tr><td>${esc(e)}</td><td>${u.n}</td><td>${esc(fmt(u.last))}</td></tr>`).join('') || '<tr><td colspan="3">Sem registros.</td></tr>'
+            }</tbody></table></div>
+            <div class="tp-sub">Funções mais usadas${who ? ' por ' + esc(who) : ''}</div>
+            <div class="vx-table-wrap"><table class="vx-table"><thead><tr><th>Função</th><th>Usos</th></tr></thead><tbody>${
+                topFn.map(([f, n]) => `<tr><td>${esc(f)}</td><td>${n}</td></tr>`).join('') || '<tr><td colspan="2">Sem registros.</td></tr>'
+            }</tbody></table></div>`;
+        $('us-log').innerHTML = `<div class="vx-table-wrap"><table class="vx-table"><thead><tr><th>Data/Hora</th><th>Servidor</th><th>Função</th></tr></thead><tbody>${
+            rows.slice(0, 200).map(r => `<tr><td>${esc(fmt(r.criado_em))}</td><td>${esc(r.email)}</td><td>${esc(r.funcao)}${r.detalhe ? ' <small>(' + esc(r.detalhe) + ')</small>' : ''}</td></tr>`).join('') || '<tr><td colspan="3">Sem registros.</td></tr>'
+        }</tbody></table></div>${rows.length > 200 ? '<div class="tp-hint">Mostrando os 200 mais recentes. Exporte o CSV para ver todos.</div>' : ''}`;
+    }
+
+    /* Registro automático das funções utilizadas pelos servidores (clique em botões) */
+    const USAGE_LABELS = {
+        'adv-go': 'Busca Avançada: Buscar', 'co-go-lot': 'Coordenadas: Localizar lote', 'co-go': 'Coordenadas: Ir para coordenada',
+        'co-pick-lot': 'Coordenadas: Selecionar no mapa (lote)', 'co-pick': 'Coordenadas: Selecionar no mapa (ponto)',
+        'co-save-lot': 'Coordenadas: Salvar lote', 'co-save-pt': 'Coordenadas: Salvar ponto', 'co-copy-lot': 'Coordenadas: Copiar',
+        'vx-gen': 'Desenho: Gerar coordenadas dos vértices', 'vx-copy': 'Desenho: Copiar coordenadas', 'vx-csv': 'Desenho: Coordenadas CSV', 'vx-txt': 'Desenho: Coordenadas TXT',
+        'ex-geojson': 'Desenho: Exportar GeoJSON', 'ex-kml': 'Desenho: Exportar KML', 'ex-png': 'Desenho: Exportar PNG',
+        'vl-all': 'Extrair Vértices: Camada inteira', 'vl-pick': 'Extrair Vértices: Selecionar feição', 'vl-copy': 'Extrair Vértices: Copiar', 'vl-csv': 'Extrair Vértices: CSV', 'vl-txt': 'Extrair Vértices: TXT',
+        'pr-go': 'Imprimir Mapa: Imprimir / Salvar PDF', 'pr-dl-img': 'Imprimir Mapa: Baixar PNG',
+        'btn-measure-dist': 'Medir Distância', 'btn-measure-area': 'Medir Área'
+    };
+    function setupUsageTracking() {
+        document.addEventListener('click', e => {
+            if (!window.GeoAuth || !GeoAuth.isStaff()) return;
+            const t = e.target.closest && e.target.closest('button');
+            if (!t) return;
+            if (t.id && t.id.startsWith('dock-')) {
+                const name = t.id.slice(5);
+                if (name === 'historico') return;
+                const lbl = t.querySelector('span') ? t.querySelector('span').textContent.trim() : t.title;
+                if (PANELS[name]) { if (state.panel === name) GeoAuth.logUse('Abriu: ' + PANELS[name].label); }
+                else GeoAuth.logUse(lbl);
+            } else if (t.dataset && t.dataset.dmode) {
+                GeoAuth.logUse('Desenhar: ' + (t.querySelector('span') ? t.querySelector('span').textContent.trim() : t.dataset.dmode));
+            } else if (t.id && USAGE_LABELS[t.id]) {
+                GeoAuth.logUse(USAGE_LABELS[t.id]);
+            }
+        });
+    }
 
     function buildDock() {
         const wrap = document.querySelector('.main-wrapper');
@@ -3136,6 +3239,9 @@ const GeoTools = (() => {
             if (e.key === '/' && !typing) { e.preventDefault(); const s = $('search-input'); if (s) s.focus(); }
         });
         GeoAuth.onChange(onAuthChange);
+        GeoAuth.onChange(syncAdminUI);
+        setupUsageTracking();
+        syncAdminUI();
         if (/[?&]selftest=1/.test(location.search)) setTimeout(selfTest, 4000);
         const qs = new URLSearchParams(location.search);
         if (qs.get('dark') === '1') setDark(true);

@@ -9,5 +9,6 @@ window.GEO_SUPABASE = {
     url: "https://gbdeftfhayevbyvepwqp.supabase.co",
     anonKey: "sb_publishable_2a42kGEPSssk0SGJK-JoTQ_Dp4bwPaL",
     bucket: "restrito",                 // bucket PRIVADO com as camadas restritas
-    manifest: "config_restrito.json"    // lista das camadas restritas dentro do bucket
+    manifest: "config_restrito.json",   // lista das camadas restritas dentro do bucket
+    adminEmail: "marcossimoesgeo@gmail.com" // único e-mail que pode ver o Histórico de Uso (também definido no SQL)
 };

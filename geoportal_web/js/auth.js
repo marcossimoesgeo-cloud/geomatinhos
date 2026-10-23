@@ -44,6 +44,7 @@ const GeoAuth = (() => {
         const before = isStaff();
         session = s || null;
         saveSession(session);
+        if (session && session.user && session.user.email && !before) setTimeout(() => logUse('Login (entrada no modo servidor)'), 400);
         updateUI();
         if (!silent && before !== isStaff()) {
             listeners.forEach(fn => { try { fn(isStaff()); } catch (e) { console.error(e); } });
@@ -314,6 +315,37 @@ const GeoAuth = (() => {
         throw new Error('Arquivo restrito não encontrado no bucket.');
     }
 
+    /* ---------- HISTÓRICO DE USO DOS SERVIDORES (visível somente ao administrador) ---------- */
+    const adminEmail = () => String(cfg.adminEmail || '').trim().toLowerCase();
+    const isAdmin = () => !!(session && session.access_token && email().toLowerCase() === adminEmail() && adminEmail());
+    const lastLog = {};
+
+    /** Registra o uso de uma função por servidor logado (silencioso; nunca interrompe a ferramenta). */
+    function logUse(funcao, detalhe) {
+        try {
+            if (!isStaff() || !configured()) return;
+            const key = funcao + '|' + (detalhe || '');
+            const now = Date.now();
+            if (lastLog[key] && now - lastLog[key] < 20000) return; // evita repetição em sequência
+            lastLog[key] = now;
+            const url = projectUrl();
+            const headers = { 'apikey': cfg.anonKey, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
+            if (session && session.access_token) headers['Authorization'] = 'Bearer ' + session.access_token;
+            fetch(url + '/rest/v1/uso_servidores', {
+                method: 'POST',
+                headers,
+                keepalive: true,
+                body: JSON.stringify({ email: email(), funcao: String(funcao).slice(0, 120), detalhe: detalhe ? String(detalhe).slice(0, 300) : null })
+            }).catch(() => { /* ignore */ });
+        } catch (e) { /* ignore */ }
+    }
+
+    /** Lê o histórico (só funciona para o administrador, protegido por RLS no Supabase). */
+    async function fetchUsage(limit = 1000) {
+        if (!isAdmin()) throw new Error('Acesso restrito ao administrador.');
+        return await supaFetch(`/rest/v1/uso_servidores?select=id,criado_em,email,funcao,detalhe&order=criado_em.desc&limit=${limit}`);
+    }
+
     function init() {
         buildModal();
         const saved = loadSavedSession();
@@ -347,6 +379,6 @@ const GeoAuth = (() => {
         }
     }
 
-    return { init, isStaff, email, onChange, fetchJSON, openLogin, signOut, configured, manifest: cfg.manifest || 'config_restrito.json' };
+    return { init, isStaff, email, onChange, fetchJSON, openLogin, signOut, configured, isAdmin, logUse, fetchUsage, manifest: cfg.manifest || 'config_restrito.json' };
 })();
 window.GeoAuth = GeoAuth;
