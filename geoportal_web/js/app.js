@@ -771,6 +771,25 @@ async function loadGeoJsonLayer(layerDef) {
                     setupFeatureInteractions(feature, layer, layerDef);
                 }
             });
+        } else if (layerDef.type === 'labels') {
+            // Rótulos fixos (nomes de ruas): marcadores de texto não interativos, visíveis a partir do zoom mínimo
+            geojsonLayer = L.featureGroup();
+            (geojsonData.features || []).forEach(f => {
+                const nome = f.properties && f.properties.Logradouro;
+                if (!nome || !f.geometry) return;
+                const safe = String(nome).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
+                    icon: L.divIcon({ className: 'street-label', html: `<span>${safe}</span>`, iconSize: null }),
+                    interactive: false,
+                    keyboard: false
+                }).addTo(geojsonLayer);
+            });
+            const minZ = layerDef.min_zoom || 16;
+            geojsonLayer._isLabels = true;
+            geojsonLayer._minZoom = minZ;
+            const toggleLabelsZoom = () => map.getContainer().classList.toggle('street-labels-hidden', map.getZoom() < minZ);
+            map.on('zoomend', toggleLabelsZoom);
+            toggleLabelsZoom();
         } else if (layerDef.type === 'line') {
             geojsonLayer = L.geoJSON(geojsonData, {
                 style: feature => getLineFeatureStyle(feature, layerDef),
@@ -1463,6 +1482,12 @@ function zoomToThematicLayer(layerId) {
         cb.dispatchEvent(new Event('change'));
     }
     if (g) {
+        if (g._isLabels) {
+            // Rótulos só aparecem a partir de um zoom mínimo: aproxima o mapa sem mudar o centro
+            if (map.getZoom() < g._minZoom) map.setZoom(g._minZoom);
+            if (window.GeoTools) GeoTools.toast('Camada ativada! Os rótulos aparecem a partir do zoom ' + g._minZoom + '.', 'ok', 2500);
+            return;
+        }
         let bounds = null;
         if (g.eachLayer) {
             g.eachLayer(l => {

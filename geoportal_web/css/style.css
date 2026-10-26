@@ -1449,3 +1449,23 @@ input:checked + .slider:before {
     flex-shrink: 0;
     box-sizing: border-box;
 }
+/* Rótulos fixos dos nomes de ruas (Sistema Viário) */
+.street-label {
+    background: transparent;
+    border: none;
+    pointer-events: none;
+}
+.street-label span {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffff00;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px #000;
+    letter-spacing: 0.2px;
+    pointer-events: none;
+}
+.street-labels-hidden .street-label {
+    display: none;
+}
