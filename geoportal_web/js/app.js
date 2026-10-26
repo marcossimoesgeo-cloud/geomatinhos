@@ -789,9 +789,12 @@ async function loadGeoJsonLayer(layerDef) {
                     const rawName = (props.Logradouro || props.Nome || '').trim();
                     if (rawName && rawName !== 'NULL') {
                         const safe = String(rawName).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-                        // Rótulos integrados diretamente sobre as vias (como no QGIS)
-                        // Evita repetição excessiva em segmentos contíguos (< 120m)
-                        const center = (layer.getBounds && layer.getBounds().isValid()) ? layer.getBounds().getCenter() : null;
+                        // Posicionamento do rótulo conforme configurado no QGIS:
+                        // - Alinhamento Paralelo à via (rotação ao longo do segmento mais expressivo)
+                        // - Acima da linha (AboveLine: True, OnLine: False -> deslocamento perpendicular)
+                        // - Evita repetição excessiva em segmentos contíguos (< 120m)
+                        const placement = getLineFeatureLabelPlacement(feature);
+                        const center = placement ? placement.latlng : ((layer.getBounds && layer.getBounds().isValid()) ? layer.getBounds().getCenter() : null);
                         let shouldPermanent = true;
                         if (center) {
                             if (!labeledCenters[rawName]) {
@@ -803,7 +806,12 @@ async function loadGeoJsonLayer(layerDef) {
                         }
                         if (shouldPermanent) {
                             if (center) labeledCenters[rawName].push(center);
-                            layer.bindTooltip(safe, {
+                            if (placement && placement.latlng) {
+                                layer.getCenter = () => placement.latlng;
+                            }
+                            const angle = placement ? placement.angle : 0;
+                            const labelHtml = `<span class="street-label-text" style="transform: rotate(${angle}deg) translateY(-8px);">${safe}</span>`;
+                            layer.bindTooltip(labelHtml, {
                                 permanent: true,
                                 direction: 'center',
                                 className: 'street-name-label'
@@ -908,6 +916,70 @@ function getLineFeatureStyle(feature, def) {
         dashArray: null,
         fill: false,
         opacity: 1
+    };
+}
+
+/**
+ * Calcula o posicionamento e rotação do rótulo para feições de linha,
+ * de acordo com o padrão configurado no QGIS (Paralelo ao segmento e acima da linha):
+ * - Segmento mais longo e representativo da via
+ * - Ponto médio geográfico
+ * - Ângulo em graus projetado em Web Mercator normalizado entre -90° e +90° (sempre legível da esquerda para a direita)
+ */
+function getLineFeatureLabelPlacement(feature) {
+    if (!feature || !feature.geometry) return null;
+    let lines = [];
+    if (feature.geometry.type === 'LineString') {
+        lines = [feature.geometry.coordinates];
+    } else if (feature.geometry.type === 'MultiLineString') {
+        lines = feature.geometry.coordinates;
+    }
+    if (!lines || !lines.length) return null;
+
+    let longestSeg = null;
+    let maxDist = -1;
+
+    for (let l = 0; l < lines.length; l++) {
+        const coords = lines[l];
+        if (!coords || coords.length < 2) continue;
+        for (let i = 0; i < coords.length - 1; i++) {
+            const p1 = coords[i];     // [lng, lat]
+            const p2 = coords[i + 1]; // [lng, lat]
+            if (!p1 || !p2 || p1.length < 2 || p2.length < 2) continue;
+
+            const p1Proj = L.CRS.EPSG3857.project(L.latLng(p1[1], p1[0]));
+            const p2Proj = L.CRS.EPSG3857.project(L.latLng(p2[1], p2[0]));
+            const dx = p2Proj.x - p1Proj.x;
+            const dy = p2Proj.y - p1Proj.y;
+            const distSq = dx * dx + dy * dy;
+
+            if (distSq > maxDist) {
+                maxDist = distSq;
+                longestSeg = { p1, p2, dx, dy };
+            }
+        }
+    }
+
+    if (!longestSeg) return null;
+
+    const midLatLng = L.latLng(
+        (longestSeg.p1[1] + longestSeg.p2[1]) / 2,
+        (longestSeg.p1[0] + longestSeg.p2[0]) / 2
+    );
+
+    // No sistema de tela, o eixo Y cresce para baixo, logo o dy projetado é invertido
+    const screenDy = -longestSeg.dy;
+    const screenDx = longestSeg.dx;
+
+    let angle = Math.atan2(screenDy, screenDx) * 180 / Math.PI;
+
+    // Normalização entre -90° e +90° para que o rótulo permaneça na orientação legível natural
+    if (angle > 90) angle -= 180;
+    else if (angle < -90) angle += 180;
+
+    return {
+        latlng: midLatLng,
+        angle: Math.round(angle * 10) / 10
     };
 }
 
