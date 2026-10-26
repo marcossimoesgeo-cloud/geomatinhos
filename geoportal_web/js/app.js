@@ -358,8 +358,19 @@ function setupUIEvents() {
     const floatingLayersBtn = document.getElementById('floating-layers-btn');
     const btnCloseSidebar = document.getElementById('btn-close-sidebar');
 
+    function collapseAllLayerGroups() {
+        document.querySelectorAll('.group-header').forEach(header => {
+            const contentId = header.getAttribute('data-toggle');
+            const content = document.getElementById(contentId);
+            const icon = header.querySelector('.toggle-icon');
+            if (content) content.style.display = 'none';
+            if (icon) icon.className = 'fa-solid fa-chevron-right toggle-icon';
+        });
+    }
+
     function openLayersPanel() {
         sidebar.classList.remove('collapsed');
+        collapseAllLayerGroups();
         const tabCamadasBtn = document.getElementById('tab-btn-camadas');
         if (tabCamadasBtn) tabCamadasBtn.click();
     }
@@ -403,15 +414,20 @@ function setupUIEvents() {
             const contentId = header.getAttribute('data-toggle');
             const content = document.getElementById(contentId);
             const icon = header.querySelector('.toggle-icon');
-            if (content.style.display === 'none') {
+            if (!content) return;
+            const isClosed = content.style.display === 'none' || !content.style.display;
+            if (isClosed) {
                 content.style.display = 'block';
-                icon.className = 'fa-solid fa-chevron-down toggle-icon';
+                if (icon) icon.className = 'fa-solid fa-chevron-down toggle-icon';
             } else {
                 content.style.display = 'none';
-                icon.className = 'fa-solid fa-chevron-right toggle-icon';
+                if (icon) icon.className = 'fa-solid fa-chevron-right toggle-icon';
             }
         });
     });
+
+    // Inicializa todos os grupos recolhidos
+    collapseAllLayerGroups();
 
     // Slider de Opacidade do Zoneamento
     const opacitySlider = document.getElementById('opacity-slider');
@@ -527,12 +543,16 @@ function setupUIEvents() {
         if (!map) return;
         const isLow = map.getZoom() < 15;
         map.getContainer().classList.toggle('map-zoom-low', isLow);
+        updateViarioLabels();
     }
     updateStreetLabelsVisibility();
 
     map.on('zoomend', () => {
         document.getElementById('zoom-level').textContent = map.getZoom();
         updateStreetLabelsVisibility();
+    });
+    map.on('moveend', () => {
+        updateViarioLabels();
     });
 
     // Botão Voltar para Enquadramento Geral (se presente no header)
@@ -696,6 +716,54 @@ async function loadVectorLayers() {
     }
 }
 
+// Cache em memória dos arquivos GeoJSON para evitar requisições de rede e reprocessamento repetidos
+const geoJsonDataCache = {};
+
+// Renderer Canvas de alta performance para a malha viária e camadas lineares (desenho direto via GPU)
+const viarioCanvasRenderer = L.canvas({ padding: 0.5 });
+
+// Grupo dedicado de rótulos viários (renderizados sob demanda no viewport para zoom >= 15 com zero travamentos)
+const viarioLabelGroup = L.layerGroup();
+let viarioLabelsData = [];
+
+/**
+ * Atualiza os rótulos de ruas na tela dinamicamente de acordo com o viewport e zoom
+ * (Apenas no zoom >= 15 e apenas para as vias que estão no campo de visão do usuário)
+ */
+function updateViarioLabels() {
+    if (!map || !viarioLabelGroup) return;
+    const isViarioActive = layersMap['malha_viaria'] && map.hasLayer(layersMap['malha_viaria']);
+    if (!isViarioActive) {
+        if (map.hasLayer(viarioLabelGroup)) map.removeLayer(viarioLabelGroup);
+        viarioLabelGroup.clearLayers();
+        return;
+    }
+    const zoom = map.getZoom();
+    if (zoom < 15) {
+        viarioLabelGroup.clearLayers();
+        return;
+    }
+    if (!map.hasLayer(viarioLabelGroup)) {
+        viarioLabelGroup.addTo(map);
+    }
+    const bounds = map.getBounds().pad(0.12);
+    viarioLabelGroup.clearLayers();
+
+    for (let i = 0; i < viarioLabelsData.length; i++) {
+        const item = viarioLabelsData[i];
+        if (bounds.contains(item.latlng)) {
+            const html = `<span class="street-label-text" style="transform: rotate(${item.angle}deg) translateY(-8px);">${item.safe}</span>`;
+            const icon = L.divIcon({
+                className: 'street-name-label',
+                html: html,
+                iconSize: [0, 0],
+                iconAnchor: [0, 0]
+            });
+            L.marker(item.latlng, { icon: icon, interactive: false }).addTo(viarioLabelGroup);
+        }
+    }
+}
+
 /**
  * Carrega uma camada GeoJSON individual
  */
@@ -704,8 +772,14 @@ async function loadGeoJsonLayer(layerDef) {
     const checkbox = document.getElementById('layer-' + layerId);
 
     try {
-        const res = await fetch('data/' + layerDef.file);
-        const geojsonData = await res.json();
+        let geojsonData;
+        if (geoJsonDataCache[layerDef.file]) {
+            geojsonData = geoJsonDataCache[layerDef.file];
+        } else {
+            const res = await fetch('data/' + layerDef.file);
+            geojsonData = await res.json();
+            geoJsonDataCache[layerDef.file] = geojsonData;
+        }
 
         let geojsonLayer;
 
@@ -780,53 +854,49 @@ async function loadGeoJsonLayer(layerDef) {
                 }
             });
         } else if (layerDef.type === 'line') {
-            const labeledCenters = {};
+            // Renderização ultrarrápida via Canvas (GPU) para evitar travamentos
             geojsonLayer = L.geoJSON(geojsonData, {
+                renderer: viarioCanvasRenderer,
                 style: feature => getLineFeatureStyle(feature, layerDef),
                 onEachFeature: (feature, layer) => {
                     layer.layerDef = layerDef;
-                    const props = feature.properties || {};
-                    const rawName = (props.Logradouro || props.Nome || '').trim();
-                    if (rawName && rawName !== 'NULL') {
-                        const safe = String(rawName).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-                        // Posicionamento do rótulo conforme configurado no QGIS:
-                        // - Alinhamento Paralelo à via (rotação ao longo do segmento mais expressivo)
-                        // - Acima da linha (AboveLine: True, OnLine: False -> deslocamento perpendicular)
-                        // - Evita repetição excessiva em segmentos contíguos (< 120m)
-                        const placement = getLineFeatureLabelPlacement(feature);
-                        const center = placement ? placement.latlng : ((layer.getBounds && layer.getBounds().isValid()) ? layer.getBounds().getCenter() : null);
-                        let shouldPermanent = true;
-                        if (center) {
-                            if (!labeledCenters[rawName]) {
-                                labeledCenters[rawName] = [];
-                            } else {
-                                const tooClose = labeledCenters[rawName].some(c => c.distanceTo(center) < 120);
-                                if (tooClose) shouldPermanent = false;
-                            }
-                        }
-                        if (shouldPermanent) {
-                            if (center) labeledCenters[rawName].push(center);
-                            if (placement && placement.latlng) {
-                                layer.getCenter = () => placement.latlng;
-                            }
-                            const angle = placement ? placement.angle : 0;
-                            const labelHtml = `<span class="street-label-text" style="transform: rotate(${angle}deg) translateY(-8px);">${safe}</span>`;
-                            layer.bindTooltip(labelHtml, {
-                                permanent: true,
-                                direction: 'center',
-                                className: 'street-name-label'
-                            });
-                        } else {
-                            layer.bindTooltip(`<b>${safe}</b>`, {
-                                sticky: true,
-                                direction: 'top',
-                                className: 'bairro-tooltip'
-                            });
-                        }
-                    }
                     setupFeatureInteractions(feature, layer, layerDef);
                 }
             });
+
+            // Extrai pontos de rótulo para a malha viária principal (executado uma única vez)
+            if (layerId === 'malha_viaria' && viarioLabelsData.length === 0) {
+                const labeledCenters = {};
+                geojsonData.features.forEach(feat => {
+                    const props = feat.properties || {};
+                    const rawName = (props.Logradouro || props.Nome || '').trim();
+                    if (!rawName || rawName === 'NULL') return;
+
+                    const placement = getLineFeatureLabelPlacement(feat);
+                    if (!placement) return;
+
+                    if (!labeledCenters[rawName]) {
+                        labeledCenters[rawName] = [placement.latlng];
+                        viarioLabelsData.push({
+                            name: rawName,
+                            safe: String(rawName).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
+                            latlng: placement.latlng,
+                            angle: placement.angle
+                        });
+                    } else {
+                        const tooClose = labeledCenters[rawName].some(c => c.distanceTo(placement.latlng) < 220);
+                        if (!tooClose) {
+                            labeledCenters[rawName].push(placement.latlng);
+                            viarioLabelsData.push({
+                                name: rawName,
+                                safe: String(rawName).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
+                                latlng: placement.latlng,
+                                angle: placement.angle
+                            });
+                        }
+                    }
+                });
+            }
         } else {
             geojsonLayer = L.geoJSON(geojsonData, {
                 style: {
@@ -849,6 +919,7 @@ async function loadGeoJsonLayer(layerDef) {
         // Adicionar ao mapa se padrão for visível
         if (layerDef.visible_default && checkbox && checkbox.checked) {
             geojsonLayer.addTo(map);
+            if (layerId === 'malha_viaria') updateViarioLabels();
         }
 
         // Listener do checkbox
@@ -856,14 +927,14 @@ async function loadGeoJsonLayer(layerDef) {
             checkbox.addEventListener('change', () => {
                 if (checkbox.checked) {
                     geojsonLayer.addTo(map);
+                    if (layerId === 'malha_viaria') {
+                        updateViarioLabels();
+                    }
                 } else {
                     map.removeLayer(geojsonLayer);
-                    if (geojsonLayer.eachLayer) {
-                        geojsonLayer.eachLayer(l => {
-                            if (l._tooltip && l._tooltip._container) {
-                                l._tooltip._container.remove();
-                            }
-                        });
+                    if (layerId === 'malha_viaria') {
+                        if (map.hasLayer(viarioLabelGroup)) map.removeLayer(viarioLabelGroup);
+                        viarioLabelGroup.clearLayers();
                     }
                 }
                 updateLayerCounters();
@@ -1334,6 +1405,27 @@ function setupSearch() {
             }
         });
 
+        // Buscar em logradouros (malha viária)
+        if (layersMap['malha_viaria']) {
+            const addedStreets = new Set();
+            layersMap['malha_viaria'].eachLayer(layer => {
+                if (matches.length >= 20) return;
+                const props = layer.feature.properties || {};
+                const sName = (props.Logradouro || props.Nome || '').trim();
+                if (sName && sName !== 'NULL' && sName.toLowerCase().includes(q)) {
+                    if (!addedStreets.has(sName)) {
+                        addedStreets.add(sName);
+                        matches.push({
+                            title: sName,
+                            type: 'Logradouro / Rua',
+                            layer: layer,
+                            layerId: 'malha_viaria'
+                        });
+                    }
+                }
+            });
+        }
+
         if (matches.length === 0) {
             searchResults.innerHTML = `<div class="search-item" style="color: var(--text-muted);">Nenhum resultado encontrado</div>`;
             searchResults.style.display = 'block';
@@ -1364,7 +1456,10 @@ function setupSearch() {
                     if (m.layerId && layersMap[m.layerId] && !map.hasLayer(layersMap[m.layerId])) {
                         layersMap[m.layerId].addTo(map);
                         const cb = document.getElementById('layer-' + m.layerId);
-                        if (cb) cb.checked = true;
+                        if (cb) {
+                            cb.checked = true;
+                            cb.dispatchEvent(new Event('change'));
+                        }
                     }
                     const bounds = m.layer.getBounds();
                     map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 });
