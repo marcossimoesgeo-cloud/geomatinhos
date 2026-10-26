@@ -523,8 +523,16 @@ function setupUIEvents() {
         document.getElementById('coord-utm').textContent = `E: ${utm.x} m, N: ${utm.y} m`;
     });
 
+    function updateStreetLabelsVisibility() {
+        if (!map) return;
+        const isLow = map.getZoom() < 15;
+        map.getContainer().classList.toggle('map-zoom-low', isLow);
+    }
+    updateStreetLabelsVisibility();
+
     map.on('zoomend', () => {
         document.getElementById('zoom-level').textContent = map.getZoom();
+        updateStreetLabelsVisibility();
     });
 
     // Botão Voltar para Enquadramento Geral (se presente no header)
@@ -771,34 +779,42 @@ async function loadGeoJsonLayer(layerDef) {
                     setupFeatureInteractions(feature, layer, layerDef);
                 }
             });
-        } else if (layerDef.type === 'labels') {
-            // Rótulos fixos (nomes de ruas): marcadores de texto não interativos, visíveis a partir do zoom mínimo
-            geojsonLayer = L.featureGroup();
-            (geojsonData.features || []).forEach(f => {
-                const nome = f.properties && f.properties.Logradouro;
-                if (!nome || !f.geometry) return;
-                const safe = String(nome).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-                L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
-                    icon: L.divIcon({ className: 'street-label', html: `<span>${safe}</span>`, iconSize: null }),
-                    interactive: false,
-                    keyboard: false
-                }).addTo(geojsonLayer);
-            });
-            const minZ = layerDef.min_zoom || 16;
-            geojsonLayer._isLabels = true;
-            geojsonLayer._minZoom = minZ;
-            const toggleLabelsZoom = () => map.getContainer().classList.toggle('street-labels-hidden', map.getZoom() < minZ);
-            map.on('zoomend', toggleLabelsZoom);
-            toggleLabelsZoom();
         } else if (layerDef.type === 'line') {
+            const labeledCenters = {};
             geojsonLayer = L.geoJSON(geojsonData, {
                 style: feature => getLineFeatureStyle(feature, layerDef),
                 onEachFeature: (feature, layer) => {
                     layer.layerDef = layerDef;
                     const props = feature.properties || {};
-                    const nome = props.Logradouro || props.Nome;
-                    if (nome) {
-                        layer.bindTooltip(`<b>${nome}</b>`, { sticky: true, direction: 'top', className: 'bairro-tooltip' });
+                    const rawName = (props.Logradouro || props.Nome || '').trim();
+                    if (rawName && rawName !== 'NULL') {
+                        const safe = String(rawName).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                        // Rótulos integrados diretamente sobre as vias (como no QGIS)
+                        // Evita repetição excessiva em segmentos contíguos (< 120m)
+                        const center = (layer.getBounds && layer.getBounds().isValid()) ? layer.getBounds().getCenter() : null;
+                        let shouldPermanent = true;
+                        if (center) {
+                            if (!labeledCenters[rawName]) {
+                                labeledCenters[rawName] = [];
+                            } else {
+                                const tooClose = labeledCenters[rawName].some(c => c.distanceTo(center) < 120);
+                                if (tooClose) shouldPermanent = false;
+                            }
+                        }
+                        if (shouldPermanent) {
+                            if (center) labeledCenters[rawName].push(center);
+                            layer.bindTooltip(safe, {
+                                permanent: true,
+                                direction: 'center',
+                                className: 'street-name-label'
+                            });
+                        } else {
+                            layer.bindTooltip(`<b>${safe}</b>`, {
+                                sticky: true,
+                                direction: 'top',
+                                className: 'bairro-tooltip'
+                            });
+                        }
                     }
                     setupFeatureInteractions(feature, layer, layerDef);
                 }
@@ -834,6 +850,13 @@ async function loadGeoJsonLayer(layerDef) {
                     geojsonLayer.addTo(map);
                 } else {
                     map.removeLayer(geojsonLayer);
+                    if (geojsonLayer.eachLayer) {
+                        geojsonLayer.eachLayer(l => {
+                            if (l._tooltip && l._tooltip._container) {
+                                l._tooltip._container.remove();
+                            }
+                        });
+                    }
                 }
                 updateLayerCounters();
             });
@@ -1482,12 +1505,6 @@ function zoomToThematicLayer(layerId) {
         cb.dispatchEvent(new Event('change'));
     }
     if (g) {
-        if (g._isLabels) {
-            // Rótulos só aparecem a partir de um zoom mínimo: aproxima o mapa sem mudar o centro
-            if (map.getZoom() < g._minZoom) map.setZoom(g._minZoom);
-            if (window.GeoTools) GeoTools.toast('Camada ativada! Os rótulos aparecem a partir do zoom ' + g._minZoom + '.', 'ok', 2500);
-            return;
-        }
         let bounds = null;
         if (g.eachLayer) {
             g.eachLayer(l => {

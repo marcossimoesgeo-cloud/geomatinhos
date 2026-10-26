@@ -390,15 +390,6 @@
       "dashArray": "6, 3",
       "fill": false,
       "visible_default": false
-    },
-    {
-      "id": "malha_nomes",
-      "file": "nomes_ruas.geojson",
-      "title": "Nomes das Ruas (Rótulos)",
-      "group": "viario",
-      "type": "labels",
-      "visible_default": false,
-      "min_zoom": 16
     }
   ],
   "zone_styles": {
