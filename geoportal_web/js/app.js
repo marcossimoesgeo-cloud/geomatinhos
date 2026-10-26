@@ -771,6 +771,19 @@ async function loadGeoJsonLayer(layerDef) {
                     setupFeatureInteractions(feature, layer, layerDef);
                 }
             });
+        } else if (layerDef.type === 'line') {
+            geojsonLayer = L.geoJSON(geojsonData, {
+                style: feature => getLineFeatureStyle(feature, layerDef),
+                onEachFeature: (feature, layer) => {
+                    layer.layerDef = layerDef;
+                    const props = feature.properties || {};
+                    const nome = props.Logradouro || props.Nome;
+                    if (nome) {
+                        layer.bindTooltip(`<b>${nome}</b>`, { sticky: true, direction: 'top', className: 'bairro-tooltip' });
+                    }
+                    setupFeatureInteractions(feature, layer, layerDef);
+                }
+            });
         } else {
             geojsonLayer = L.geoJSON(geojsonData, {
                 style: {
@@ -839,6 +852,24 @@ function getZoneFeatureStyle(feature) {
 }
 
 /**
+ * Estilo das camadas de linhas (Sistema Viário): categorizado por atributo ou simples
+ */
+function getLineFeatureStyle(feature, def) {
+    if (!def.categories) {
+        return { color: def.color, weight: def.weight, dashArray: def.dashArray || null, fill: false, opacity: 1 };
+    }
+    const v = (feature.properties || {})[def.categorized_by];
+    const cat = def.categories.find(c => c.value !== null && c.value === v) || def.categories.find(c => c.value === null);
+    return {
+        color: cat ? cat.color : '#9ca3af',
+        weight: (cat && cat.weight) || def.weight,
+        dashArray: null,
+        fill: false,
+        opacity: 1
+    };
+}
+
+/**
  * Restaura o estilo padrão de uma camada após desmarcar o destaque
  */
 function resetLayerStyle(l) {
@@ -846,7 +877,9 @@ function resetLayerStyle(l) {
     const def = l.layerDef;
     if (!def) return;
 
-    if (def.id === 'zoneamento_corrigido') {
+    if (def.type === 'line') {
+        l.setStyle(getLineFeatureStyle(l.feature, def));
+    } else if (def.id === 'zoneamento_corrigido') {
         l.setStyle(getZoneFeatureStyle(l.feature));
     } else if (def.id === 'area_de_preservacao') {
         l.setStyle({
@@ -974,7 +1007,23 @@ function displayFeatureDetails(feature, layerDef, latlng) {
         }
     }
 
-    // Calcular área e perímetro aproximados
+    // Camadas de linhas (Sistema Viário): título pelo logradouro e extensão no lugar da área
+    const isLine = layerDef.type === 'line';
+    let lineLenFormatted = '';
+    if (isLine) {
+        title = props.Logradouro || props.Nome || layerDef.title;
+        badgeText = layerDef.title;
+        badgeBg = getLineFeatureStyle(feature, layerDef).color;
+        if (badgeBg === '#ffffff' || badgeBg === '#fffa72') badgeBg = '#64748b';
+        const segs = feature.geometry.type === 'MultiLineString' ? feature.geometry.coordinates : [feature.geometry.coordinates];
+        let len = 0;
+        segs.forEach(seg => {
+            for (let i = 0; i < seg.length - 1; i++) {
+                len += L.latLng(seg[i][1], seg[i][0]).distanceTo(L.latLng(seg[i + 1][1], seg[i + 1][0]));
+            }
+        });
+        lineLenFormatted = len > 1000 ? `${(len / 1000).toFixed(2)} km` : `${len.toFixed(1)} m`;
+    }
     const areaM2 = calculateApproxArea(feature.geometry);
     const areaHa = (areaM2 / 10000).toFixed(2);
     const areaFormatted = areaM2 > 10000 
@@ -999,8 +1048,8 @@ function displayFeatureDetails(feature, layerDef, latlng) {
                 <span class="info-value">${layerDef.title}</span>
             </div>
             <div class="info-row">
-                <span class="info-label">Área Aproximada:</span>
-                <span class="info-value" style="color: var(--accent-hover);">${areaFormatted}</span>
+                <span class="info-label">${isLine ? 'Extensão Aproximada:' : 'Área Aproximada:'}</span>
+                <span class="info-value" style="color: var(--accent-hover);">${isLine ? lineLenFormatted : areaFormatted}</span>
             </div>
             ${latlng ? `
             <div class="info-row">
@@ -1377,7 +1426,7 @@ function updateLayerCounters() {
         sideBadge.classList.toggle('has-active', totalActive > 0);
     }
 
-    const groupIds = ['group-zoneamento', 'group-admin', 'group-preservacao', 'group-ambiental', 'group-publicos'];
+    const groupIds = ['group-zoneamento', 'group-admin', 'group-preservacao', 'group-ambiental', 'group-publicos', 'group-viario'];
     groupIds.forEach(gid => {
         const container = document.getElementById(gid);
         const pill = document.getElementById('count-' + gid);

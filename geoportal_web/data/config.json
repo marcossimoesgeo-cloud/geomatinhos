@@ -209,6 +209,187 @@
       "fillColor": "#ffaa00",
       "fillOpacity": 0.6,
       "visible_default": false
+    },
+    {
+      "id": "malha_viaria",
+      "file": "malha_viaria.geojson",
+      "title": "Malha Viária (Eixos e Classificação)",
+      "group": "viario",
+      "type": "line",
+      "categorized_by": "Tipo",
+      "weight": 2.5,
+      "fill": false,
+      "visible_default": false,
+      "categories": [
+        {
+          "value": "Rodovia",
+          "color": "#ce1b27",
+          "label": "Rodovia",
+          "weight": 3.5
+        },
+        {
+          "value": "Via Pavimentada com Meio Fio",
+          "color": "#ef1113",
+          "label": "Via Pavimentada com Meio Fio",
+          "weight": 2.5
+        },
+        {
+          "value": "Via Não Pavimentada Sem Meio Fio",
+          "color": "#ff9f1c",
+          "label": "Via Não Pavimentada Sem Meio Fio",
+          "weight": 2.5
+        },
+        {
+          "value": "Ponte",
+          "color": "#ff7f00",
+          "label": "Ponte",
+          "weight": 3.5
+        },
+        {
+          "value": "Eixo de Via",
+          "color": "#ffffff",
+          "label": "Eixo de Via",
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "id": "malha_revestimento",
+      "file": "malha_viaria_ibge.geojson",
+      "title": "Tipo de Revestimento das Vias",
+      "group": "viario",
+      "type": "line",
+      "categorized_by": "Revestimento",
+      "weight": 2.5,
+      "fill": false,
+      "visible_default": false,
+      "categories": [
+        {
+          "value": "Asfalto",
+          "color": "#e31a1c",
+          "label": "Asfalto",
+          "weight": 2.5
+        },
+        {
+          "value": "Lajota Sextavada",
+          "color": "#ff7f00",
+          "label": "Lajota Sextavada",
+          "weight": 2.5
+        },
+        {
+          "value": "Anti-pó",
+          "color": "#2d95da",
+          "label": "Anti-pó",
+          "weight": 2.5
+        },
+        {
+          "value": "Paralelepípedo",
+          "color": "#d15ac5",
+          "label": "Paralelepípedo",
+          "weight": 2.5
+        },
+        {
+          "value": "Leito Natural",
+          "color": "#fffa72",
+          "label": "Leito Natural",
+          "weight": 2.5
+        },
+        {
+          "value": "Sem Informação",
+          "color": "#ffffff",
+          "label": "Sem Informação",
+          "weight": 2.5
+        },
+        {
+          "value": null,
+          "color": "#9ca3af",
+          "label": "Sem classificação"
+        }
+      ]
+    },
+    {
+      "id": "malha_agua",
+      "file": "malha_viaria_ibge.geojson",
+      "title": "Abastecimento de Água nas Vias",
+      "group": "viario",
+      "type": "line",
+      "categorized_by": "Agua",
+      "weight": 2.5,
+      "fill": false,
+      "visible_default": false,
+      "categories": [
+        {
+          "value": "Com Rede de Abastecimento de Água",
+          "color": "#4223ed",
+          "label": "Com Rede de Abastecimento de Água",
+          "weight": 2.5
+        },
+        {
+          "value": "Sem Rede de Abastecimento de Água",
+          "color": "#ceec24",
+          "label": "Sem Rede de Abastecimento de Água",
+          "weight": 2.5
+        },
+        {
+          "value": "Sem Informação",
+          "color": "#76e0bb",
+          "label": "Sem Informação",
+          "weight": 2.5
+        },
+        {
+          "value": null,
+          "color": "#9ca3af",
+          "label": "Sem classificação"
+        }
+      ]
+    },
+    {
+      "id": "malha_esgoto",
+      "file": "malha_viaria_ibge.geojson",
+      "title": "Coleta de Esgoto nas Vias",
+      "group": "viario",
+      "type": "line",
+      "categorized_by": "Esgoto",
+      "weight": 2.5,
+      "fill": false,
+      "visible_default": false,
+      "categories": [
+        {
+          "value": "Com Rede de Coleta de Esgoto",
+          "color": "#0df803",
+          "label": "Com Rede de Coleta de Esgoto",
+          "weight": 2.5
+        },
+        {
+          "value": "Sem Rede de Coleta de Esgoto",
+          "color": "#e31a1c",
+          "label": "Sem Rede de Coleta de Esgoto",
+          "weight": 2.5
+        },
+        {
+          "value": "Sem Informação",
+          "color": "#000000",
+          "label": "Sem Informação",
+          "weight": 2.5
+        },
+        {
+          "value": null,
+          "color": "#9ca3af",
+          "label": "Sem classificação"
+        }
+      ]
+    },
+    {
+      "id": "estradas_rurais",
+      "file": "estradas_rurais.geojson",
+      "title": "Estradas Rurais",
+      "group": "viario",
+      "type": "line",
+      "color": "#ff5f00",
+      "weight": 3,
+      "dashArray": "6, 3",
+      "fill": false,
+      "visible_default": false
     }
   ],
   "zone_styles": {
@@ -321,4 +502,4 @@
       "opacity": 0.75
     }
   }
-}
+}

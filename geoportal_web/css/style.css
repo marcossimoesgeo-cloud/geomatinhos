@@ -1424,3 +1424,28 @@ input:checked + .slider:before {
     flex-direction: column;
     gap: 6px;
 }
+
+/* Legenda compacta das camadas de linhas (Sistema Viário) */
+.line-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 8px;
+    margin-top: 4px;
+}
+.line-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.66rem;
+    color: var(--text-muted);
+    line-height: 1.2;
+}
+.line-sw {
+    display: inline-block;
+    width: 16px;
+    height: 4px;
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.35);
+    flex-shrink: 0;
+    box-sizing: border-box;
+}

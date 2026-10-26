@@ -609,6 +609,120 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Grupo 6: Sistema Viário (Malha Viária) -->
+                <div class="layer-group" data-group-container="group-viario">
+                    <div class="group-header" data-toggle="group-viario">
+                        <div class="group-header-left">
+                            <i class="fa-solid fa-road group-ico" style="color: #ce1b27;"></i>
+                            <div>
+                                <div class="group-title-text">Sistema Viário</div>
+                                <div class="group-subtitle-text">Malha Viária, Pavimentação e Infraestrutura</div>
+                            </div>
+                        </div>
+                        <div class="group-header-right">
+                            <span class="group-count-pill" id="count-group-viario">0/5</span>
+                            <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                        </div>
+                    </div>
+                    <div class="group-content" id="group-viario">
+                        <div class="layer-item" data-layer-row="malha_viaria">
+                            <label class="layer-label" for="layer-malha_viaria">
+                                <span class="layer-badge" style="background: linear-gradient(90deg,#ce1b27,#ef1113,#ff9f1c,#ff7f00); height: 6px; align-self:center;"></span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Malha Viária (Eixos e Classificação)</span>
+                                    <span class="layer-desc-sub">Rodovias, vias pavimentadas, não pavimentadas e pontes</span>
+                                    <span class="line-legend"><span class="line-legend-item"><i class="line-sw" style="background:#ce1b27;"></i>Rodovia</span><span class="line-legend-item"><i class="line-sw" style="background:#ef1113;"></i>Via Pavimentada com Meio Fio</span><span class="line-legend-item"><i class="line-sw" style="background:#ff9f1c;"></i>Via Não Pavimentada Sem Meio Fio</span><span class="line-legend-item"><i class="line-sw" style="background:#ff7f00;"></i>Ponte</span><span class="line-legend-item"><i class="line-sw" style="background:#ffffff;"></i>Eixo de Via</span></span>
+                                </div>
+                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="malha_viaria" title="Ligar e enquadrar Malha Viária (Eixos e Classificação)">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-malha_viaria">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="layer-item" data-layer-row="malha_revestimento">
+                            <label class="layer-label" for="layer-malha_revestimento">
+                                <span class="layer-badge" style="background: linear-gradient(90deg,#e31a1c,#ff7f00,#2d95da,#d15ac5); height: 6px; align-self:center;"></span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Tipo de Revestimento das Vias</span>
+                                    <span class="layer-desc-sub">Asfalto, lajota, anti-pó, paralelepípedo e leito natural</span>
+                                    <span class="line-legend"><span class="line-legend-item"><i class="line-sw" style="background:#e31a1c;"></i>Asfalto</span><span class="line-legend-item"><i class="line-sw" style="background:#ff7f00;"></i>Lajota Sextavada</span><span class="line-legend-item"><i class="line-sw" style="background:#2d95da;"></i>Anti-pó</span><span class="line-legend-item"><i class="line-sw" style="background:#d15ac5;"></i>Paralelepípedo</span><span class="line-legend-item"><i class="line-sw" style="background:#fffa72;"></i>Leito Natural</span><span class="line-legend-item"><i class="line-sw" style="background:#ffffff;"></i>Sem Informação</span><span class="line-legend-item"><i class="line-sw" style="background:#9ca3af;"></i>Sem classificação</span></span>
+                                </div>
+                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="malha_revestimento" title="Ligar e enquadrar Tipo de Revestimento das Vias">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-malha_revestimento">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="layer-item" data-layer-row="malha_agua">
+                            <label class="layer-label" for="layer-malha_agua">
+                                <span class="layer-badge" style="background: linear-gradient(90deg,#4223ed,#ceec24,#76e0bb,#9ca3af); height: 6px; align-self:center;"></span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Abastecimento de Água nas Vias</span>
+                                    <span class="layer-desc-sub">Vias com ou sem rede de abastecimento de água</span>
+                                    <span class="line-legend"><span class="line-legend-item"><i class="line-sw" style="background:#4223ed;"></i>Com Rede de Abastecimento de Água</span><span class="line-legend-item"><i class="line-sw" style="background:#ceec24;"></i>Sem Rede de Abastecimento de Água</span><span class="line-legend-item"><i class="line-sw" style="background:#76e0bb;"></i>Sem Informação</span><span class="line-legend-item"><i class="line-sw" style="background:#9ca3af;"></i>Sem classificação</span></span>
+                                </div>
+                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="malha_agua" title="Ligar e enquadrar Abastecimento de Água nas Vias">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-malha_agua">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="layer-item" data-layer-row="malha_esgoto">
+                            <label class="layer-label" for="layer-malha_esgoto">
+                                <span class="layer-badge" style="background: linear-gradient(90deg,#0df803,#e31a1c,#000000,#9ca3af); height: 6px; align-self:center;"></span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Coleta de Esgoto nas Vias</span>
+                                    <span class="layer-desc-sub">Vias com ou sem rede de coleta de esgoto</span>
+                                    <span class="line-legend"><span class="line-legend-item"><i class="line-sw" style="background:#0df803;"></i>Com Rede de Coleta de Esgoto</span><span class="line-legend-item"><i class="line-sw" style="background:#e31a1c;"></i>Sem Rede de Coleta de Esgoto</span><span class="line-legend-item"><i class="line-sw" style="background:#000000;"></i>Sem Informação</span><span class="line-legend-item"><i class="line-sw" style="background:#9ca3af;"></i>Sem classificação</span></span>
+                                </div>
+                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="malha_esgoto" title="Ligar e enquadrar Coleta de Esgoto nas Vias">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-malha_esgoto">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="layer-item" data-layer-row="estradas_rurais">
+                            <label class="layer-label" for="layer-estradas_rurais">
+                                <span class="layer-badge" style="background: #ff5f00; height: 6px; align-self:center;"></span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Estradas Rurais</span>
+                                    <span class="layer-desc-sub">Estradas rurais e vias de acesso fora da malha urbana</span>
+                                    <span class="line-legend"><span class="line-legend-item"><i class="line-sw" style="border-top:3px dashed #ff5f00;background:transparent;"></i>Estrada rural</span></span>
+                                </div>
+                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="estradas_rurais" title="Ligar e enquadrar Estradas Rurais">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-estradas_rurais">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Aba 2: Consulta & Detalhes -->

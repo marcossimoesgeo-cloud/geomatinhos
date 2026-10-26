@@ -2551,6 +2551,8 @@ const GeoTools = (() => {
                 }
             } else if (id === 'loteamento_por_bairro') {
                 items.push({ color: 'linear-gradient(45deg,#d7191c,#fdae61,#abdda4,#2b83ba)', label: (def && def.title) || 'Loteamentos por Bairro' });
+            } else if (def && def.categories) {
+                def.categories.forEach(c => items.push({ color: c.color, label: `${def.title}: ${c.label}`, border: '#555555' }));
             } else if (def) {
                 items.push({ color: def.fillColor || def.color || '#888', label: def.title, border: def.color });
             }
