@@ -815,15 +815,6 @@ const GeoTools = (() => {
             const d = coords[i].ll.distanceTo(coords[next].ll);
             sides.push({ from: coords[i].v, to: coords[next].v, d });
             perimeter += d;
-
-            const midLat = (coords[i].lat + coords[next].lat) / 2;
-            const midLng = (coords[i].lng + coords[next].lng) / 2;
-            const dimIcon = L.divIcon({
-                className: 'lot-dim-wrap',
-                html: `<span class="lot-dim-label">${fmtDist(d)}</span>`,
-                iconSize: [0, 0]
-            });
-            L.marker([midLat, midLng], { icon: dimIcon, interactive: false, zIndexOffset: 2000 }).addTo(state.coordLotGroup);
         }
 
         // Área plana pelo Shoelace em UTM (área exata de memorial descritivo)
@@ -946,19 +937,6 @@ const GeoTools = (() => {
             fillOpacity: 0.24
         }).addTo(itemGroup);
         poly.bindTooltip(`<b>${esc(lotName)}</b><br>Área: ${fmtArea(data.area)} · Perímetro: ${fmtDist(data.perimeter)}`, { sticky: true });
-
-        for (let i = 0; i < nVerts; i++) {
-            const next = (i + 1) % nVerts;
-            const d = data.sides[i].d;
-            const midLat = (data.coords[i].lat + data.coords[next].lat) / 2;
-            const midLng = (data.coords[i].lng + data.coords[next].lng) / 2;
-            const dimIcon = L.divIcon({
-                className: 'lot-dim-wrap',
-                html: `<span class="lot-dim-label" style="border-color:${color};color:${color};">${fmtDist(d)}</span>`,
-                iconSize: [0, 0]
-            });
-            L.marker([midLat, midLng], { icon: dimIcon, interactive: false, zIndexOffset: 1900 }).addTo(itemGroup);
-        }
 
         data.coords.forEach(c => {
             const pinIcon = L.divIcon({
