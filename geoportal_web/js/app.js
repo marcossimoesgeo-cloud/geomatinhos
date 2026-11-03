@@ -1116,6 +1116,7 @@ async function loadGeoJsonLayer(layerDef) {
             // Renderização ultrarrápida via Canvas (GPU) para evitar travamentos
             geojsonLayer = L.geoJSON(geojsonData, {
                 renderer: viarioCanvasRenderer,
+                filter: feature => feature && feature.geometry && (feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString'),
                 style: feature => getLineFeatureStyle(feature, layerDef),
                 onEachFeature: (feature, layer) => {
                     layer.layerDef = layerDef;
