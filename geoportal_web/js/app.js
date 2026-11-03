@@ -732,7 +732,8 @@ let viarioLabelsData = [];
  */
 function updateViarioLabels() {
     if (!map || !viarioLabelGroup) return;
-    const isViarioActive = layersMap['malha_viaria'] && map.hasLayer(layersMap['malha_viaria']);
+    const isViarioActive = (layersMap['malha_viaria'] && map.hasLayer(layersMap['malha_viaria'])) ||
+                           (layersMap['hierarquia_vias'] && map.hasLayer(layersMap['hierarquia_vias']));
     if (!isViarioActive) {
         if (map.hasLayer(viarioLabelGroup)) map.removeLayer(viarioLabelGroup);
         viarioLabelGroup.clearLayers();
@@ -864,8 +865,8 @@ async function loadGeoJsonLayer(layerDef) {
                 }
             });
 
-            // Extrai pontos de rótulo para a malha viária principal (executado uma única vez)
-            if (layerId === 'malha_viaria' && viarioLabelsData.length === 0) {
+            // Extrai pontos de rótulo para a malha viária principal ou hierarquia (executado uma única vez)
+            if ((layerId === 'malha_viaria' || layerId === 'hierarquia_vias') && viarioLabelsData.length === 0) {
                 const labeledCenters = {};
                 geojsonData.features.forEach(feat => {
                     const props = feat.properties || {};
@@ -919,7 +920,7 @@ async function loadGeoJsonLayer(layerDef) {
         // Adicionar ao mapa se padrão for visível
         if (layerDef.visible_default && checkbox && checkbox.checked) {
             geojsonLayer.addTo(map);
-            if (layerId === 'malha_viaria') updateViarioLabels();
+            if (layerId === 'malha_viaria' || layerId === 'hierarquia_vias') updateViarioLabels();
         }
 
         // Listener do checkbox
@@ -927,14 +928,13 @@ async function loadGeoJsonLayer(layerDef) {
             checkbox.addEventListener('change', () => {
                 if (checkbox.checked) {
                     geojsonLayer.addTo(map);
-                    if (layerId === 'malha_viaria') {
+                    if (layerId === 'malha_viaria' || layerId === 'hierarquia_vias') {
                         updateViarioLabels();
                     }
                 } else {
                     map.removeLayer(geojsonLayer);
-                    if (layerId === 'malha_viaria') {
-                        if (map.hasLayer(viarioLabelGroup)) map.removeLayer(viarioLabelGroup);
-                        viarioLabelGroup.clearLayers();
+                    if (layerId === 'malha_viaria' || layerId === 'hierarquia_vias') {
+                        updateViarioLabels();
                     }
                 }
                 updateLayerCounters();
@@ -1405,26 +1405,29 @@ function setupSearch() {
             }
         });
 
-        // Buscar em logradouros (malha viária)
-        if (layersMap['malha_viaria']) {
-            const addedStreets = new Set();
-            layersMap['malha_viaria'].eachLayer(layer => {
-                if (matches.length >= 20) return;
-                const props = layer.feature.properties || {};
-                const sName = (props.Logradouro || props.Nome || '').trim();
-                if (sName && sName !== 'NULL' && sName.toLowerCase().includes(q)) {
-                    if (!addedStreets.has(sName)) {
-                        addedStreets.add(sName);
-                        matches.push({
-                            title: sName,
-                            type: 'Logradouro / Rua',
-                            layer: layer,
-                            layerId: 'malha_viaria'
-                        });
+        // Buscar em logradouros (malha viária e hierarquia de vias)
+        const streetLayers = ['malha_viaria', 'hierarquia_vias'];
+        const addedStreets = new Set();
+        streetLayers.forEach(sid => {
+            if (layersMap[sid]) {
+                layersMap[sid].eachLayer(layer => {
+                    if (matches.length >= 20) return;
+                    const props = layer.feature.properties || {};
+                    const sName = (props.Logradouro || props.Nome || '').trim();
+                    if (sName && sName !== 'NULL' && sName.toLowerCase().includes(q)) {
+                        if (!addedStreets.has(sName)) {
+                            addedStreets.add(sName);
+                            matches.push({
+                                title: sName,
+                                type: 'Logradouro / Rua',
+                                layer: layer,
+                                layerId: sid
+                            });
+                        }
                     }
-                }
-            });
-        }
+                });
+            }
+        });
 
         if (matches.length === 0) {
             searchResults.innerHTML = `<div class="search-item" style="color: var(--text-muted);">Nenhum resultado encontrado</div>`;

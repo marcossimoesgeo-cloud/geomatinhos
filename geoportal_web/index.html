@@ -621,7 +621,7 @@
                             </div>
                         </div>
                         <div class="group-header-right">
-                            <span class="group-count-pill" id="count-group-viario">0/5</span>
+                            <span class="group-count-pill" id="count-group-viario">0/6</span>
                             <i class="fa-solid fa-chevron-right toggle-icon"></i>
                         </div>
                     </div>
@@ -641,6 +641,25 @@
                                 </button>
                                 <label class="switch">
                                     <input type="checkbox" id="layer-malha_viaria">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="layer-item" data-layer-row="hierarquia_vias">
+                            <label class="layer-label" for="layer-hierarquia_vias">
+                                <span class="layer-badge" style="background: linear-gradient(90deg,#d7191c,#fd8d3c,#fecc5c,#0cf5dd); height: 6px; align-self:center;"></span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Hierarquia de Vias</span>
+                                    <span class="layer-desc-sub">Vias arteriais, coletoras e locais (Lei do Sistema Viário)</span>
+                                    <span class="line-legend"><span class="line-legend-item"><i class="line-sw" style="background:#d7191c;"></i>Via Arterial</span><span class="line-legend-item"><i class="line-sw" style="background:#fd8d3c;"></i>Via Coletora Tipo 1</span><span class="line-legend-item"><i class="line-sw" style="background:#fecc5c;"></i>Via Coletora Tipo 2</span><span class="line-legend-item"><i class="line-sw" style="background:#0cf5dd;"></i>Via Local</span></span>
+                                </div>
+                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="hierarquia_vias" title="Ligar e enquadrar Hierarquia de Vias">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-hierarquia_vias">
                                     <span class="slider"></span>
                                 </label>
                             </div>

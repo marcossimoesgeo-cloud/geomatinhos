@@ -254,6 +254,43 @@
       ]
     },
     {
+      "id": "hierarquia_vias",
+      "file": "hierarquia_vias.geojson",
+      "title": "Hierarquia de Vias",
+      "group": "viario",
+      "type": "line",
+      "categorized_by": "Hierarquia",
+      "weight": 2,
+      "fill": false,
+      "visible_default": false,
+      "categories": [
+        {
+          "value": "Via Arterial",
+          "color": "#d7191c",
+          "label": "Via Arterial",
+          "weight": 4
+        },
+        {
+          "value": "Via Coletora Tipo 1",
+          "color": "#fd8d3c",
+          "label": "Via Coletora Tipo 1",
+          "weight": 3
+        },
+        {
+          "value": "Via Coletora Tipo 2",
+          "color": "#fecc5c",
+          "label": "Via Coletora Tipo 2",
+          "weight": 2.5
+        },
+        {
+          "value": "Via Local",
+          "color": "#0cf5dd",
+          "label": "Via Local",
+          "weight": 1.5
+        }
+      ]
+    },
+    {
       "id": "malha_revestimento",
       "file": "malha_viaria_ibge.geojson",
       "title": "Tipo de Revestimento das Vias",
@@ -502,4 +539,4 @@
       "opacity": 0.75
     }
   }
-}
+}
