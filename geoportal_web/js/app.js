@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let map;
 let layersMap = {};
+window.layersMap = layersMap;
 let activeHighlight = null;
 let currentOpacity = 0.65;
 let currentZoneFilter = "ALL";
@@ -29,6 +30,7 @@ function initGeoportal() {
         maxZoom: 21,
         zoomControl: false
     });
+    window.map = map;
 
     // Controle de zoom no canto inferior esquerdo para liberar a lateral direita
     L.control.zoom({ position: 'bottomleft' }).addTo(map);
@@ -541,7 +543,7 @@ function setupUIEvents() {
 
     function updateStreetLabelsVisibility() {
         if (!map) return;
-        const isLow = map.getZoom() < 15;
+        const isLow = map.getZoom() < 14;
         map.getContainer().classList.toggle('map-zoom-low', isLow);
         updateViarioLabels();
     }
@@ -722,46 +724,302 @@ const geoJsonDataCache = {};
 // Renderer Canvas de alta performance para a malha viária e camadas lineares (desenho direto via GPU)
 const viarioCanvasRenderer = L.canvas({ padding: 0.5 });
 
-// Grupo dedicado de rótulos viários (renderizados sob demanda no viewport para zoom >= 15 com zero travamentos)
+// Grupo dedicado de rótulos viários (renderizados sob demanda com mobilidade e escala dinâmica)
 const viarioLabelGroup = L.layerGroup();
-let viarioLabelsData = [];
+const viarioIndexMap = {};
+window.viarioLabelGroup = viarioLabelGroup;
+window.viarioIndexMap = viarioIndexMap;
+window.updateViarioLabels = updateViarioLabels;
 
 /**
- * Atualiza os rótulos de ruas na tela dinamicamente de acordo com o viewport e zoom
- * (Apenas no zoom >= 15 e apenas para as vias que estão no campo de visão do usuário)
+ * Algoritmo Liang-Barsky para recorte 2D ultra-rápido de segmentos de linha dentro do viewport
+ */
+function clipSegment2D(x0, y0, x1, y1, xmin, ymin, xmax, ymax) {
+    let t0 = 0.0;
+    let t1 = 1.0;
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+
+    const p = [-dx, dx, -dy, dy];
+    const q = [x0 - xmin, xmax - x0, y0 - ymin, ymax - y0];
+
+    for (let i = 0; i < 4; i++) {
+        if (p[i] === 0) {
+            if (q[i] < 0) return null;
+        } else {
+            const r = q[i] / p[i];
+            if (p[i] < 0) {
+                if (r > t1) return null;
+                if (r > t0) t0 = r;
+            } else {
+                if (r < t0) return null;
+                if (r < t1) t1 = r;
+            }
+        }
+    }
+
+    return [
+        x0 + t0 * dx,
+        y0 + t0 * dy,
+        x0 + t1 * dx,
+        y0 + t1 * dy
+    ];
+}
+
+/**
+ * Pré-indexa os segmentos e metadados das vias para cálculo dinâmico de rótulos
+ */
+function indexViarioFeatures(geojsonData) {
+    if (!geojsonData || !geojsonData.features) return [];
+    const indexed = [];
+    const features = geojsonData.features;
+
+    for (let i = 0; i < features.length; i++) {
+        const feat = features[i];
+        const props = feat.properties || {};
+        const rawName = (props.Logradouro || props.Nome || '').trim();
+        if (!rawName || rawName === 'NULL' || rawName === '-') continue;
+
+        const geom = feat.geometry;
+        if (!geom) continue;
+
+        let lines = [];
+        if (geom.type === 'LineString') {
+            lines = [geom.coordinates];
+        } else if (geom.type === 'MultiLineString') {
+            lines = geom.coordinates;
+        }
+        if (!lines || !lines.length) continue;
+
+        let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+        const validSegments = [];
+
+        for (let l = 0; l < lines.length; l++) {
+            const coords = lines[l];
+            if (!coords || coords.length < 2) continue;
+            for (let j = 0; j < coords.length - 1; j++) {
+                const p1 = coords[j];
+                const p2 = coords[j + 1];
+                if (!Array.isArray(p1) || !Array.isArray(p2) || p1.length < 2 || p2.length < 2) continue;
+                const lng1 = p1[0], lat1 = p1[1], lng2 = p2[0], lat2 = p2[1];
+                if (typeof lng1 !== 'number' || typeof lat1 !== 'number') continue;
+
+                if (lng1 < minLng) minLng = lng1;
+                if (lng2 < minLng) minLng = lng2;
+                if (lng1 > maxLng) maxLng = lng1;
+                if (lng2 > maxLng) maxLng = lng2;
+
+                if (lat1 < minLat) minLat = lat1;
+                if (lat2 < minLat) minLat = lat2;
+                if (lat1 > maxLat) maxLat = lat1;
+                if (lat2 > maxLat) maxLat = lat2;
+
+                validSegments.push([lng1, lat1, lng2, lat2]);
+            }
+        }
+
+        if (validSegments.length === 0) continue;
+
+        const hier = (props.Hierarqui || props.hierarquia || '').trim();
+        const isMajor = hier === 'Via Arterial' ||
+                        hier === 'Via Coletora Tipo 1' ||
+                        /^(AVENIDA|AV\.|RODOVIA|ROD\.|ESTRADA|PR-\d+)/i.test(rawName);
+
+        const safeName = String(rawName).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+
+        indexed.push({
+            name: rawName,
+            safe: safeName,
+            bbox: [minLng, minLat, maxLng, maxLat],
+            segments: validSegments,
+            isMajor: isMajor
+        });
+    }
+    return indexed;
+}
+
+/**
+ * Atualiza os rótulos de ruas na tela com MOBILIDADE DINÂMICA (viewport tracking)
+ * e ESCALA MULTINÍVEL (tamanho proporcional ao zoom):
+ * - zoom < 14: oculto para visão macro da orla/cidade
+ * - zoom == 14: 10px, avenidas e vias arteriais principais
+ * - zoom == 15: 11px, todas as vias (escala padrão do QGIS 8.5 pt)
+ * - zoom == 16: 12px
+ * - zoom == 17: 13px
+ * - zoom >= 18: 14px, máxima visibilidade ao nível de lote/quadra
  */
 function updateViarioLabels() {
     if (!map || !viarioLabelGroup) return;
-    const isViarioActive = (layersMap['malha_viaria'] && map.hasLayer(layersMap['malha_viaria'])) ||
-                           (layersMap['hierarquia_vias'] && map.hasLayer(layersMap['hierarquia_vias']));
-    if (!isViarioActive) {
+
+    const malhaActive = layersMap['malha_viaria'] && map.hasLayer(layersMap['malha_viaria']);
+    const hierarquiaActive = layersMap['hierarquia_vias'] && map.hasLayer(layersMap['hierarquia_vias']);
+
+    if (!malhaActive && !hierarquiaActive) {
         if (map.hasLayer(viarioLabelGroup)) map.removeLayer(viarioLabelGroup);
         viarioLabelGroup.clearLayers();
         return;
     }
+
     const zoom = map.getZoom();
-    if (zoom < 15) {
+    if (zoom < 14) {
         viarioLabelGroup.clearLayers();
         return;
     }
+
+    // Configuração de escala e densidade por nível de zoom
+    let fontSize = 11;
+    let yOffset = -7;
+    let minSegPx = 25;
+    let dedupeDistPx = 180;
+
+    if (zoom === 14) {
+        fontSize = 10;
+        yOffset = -6;
+        minSegPx = 40;
+        dedupeDistPx = 220;
+    } else if (zoom === 15) {
+        fontSize = 11;
+        yOffset = -7;
+        minSegPx = 30;
+        dedupeDistPx = 190;
+    } else if (zoom === 16) {
+        fontSize = 12;
+        yOffset = -8;
+        minSegPx = 26;
+        dedupeDistPx = 170;
+    } else if (zoom === 17) {
+        fontSize = 13;
+        yOffset = -9;
+        minSegPx = 22;
+        dedupeDistPx = 150;
+    } else { // zoom >= 18
+        fontSize = 14;
+        yOffset = -10;
+        minSegPx = 20;
+        dedupeDistPx = 130;
+    }
+
+    // Se hierarquia_vias estiver ativa, prioriza ela para evitar rótulos sobrepostos
+    const activeList = hierarquiaActive ? (viarioIndexMap['hierarquia_vias'] || viarioIndexMap['malha_viaria'])
+                                        : viarioIndexMap['malha_viaria'];
+
+    if (!activeList || activeList.length === 0) return;
+
     if (!map.hasLayer(viarioLabelGroup)) {
         viarioLabelGroup.addTo(map);
     }
-    const bounds = map.getBounds().pad(0.12);
     viarioLabelGroup.clearLayers();
 
-    for (let i = 0; i < viarioLabelsData.length; i++) {
-        const item = viarioLabelsData[i];
-        if (bounds.contains(item.latlng)) {
-            const html = `<span class="street-label-text" style="transform: rotate(${item.angle}deg) translateY(-8px);">${item.safe}</span>`;
-            const icon = L.divIcon({
-                className: 'street-name-label',
-                html: html,
-                iconSize: [0, 0],
-                iconAnchor: [0, 0]
-            });
-            L.marker(item.latlng, { icon: icon, interactive: false }).addTo(viarioLabelGroup);
+    const bounds = map.getBounds();
+    const minLng = bounds.getWest();
+    const minLat = bounds.getSouth();
+    const maxLng = bounds.getEast();
+    const maxLat = bounds.getNorth();
+
+    const placedScreenPoints = [];
+    const placedByName = {};
+    const minSegPxSq = minSegPx * minSegPx;
+    const dedupeDistPxSq = dedupeDistPx * dedupeDistPx;
+
+    for (let i = 0; i < activeList.length; i++) {
+        const item = activeList[i];
+
+        // No zoom 14, exibe apenas avenidas, rodovias e arteriais
+        if (zoom === 14 && !item.isMajor) continue;
+
+        // Teste rápido de Bounding Box com o viewport atual
+        const b = item.bbox;
+        if (b[2] < minLng || b[0] > maxLng || b[3] < minLat || b[1] > maxLat) {
+            continue;
         }
+
+        // Recorta os segmentos visíveis no viewport e seleciona o mais expressivo
+        let bestSeg = null;
+        let maxLenSq = -1;
+
+        const segs = item.segments;
+        for (let s = 0; s < segs.length; s++) {
+            const seg = segs[s];
+            const clipped = clipSegment2D(seg[0], seg[1], seg[2], seg[3], minLng, minLat, maxLng, maxLat);
+            if (!clipped) continue;
+
+            const p1Screen = map.latLngToContainerPoint([clipped[1], clipped[0]]);
+            const p2Screen = map.latLngToContainerPoint([clipped[3], clipped[2]]);
+            const dx = p2Screen.x - p1Screen.x;
+            const dy = p2Screen.y - p1Screen.y;
+            const lenSq = dx * dx + dy * dy;
+
+            if (lenSq > maxLenSq) {
+                maxLenSq = lenSq;
+                bestSeg = {
+                    midLat: (clipped[1] + clipped[3]) / 2,
+                    midLng: (clipped[0] + clipped[2]) / 2,
+                    p1Screen,
+                    p2Screen,
+                    dx,
+                    dy,
+                    lenSq
+                };
+            }
+        }
+
+        if (!bestSeg || bestSeg.lenSq < minSegPxSq) continue;
+
+        const screenMidX = (bestSeg.p1Screen.x + bestSeg.p2Screen.x) / 2;
+        const screenMidY = (bestSeg.p1Screen.y + bestSeg.p2Screen.y) / 2;
+
+        // Deduplicação por nome em distância na tela (pixels)
+        const existingForName = placedByName[item.name];
+        if (existingForName) {
+            let tooClose = false;
+            for (let k = 0; k < existingForName.length; k++) {
+                const ex = existingForName[k];
+                const dX = ex.x - screenMidX;
+                const dY = ex.y - screenMidY;
+                if ((dX * dX + dY * dY) < dedupeDistPxSq) {
+                    tooClose = true;
+                    break;
+                }
+            }
+            if (tooClose) continue;
+        }
+
+        // Evita colisão direta com outros rótulos de ruas diferentes (32px)
+        let collision = false;
+        for (let p = 0; p < placedScreenPoints.length; p++) {
+            const pt = placedScreenPoints[p];
+            const cX = pt.x - screenMidX;
+            const cY = pt.y - screenMidY;
+            if ((cX * cX + cY * cY) < 1024) {
+                collision = true;
+                break;
+            }
+        }
+        if (collision) continue;
+
+        // Ângulo de rotação na tela normalizado (-90° a +90°) para leitura natural
+        let angle = Math.atan2(bestSeg.dy, bestSeg.dx) * 180 / Math.PI;
+        if (angle > 90) angle -= 180;
+        else if (angle < -90) angle += 180;
+        angle = Math.round(angle * 10) / 10;
+
+        const screenPt = { x: screenMidX, y: screenMidY };
+        placedScreenPoints.push(screenPt);
+        if (!placedByName[item.name]) placedByName[item.name] = [];
+        placedByName[item.name].push(screenPt);
+
+        const latlng = L.latLng(bestSeg.midLat, bestSeg.midLng);
+        const html = `<span class="street-label-text" style="font-size: ${fontSize}px !important; transform: rotate(${angle}deg) translateY(${yOffset}px);">${item.safe}</span>`;
+        const icon = L.divIcon({
+            className: 'street-name-label',
+            html: html,
+            iconSize: [0, 0],
+            iconAnchor: [0, 0]
+        });
+
+        L.marker(latlng, { icon: icon, interactive: false }).addTo(viarioLabelGroup);
     }
 }
 
@@ -865,38 +1123,11 @@ async function loadGeoJsonLayer(layerDef) {
                 }
             });
 
-            // Extrai pontos de rótulo para a malha viária principal ou hierarquia (executado uma única vez)
-            if ((layerId === 'malha_viaria' || layerId === 'hierarquia_vias') && viarioLabelsData.length === 0) {
-                const labeledCenters = {};
-                geojsonData.features.forEach(feat => {
-                    const props = feat.properties || {};
-                    const rawName = (props.Logradouro || props.Nome || '').trim();
-                    if (!rawName || rawName === 'NULL') return;
-
-                    const placement = getLineFeatureLabelPlacement(feat);
-                    if (!placement) return;
-
-                    if (!labeledCenters[rawName]) {
-                        labeledCenters[rawName] = [placement.latlng];
-                        viarioLabelsData.push({
-                            name: rawName,
-                            safe: String(rawName).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
-                            latlng: placement.latlng,
-                            angle: placement.angle
-                        });
-                    } else {
-                        const tooClose = labeledCenters[rawName].some(c => c.distanceTo(placement.latlng) < 220);
-                        if (!tooClose) {
-                            labeledCenters[rawName].push(placement.latlng);
-                            viarioLabelsData.push({
-                                name: rawName,
-                                safe: String(rawName).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
-                                latlng: placement.latlng,
-                                angle: placement.angle
-                            });
-                        }
-                    }
-                });
+            // Indexa vias para cálculo dinâmico de rótulos com mobilidade (uma única vez por camada)
+            if (layerId === 'malha_viaria' || layerId === 'hierarquia_vias') {
+                if (!viarioIndexMap[layerId]) {
+                    viarioIndexMap[layerId] = indexViarioFeatures(geojsonData);
+                }
             }
         } else {
             geojsonLayer = L.geoJSON(geojsonData, {
