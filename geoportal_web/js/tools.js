@@ -41,6 +41,7 @@ const GeoTools = (() => {
         savedCoordLots: [],
         savedCoordSeq: 1,
         coordVertexCount: 4,
+        showLotDims: false,
         lastLocatedLot: null,
         lastLocatedPoint: null,
         coordTab: 'lot',
@@ -654,6 +655,13 @@ const GeoTools = (() => {
                     <button type="button" class="tp-btn" id="co-clear-inputs"><i class="fa-solid fa-eraser"></i> Limpar</button>
                 </div>
 
+                <div class="tp-row" style="margin-top:6px;">
+                    <button type="button" class="tp-btn ${state.showLotDims ? 'active' : ''}" id="co-toggle-dims" title="Ativar ou ocultar as medidas lineares nos lados do polígono desenhado na tela">
+                        <i class="fa-solid ${state.showLotDims ? 'fa-eye-slash' : 'fa-ruler-combined'}"></i>
+                        <span>${state.showLotDims ? 'Ocultar Medidas Lineares na Tela' : 'Mostrar Medidas Lineares na Tela'}</span>
+                    </button>
+                </div>
+
                 <div class="tp-sub">Capturar no mapa</div>
                 <div class="tp-row">
                     <button type="button" class="tp-btn" id="co-pick-lot"><i class="fa-solid fa-crosshairs"></i> Capturar 4 vértices por clique</button>
@@ -729,12 +737,40 @@ const GeoTools = (() => {
         });
 
         $('co-go-lot').addEventListener('click', locateLot);
+        $('co-toggle-dims').addEventListener('click', toggleLotDimensions);
         $('co-pick-lot').addEventListener('click', () => togglePick('lot'));
         $('co-go').addEventListener('click', goToCoord);
         ['co-a', 'co-b'].forEach(i => $(i).addEventListener('keydown', e => { if (e.key === 'Enter') goToCoord(); }));
         $('co-pick').addEventListener('click', () => togglePick('single'));
 
+        syncLotDimsUI();
         updateCoordPlaceholders();
+    }
+
+    function syncLotDimsUI() {
+        document.body.classList.toggle('show-lot-dims', !!state.showLotDims);
+        const btnMain = $('co-toggle-dims');
+        if (btnMain) {
+            btnMain.classList.toggle('active', !!state.showLotDims);
+            btnMain.innerHTML = `<i class="fa-solid ${state.showLotDims ? 'fa-eye-slash' : 'fa-ruler-combined'}"></i> <span>${state.showLotDims ? 'Ocultar Medidas Lineares na Tela' : 'Mostrar Medidas Lineares na Tela'}</span>`;
+        }
+        const btnCard = $('co-card-toggle-dims');
+        if (btnCard) {
+            btnCard.classList.toggle('active', !!state.showLotDims);
+            btnCard.innerHTML = `<i class="fa-solid ${state.showLotDims ? 'fa-eye-slash' : 'fa-ruler-combined'}"></i> ${state.showLotDims ? 'Ocultar Medidas na Tela' : 'Mostrar Medidas na Tela'}`;
+        }
+    }
+
+    function toggleLotDimensions() {
+        state.showLotDims = !state.showLotDims;
+        syncLotDimsUI();
+        toast(
+            state.showLotDims
+                ? 'Medidas lineares exibidas no polígono do lote.'
+                : 'Medidas lineares ocultadas no polígono do lote.',
+            'info',
+            2200
+        );
     }
 
     const num = s => parseFloat(String(s).trim().replace(/\s/g, '').replace(',', '.'));
@@ -815,6 +851,15 @@ const GeoTools = (() => {
             const d = coords[i].ll.distanceTo(coords[next].ll);
             sides.push({ from: coords[i].v, to: coords[next].v, d });
             perimeter += d;
+
+            const midLat = (coords[i].lat + coords[next].lat) / 2;
+            const midLng = (coords[i].lng + coords[next].lng) / 2;
+            const dimIcon = L.divIcon({
+                className: 'lot-dim-wrap',
+                html: `<span class="lot-dim-label">${fmtDist(d)}</span>`,
+                iconSize: [0, 0]
+            });
+            L.marker([midLat, midLng], { icon: dimIcon, interactive: false, zIndexOffset: 2000 }).addTo(state.coordLotGroup);
         }
 
         // Área plana pelo Shoelace em UTM (área exata de memorial descritivo)
@@ -894,13 +939,19 @@ const GeoTools = (() => {
                             </tbody>
                         </table>
                     </div>
-                    <div class="tp-row three" style="margin-top:8px; margin-bottom:0;">
+                    <div class="tp-row" style="margin-top:8px; margin-bottom:6px;">
+                        <button type="button" class="tp-btn ${state.showLotDims ? 'active' : ''}" id="co-card-toggle-dims" title="Ativar ou ocultar as medidas lineares no polígono desenhado na tela">
+                            <i class="fa-solid ${state.showLotDims ? 'fa-eye-slash' : 'fa-ruler-combined'}"></i> ${state.showLotDims ? 'Ocultar Medidas na Tela' : 'Mostrar Medidas na Tela'}
+                        </button>
+                    </div>
+                    <div class="tp-row three" style="margin-top:0; margin-bottom:0;">
                         <button type="button" class="tp-btn" id="co-copy-lot" title="Copiar memorial/tabela de vértices"><i class="fa-regular fa-copy"></i> Copiar</button>
                         <button type="button" class="tp-btn primary" id="co-save-lot" title="Salvar este lote e seus vértices no mapa para gerar outro e comparar"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
                         <button type="button" class="tp-btn danger" id="co-clear-lot" title="Limpar visualização atual"><i class="fa-solid fa-trash-can"></i> Limpar</button>
                     </div>
                 </div>`;
 
+            $('co-card-toggle-dims').addEventListener('click', toggleLotDimensions);
             $('co-copy-lot').addEventListener('click', () => {
                 const header = ['Vertice', 'UTM_E_22S', 'UTM_N_22S', 'Latitude', 'Longitude', 'Lado_Comprimento'];
                 const lines = coords.map((c, i) => [`V${c.v}`, c.e.toFixed(2), c.n.toFixed(2), c.lat.toFixed(6), c.lng.toFixed(6), `${fmtDist(sides[i].d)}`]);
@@ -937,6 +988,19 @@ const GeoTools = (() => {
             fillOpacity: 0.24
         }).addTo(itemGroup);
         poly.bindTooltip(`<b>${esc(lotName)}</b><br>Área: ${fmtArea(data.area)} · Perímetro: ${fmtDist(data.perimeter)}`, { sticky: true });
+
+        for (let i = 0; i < nVerts; i++) {
+            const next = (i + 1) % nVerts;
+            const d = data.sides[i].d;
+            const midLat = (data.coords[i].lat + data.coords[next].lat) / 2;
+            const midLng = (data.coords[i].lng + data.coords[next].lng) / 2;
+            const dimIcon = L.divIcon({
+                className: 'lot-dim-wrap',
+                html: `<span class="lot-dim-label" style="border-color:${color};color:${color};">${fmtDist(d)}</span>`,
+                iconSize: [0, 0]
+            });
+            L.marker([midLat, midLng], { icon: dimIcon, interactive: false, zIndexOffset: 1900 }).addTo(itemGroup);
+        }
 
         data.coords.forEach(c => {
             const pinIcon = L.divIcon({

@@ -134,9 +134,27 @@
     user-select: none;
 }
 .lot-vertex-pin:hover { transform: scale(1.18); background: #0369a1; }
+.lot-dim-wrap { background: none !important; border: none !important; }
 .lot-dim-wrap,
 .lot-dim-label {
     display: none !important;
+}
+body.show-lot-dims .lot-dim-wrap {
+    display: block !important;
+}
+body.show-lot-dims .lot-dim-label {
+    display: inline-block !important;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1.5px solid #0284c7;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #0369a1;
+    white-space: nowrap;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.22);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
 }
 
 /* Card e Tabela de Verificação do Lote */
