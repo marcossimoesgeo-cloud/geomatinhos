@@ -1194,7 +1194,8 @@ input:checked + .slider:before {
     flex-shrink: 0;
 }
 
-.btn-zoom-layer {
+.btn-zoom-layer,
+.btn-label-layer {
     width: 26px;
     height: 26px;
     border-radius: 6px;
@@ -1209,10 +1210,18 @@ input:checked + .slider:before {
     transition: all 0.15s ease;
 }
 
-.btn-zoom-layer:hover {
+.btn-zoom-layer:hover,
+.btn-label-layer:hover {
     background: var(--primary);
     color: #ffffff;
     border-color: var(--primary);
+}
+
+.btn-label-layer.active {
+    background: var(--primary);
+    color: #ffff00;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(13, 59, 102, 0.18);
 }
 
 /* Destaque do grupo de Preservação Prioritária */
@@ -1472,6 +1481,9 @@ input:checked + .slider:before {
 }
 
 .street-label-text {
+    position: absolute;
+    left: 0;
+    top: 0;
     display: inline-block !important;
     font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
     font-weight: 800 !important;
