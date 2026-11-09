@@ -621,7 +621,7 @@
                             </div>
                         </div>
                         <div class="group-header-right">
-                            <span class="group-count-pill" id="count-group-viario">0/6</span>
+                            <span class="group-count-pill" id="count-group-viario">0/7</span>
                             <i class="fa-solid fa-chevron-right toggle-icon"></i>
                         </div>
                     </div>
@@ -722,6 +722,26 @@
                                 </button>
                                 <label class="switch">
                                     <input type="checkbox" id="layer-malha_esgoto">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="layer-item" data-layer-row="malha_iluminacao">
+                            <label class="layer-label" for="layer-malha_iluminacao">
+                                <span class="layer-badge" style="background: linear-gradient(90deg,#00b4ff,#ff8c00,#b10dc9,#2ecc40,#ff1f1f); height: 6px; align-self:center;"></span>
+                                <div class="layer-text-wrap">
+                                    <span class="layer-name">Iluminação Pública nas Vias</span>
+                                    <span class="layer-desc-sub">Tipo de luminária por trecho viário (LED, Vapor de Sódio, Metálico, Mercúrio e Halógena)</span>
+                                    <span class="line-legend"><span class="line-legend-item"><i class="line-sw" style="background:#00b4ff;"></i>LED</span><span class="line-legend-item"><i class="line-sw" style="background:#ff8c00;"></i>Vapor de Sódio</span><span class="line-legend-item"><i class="line-sw" style="background:#b10dc9;"></i>Vapor Metálico</span><span class="line-legend-item"><i class="line-sw" style="background:#2ecc40;"></i>Vapor de Mercúrio</span><span class="line-legend-item"><i class="line-sw" style="background:#ff1f1f;"></i>Halógena</span><span class="line-legend-item"><i class="line-sw" style="background:#e0e0e0;"></i>Sem Informação</span></span>
+                                </div>
+                            </label>
+                            <div class="layer-actions">
+                                <button type="button" class="btn-label-layer" data-label-layer="malha_iluminacao" title="Mostrar/ocultar rótulos dos nomes das vias"><i class="fa-solid fa-tag"></i></button>
+                                <button type="button" class="btn-zoom-layer" data-zoom-layer="malha_iluminacao" title="Ligar e enquadrar Iluminação Pública nas Vias">
+                                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" id="layer-malha_iluminacao">
                                     <span class="slider"></span>
                                 </label>
                             </div>

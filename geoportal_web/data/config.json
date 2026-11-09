@@ -417,6 +417,60 @@
       ]
     },
     {
+      "id": "malha_iluminacao",
+      "file": "malha_viaria_ibge.geojson",
+      "title": "Iluminação Pública nas Vias",
+      "group": "viario",
+      "type": "line",
+      "categorized_by": "Iluminacao",
+      "weight": 2.5,
+      "fill": false,
+      "visible_default": false,
+      "categories": [
+        {
+          "value": "LED",
+          "color": "#00b4ff",
+          "label": "LED",
+          "weight": 2.5
+        },
+        {
+          "value": "Vapor de Sódio",
+          "color": "#ff8c00",
+          "label": "Vapor de Sódio",
+          "weight": 2.5
+        },
+        {
+          "value": "Vapor Metálico",
+          "color": "#b10dc9",
+          "label": "Vapor Metálico",
+          "weight": 3.0
+        },
+        {
+          "value": "Vapor de Mercúrio",
+          "color": "#2ecc40",
+          "label": "Vapor de Mercúrio",
+          "weight": 3.0
+        },
+        {
+          "value": "Halógena",
+          "color": "#ff1f1f",
+          "label": "Halógena",
+          "weight": 3.0
+        },
+        {
+          "value": "Sem Informação",
+          "color": "#e0e0e0",
+          "label": "Sem Informação",
+          "weight": 2.0
+        },
+        {
+          "value": null,
+          "color": "#9ca3af",
+          "label": "Sem classificação"
+        }
+      ]
+    },
+    {
       "id": "estradas_rurais",
       "file": "estradas_rurais.geojson",
       "title": "Estradas Rurais",

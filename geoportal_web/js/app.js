@@ -1028,6 +1028,7 @@ function updateViarioLabels() {
         'malha_revestimento',
         'malha_agua',
         'malha_esgoto',
+        'malha_iluminacao',
         'estradas_rurais'
     ];
 
@@ -1686,7 +1687,7 @@ function displayFeatureDetails(feature, layerDef, latlng) {
         title = props.Logradouro || props.Nome || layerDef.title;
         badgeText = layerDef.title;
         badgeBg = getLineFeatureStyle(feature, layerDef).color;
-        if (badgeBg === '#ffffff' || badgeBg === '#fffa72') badgeBg = '#64748b';
+        if (badgeBg === '#ffffff' || badgeBg === '#fffa72' || badgeBg === '#e0e0e0') badgeBg = '#64748b';
         const segs = feature.geometry.type === 'MultiLineString' ? feature.geometry.coordinates : [feature.geometry.coordinates];
         let len = 0;
         segs.forEach(seg => {
