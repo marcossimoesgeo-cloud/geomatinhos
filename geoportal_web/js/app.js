@@ -731,8 +731,8 @@ async function loadVectorLayers() {
 // Cache em memória dos arquivos GeoJSON para evitar requisições de rede e reprocessamento repetidos
 const geoJsonDataCache = {};
 
-// Renderer Canvas de alta performance para a malha viária e camadas lineares (desenho direto via GPU)
-const viarioCanvasRenderer = L.canvas({ padding: 0.5 });
+// Renderer Canvas de alta performance para a malha viária e camadas lineares (desenho direto via GPU e tolerância ampliada de clique)
+const viarioCanvasRenderer = L.canvas({ padding: 0.5, tolerance: 8 });
 
 // Grupo dedicado de rótulos viários (renderizados sob demanda apenas quando ativados pelo botão minimalista)
 const viarioLabelGroup = L.layerGroup();
@@ -1596,14 +1596,19 @@ function resetLayerStyle(l) {
  * Configura eventos de clique e hover nas feições
  */
 function setupFeatureInteractions(feature, layer, layerDef) {
+    const isLine = layerDef.type === 'line';
+    const baseWeight = isLine
+        ? (getLineFeatureStyle(feature, layerDef).weight || layerDef.weight || 3.5)
+        : (layerDef.weight || 1);
+
     layer.on('mouseover', (e) => {
         if (measureMode || window.GEO_TOOL_BUSY) return;
         const l = e.target;
         // Destaque suave na borda sem alterar z-index nem sobrepor camadas
         if (activeHighlight !== l) {
             l.setStyle({
-                weight: Math.max(2, (layerDef.weight || 1) + 1),
-                color: '#0077b6'
+                weight: isLine ? baseWeight + 2 : Math.max(2, baseWeight + 1),
+                color: isLine ? '#ffffff' : '#0077b6'
             });
         }
     });
@@ -1628,8 +1633,8 @@ function setupFeatureInteractions(feature, layer, layerDef) {
         // Mantém as cores e opacidades naturais sem chamar bringToFront
         activeHighlight = layer;
         layer.setStyle({
-            weight: 2.6,
-            color: '#023e8a',
+            weight: isLine ? baseWeight + 2.5 : 2.6,
+            color: isLine ? '#fde047' : '#023e8a',
             dashArray: null
         });
 

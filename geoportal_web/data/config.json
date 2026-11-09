@@ -423,7 +423,7 @@
       "group": "viario",
       "type": "line",
       "categorized_by": "Iluminacao",
-      "weight": 2.5,
+      "weight": 4.5,
       "fill": false,
       "visible_default": false,
       "categories": [
@@ -431,42 +431,43 @@
           "value": "LED",
           "color": "#00b4ff",
           "label": "LED",
-          "weight": 2.5
+          "weight": 4.5
         },
         {
           "value": "Vapor de Sódio",
           "color": "#ff8c00",
           "label": "Vapor de Sódio",
-          "weight": 2.5
+          "weight": 5.0
         },
         {
           "value": "Vapor Metálico",
           "color": "#b10dc9",
           "label": "Vapor Metálico",
-          "weight": 3.0
+          "weight": 5.5
         },
         {
           "value": "Vapor de Mercúrio",
           "color": "#2ecc40",
           "label": "Vapor de Mercúrio",
-          "weight": 3.0
+          "weight": 5.5
         },
         {
           "value": "Halógena",
           "color": "#ff1f1f",
           "label": "Halógena",
-          "weight": 3.0
+          "weight": 5.5
         },
         {
           "value": "Sem Informação",
           "color": "#e0e0e0",
           "label": "Sem Informação",
-          "weight": 2.0
+          "weight": 4.0
         },
         {
           "value": null,
           "color": "#9ca3af",
-          "label": "Sem classificação"
+          "label": "Sem classificação",
+          "weight": 4.0
         }
       ]
     },
