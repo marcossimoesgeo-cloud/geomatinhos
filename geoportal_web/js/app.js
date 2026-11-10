@@ -556,6 +556,7 @@ function setupUIEvents() {
         const isLow = map.getZoom() < 14;
         map.getContainer().classList.toggle('map-zoom-low', isLow);
         updateViarioLabels();
+        updatePlantaLabels();
     }
     updateStreetLabelsVisibility();
 
@@ -736,16 +737,18 @@ const viarioCanvasRenderer = L.canvas({ padding: 0.5, tolerance: 8 });
 
 // Grupo dedicado de rótulos viários (renderizados sob demanda apenas quando ativados pelo botão minimalista)
 const viarioLabelGroup = L.layerGroup();
+const plantaLabelGroup = L.layerGroup();
 const viarioIndexMap = {};
 const viarioFileIndexCache = {};
 const viarioLabelsEnabledMap = {};
 window.viarioLabelGroup = viarioLabelGroup;
+window.plantaLabelGroup = plantaLabelGroup;
 window.viarioIndexMap = viarioIndexMap;
 window.viarioLabelsEnabledMap = viarioLabelsEnabledMap;
 window.updateViarioLabels = updateViarioLabels;
 
 /**
- * Alterna a exibição dos rótulos de uma camada viária específica (botão minimalista ao lado da camada)
+ * Alterna a exibição dos rótulos de uma camada viária ou planta de loteamento (botão minimalista ao lado da camada)
  */
 function toggleViarioLayerLabels(layerId) {
     if (!layerId) return;
@@ -761,20 +764,69 @@ function toggleViarioLayerLabels(layerId) {
     viarioLabelsEnabledMap[layerId] = nextState;
     syncViarioLabelButtons();
     updateViarioLabels();
+    updatePlantaLabels();
 
     if (window.GeoTools) {
+        const isPlanta = layerId.startsWith('planta_');
         if (nextState) {
             const z = map ? map.getZoom() : 15;
             GeoTools.toast(
-                z < 14
-                    ? 'Rótulos ativados (aproxime o zoom para visualizar os nomes das vias).'
-                    : 'Rótulos dos nomes das vias ativados.',
+                isPlanta
+                    ? 'Numeração dos lotes (cod_lote) ativada.'
+                    : (z < 14
+                        ? 'Rótulos ativados (aproxime o zoom para visualizar os nomes das vias).'
+                        : 'Rótulos dos nomes das vias ativados.'),
                 'info',
                 2000
             );
         } else {
-            GeoTools.toast('Rótulos dos nomes das vias ocultados.', 'info', 1800);
+            GeoTools.toast(isPlanta ? 'Numeração dos lotes ocultada.' : 'Rótulos dos nomes das vias ocultados.', 'info', 1800);
         }
+    }
+}
+
+function updatePlantaLabels() {
+    if (!map || !plantaLabelGroup) return;
+    plantaLabelGroup.clearLayers();
+
+    const zoom = map.getZoom();
+    if (zoom < 16) {
+        if (map.hasLayer(plantaLabelGroup)) map.removeLayer(plantaLabelGroup);
+        return;
+    }
+
+    let anyActive = false;
+    Object.keys(layersMap).forEach(lid => {
+        const lyrGroup = layersMap[lid];
+        if (!lyrGroup || !map.hasLayer(lyrGroup) || !viarioLabelsEnabledMap[lid]) return;
+        let isPlanta = false;
+        lyrGroup.eachLayer(l => {
+            if (l.layerDef && l.layerDef.type === 'planta') isPlanta = true;
+        });
+        if (!isPlanta) return;
+
+        anyActive = true;
+        const fontSize = zoom >= 19 ? 12 : (zoom === 18 ? 11 : 9.5);
+        lyrGroup.eachLayer(l => {
+            if (!l.feature || !l.getBounds) return;
+            const cod = (l.feature.properties && l.feature.properties.cod_lote) ? String(l.feature.properties.cod_lote).trim() : '';
+            if (!cod) return;
+            const center = l.getBounds().getCenter();
+            const safeCod = cod.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const icon = L.divIcon({
+                className: 'street-name-label',
+                html: `<span class="street-label-text" style="font-size:${fontSize}px !important; transform: translate(-50%, -50%);">${safeCod}</span>`,
+                iconSize: [0, 0],
+                iconAnchor: [0, 0]
+            });
+            L.marker(center, { icon, interactive: false }).addTo(plantaLabelGroup);
+        });
+    });
+
+    if (anyActive) {
+        if (!map.hasLayer(plantaLabelGroup)) plantaLabelGroup.addTo(map);
+    } else if (map.hasLayer(plantaLabelGroup)) {
+        map.removeLayer(plantaLabelGroup);
     }
 }
 
@@ -1365,6 +1417,35 @@ async function loadGeoJsonLayer(layerDef) {
                     setupFeatureInteractions(feature, layer, layerDef);
                 }
             });
+        } else if (layerDef.type === 'planta') {
+            geojsonLayer = L.geoJSON(geojsonData, {
+                style: feature => {
+                    const featColor = (feature.properties && feature.properties.color) ? feature.properties.color : (layerDef.fillColor || '#2b83ba');
+                    return {
+                        color: layerDef.color || '#232323',
+                        weight: layerDef.weight || 1.1,
+                        dashArray: null,
+                        fill: true,
+                        fillColor: featColor,
+                        fillOpacity: layerDef.fillOpacity || 0.65
+                    };
+                },
+                onEachFeature: (feature, layer) => {
+                    layer.layerDef = layerDef;
+                    const props = feature.properties || {};
+                    const codLote = props.cod_lote || '-';
+                    const cor = props.color || '#2b83ba';
+                    const quadra = props.Quadra ? ` &bull; Quadra: <b>${props.Quadra}</b>` : '';
+                    const inscr = props['Inscrição'] ? `<br><span style="font-size:0.74rem; color:#334155;">Inscrição: <b>${props['Inscrição']}</b></span>` : '';
+                    const logr = props['Logradouro - Nome'] ? `<br><span style="font-size:0.74rem; color:#475569;"><i class="fa-solid fa-road"></i> ${props['Logradouro - Nome']}${props['Número'] ? ', ' + props['Número'] : ''}</span>` : '';
+                    layer.bindTooltip(`<div style="display:flex;align-items:center;gap:6px;"><span style="width:11px;height:11px;border-radius:2px;background:${cor};display:inline-block;border:1px solid #232323;flex-shrink:0;"></span><b>Lote ${codLote}</b>${quadra}</div>${inscr}${logr}`, {
+                        sticky: true,
+                        direction: 'top',
+                        className: 'bairro-tooltip'
+                    });
+                    setupFeatureInteractions(feature, layer, layerDef);
+                }
+            });
         } else if (layerDef.type === 'line') {
             // Renderização ultrarrápida via Canvas (GPU) para evitar travamentos
             geojsonLayer = L.geoJSON(geojsonData, {
@@ -1416,6 +1497,12 @@ async function loadGeoJsonLayer(layerDef) {
                     geojsonLayer.addTo(map);
                     if (layerDef.type === 'line') {
                         updateViarioLabels();
+                    } else if (layerDef.type === 'planta') {
+                        if (viarioLabelsEnabledMap[layerId] === undefined) {
+                            viarioLabelsEnabledMap[layerId] = true;
+                        }
+                        syncViarioLabelButtons();
+                        updatePlantaLabels();
                     }
                 } else {
                     map.removeLayer(geojsonLayer);
@@ -1423,6 +1510,10 @@ async function loadGeoJsonLayer(layerDef) {
                         viarioLabelsEnabledMap[layerId] = false;
                         syncViarioLabelButtons();
                         updateViarioLabels();
+                    } else if (layerDef.type === 'planta') {
+                        viarioLabelsEnabledMap[layerId] = false;
+                        syncViarioLabelButtons();
+                        updatePlantaLabels();
                     }
                 }
                 updateLayerCounters();
@@ -1570,6 +1661,16 @@ function resetLayerStyle(l) {
             fillColor: def.fillColor,
             fillOpacity: def.fillOpacity
         });
+    } else if (def.type === 'planta') {
+        const featColor = (l.feature && l.feature.properties && l.feature.properties.color) ? l.feature.properties.color : (def.fillColor || '#2b83ba');
+        l.setStyle({
+            color: def.color || '#232323',
+            weight: def.weight || 1.1,
+            dashArray: null,
+            fill: true,
+            fillColor: featColor,
+            fillOpacity: def.fillOpacity || 0.65
+        });
     } else if (def.id === 'loteamento_por_bairro') {
         const featColor = (l.feature && l.feature.properties && l.feature.properties.color) ? l.feature.properties.color : '#d97706';
         l.setStyle({
@@ -1676,6 +1777,16 @@ function displayFeatureDetails(feature, layerDef, latlng) {
         title = props.Layer || 'Bairro';
         badgeText = 'Bairro / Balneário';
         badgeBg = '#1f78b4';
+    } else if (layerDef.type === 'planta') {
+        const codLote = props.cod_lote || '-';
+        title = `Lote ${codLote}`;
+        badgeText = layerDef.title || 'Planta de Loteamento';
+        badgeBg = props.color || '#2b83ba';
+        const descParts = [];
+        if (props['Loteamento - Descrição']) descParts.push(`<b>${props['Loteamento - Descrição']}</b>`);
+        if (props['Bairro - Nome']) descParts.push(`Bairro: <b>${props['Bairro - Nome']}</b>`);
+        if (props.Quadra) descParts.push(`Quadra: <b>${props.Quadra}</b>`);
+        zoneDesc = descParts.join(' &bull; ');
     } else if (layerDef.id === 'loteamento_por_bairro') {
         title = props.Loteamento || 'Loteamento';
         badgeText = 'Loteamento';
@@ -1751,7 +1862,7 @@ function displayFeatureDetails(feature, layerDef, latlng) {
     // Listar outros atributos úteis
     let attrCount = 0;
     for (const [k, v] of Object.entries(props)) {
-        if (v === null || v === '' || k === 'Shape_Leng' || k === 'Shape_Le_1' || k === 'drn_pk' || k === 'drn_pk_2') continue;
+        if (v === null || v === '' || k === 'color' || k === 'Shape_Leng' || k === 'Shape_Le_1' || k === 'drn_pk' || k === 'drn_pk_2') continue;
         html += `
             <div class="info-row">
                 <span class="info-label">${k}:</span>
@@ -1877,6 +1988,29 @@ function setupSearch() {
                 }
             });
         }
+
+        // Buscar em plantas de loteamento (lote, inscrição, cadastro, logradouro)
+        ['planta_02_carlos_ilhe_i'].forEach(pid => {
+            if (layersMap[pid]) {
+                layersMap[pid].eachLayer(layer => {
+                    if (matches.length >= 20) return;
+                    const props = layer.feature.properties || {};
+                    const cod = String(props.cod_lote || '').trim();
+                    const inscr = String(props['Inscrição'] || '').trim();
+                    const cad = String(props.Cadastro || '').trim();
+                    const lotDesc = String(props['Loteamento - Descrição'] || '').trim();
+                    const hay = `lote ${cod} ${inscr} ${cad} ${lotDesc} carlos ilhe ihle`.toLowerCase();
+                    if (hay.includes(q)) {
+                        matches.push({
+                            title: `Lote ${cod} — ${lotDesc || '02_Planta_Carlos_Ilhe_I'}`,
+                            type: inscr ? `Inscr. ${inscr}` : 'Planta de Loteamento',
+                            layer: layer,
+                            layerId: pid
+                        });
+                    }
+                });
+            }
+        });
 
         // Buscar em parques
         [
@@ -2131,7 +2265,7 @@ function updateLayerCounters() {
         sideBadge.classList.toggle('has-active', totalActive > 0);
     }
 
-    const groupIds = ['group-zoneamento', 'group-admin', 'group-preservacao', 'group-ambiental', 'group-publicos', 'group-viario'];
+    const groupIds = ['group-zoneamento', 'group-admin', 'group-preservacao', 'group-ambiental', 'group-publicos', 'group-viario', 'group-plantas'];
     groupIds.forEach(gid => {
         const container = document.getElementById(gid);
         const pill = document.getElementById('count-' + gid);

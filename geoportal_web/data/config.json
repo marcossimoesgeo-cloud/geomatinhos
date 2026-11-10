@@ -472,6 +472,20 @@
       ]
     },
     {
+      "id": "planta_02_carlos_ilhe_i",
+      "file": "02_planta_carlos_ilhe_i.geojson",
+      "title": "02_Planta_Carlos_Ilhe_I",
+      "group": "plantas",
+      "type": "planta",
+      "color": "#232323",
+      "weight": 1.1,
+      "fill": true,
+      "fillColor": "#2b83ba",
+      "fillOpacity": 0.65,
+      "name_field": "cod_lote",
+      "visible_default": false
+    },
+    {
       "id": "estradas_rurais",
       "file": "estradas_rurais.geojson",
       "title": "Estradas Rurais",

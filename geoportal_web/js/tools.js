@@ -54,7 +54,7 @@ const GeoTools = (() => {
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     const SKIP_PROPS = new Set(['fid', 'color', 'Shape_Leng', 'Shape_Le_1', 'drn_pk', 'drn_pk_2']);
-    const NAME_KEYS = ['Loteamento', 'Layer', 'nome', 'Nome', 'NOME', 'name', 'Name', 'inscricao', 'Inscricao'];
+    const NAME_KEYS = ['cod_lote', 'Loteamento', 'Loteamento - Descrição', 'Layer', 'nome', 'Nome', 'NOME', 'name', 'Name', 'Inscrição', 'inscricao', 'Inscricao'];
 
     /* ---------- utilidades ---------- */
     function toast(msg, type = 'info', ms = 3500) {
