@@ -348,10 +348,14 @@ const GeoTools = (() => {
         btn('dock-dark', 'fa-moon', 'Modo Escuro', 'Alternar entre modo claro e modo escuro', toggleDark);
         btn('dock-fullscreen', 'fa-expand', 'Tela Cheia', 'Entrar / sair da tela cheia', toggleFullscreen);
 
+        L.DomEvent.disableClickPropagation(dock);
+        L.DomEvent.disableScrollPropagation(dock);
         wrap.appendChild(dock);
 
         const pwrap = document.createElement('div');
         pwrap.id = 'tool-panels';
+        L.DomEvent.disableClickPropagation(pwrap);
+        L.DomEvent.disableScrollPropagation(pwrap);
         wrap.appendChild(pwrap);
     }
 
@@ -1393,10 +1397,10 @@ const GeoTools = (() => {
                 iconSize: [26, 26],
                 iconAnchor: [13, 13]
             });
-            L.marker(ll, { icon: tempIcon, zIndexOffset: 2400 }).addTo(state.coordTempGroup);
+            L.marker(ll, { icon: tempIcon, zIndexOffset: 2400, interactive: false }).addTo(state.coordTempGroup);
 
             if (idx > 1) {
-                L.polyline([state.coordPickPts[idx - 2], ll], { color: '#0ea5e9', weight: 2.5, dashArray: '4, 4' }).addTo(state.coordTempGroup);
+                L.polyline([state.coordPickPts[idx - 2], ll], { color: '#0ea5e9', weight: 2.5, dashArray: '4, 4', interactive: false }).addTo(state.coordTempGroup);
             }
 
             if (idx < currentTarget) {
@@ -2190,7 +2194,8 @@ const GeoTools = (() => {
                 color: '#ffffff',
                 fillColor: state.drawColor,
                 fillOpacity: 1,
-                weight: 2
+                weight: 2,
+                interactive: false
             }).addTo(state.drawVerts);
         });
     }
@@ -2202,12 +2207,12 @@ const GeoTools = (() => {
         const col = state.drawColor;
 
         if (state.drawMode === 'line' && pts.length >= 2) {
-            state.drawPreview = L.polyline(pts, { color: col, weight: 3, dashArray: '6, 4' }).addTo(map);
+            state.drawPreview = L.polyline(pts, { color: col, weight: 3, dashArray: '6, 4', interactive: false }).addTo(map);
             let d = 0;
             for (let i = 0; i < pts.length - 1; i++) d += pts[i].distanceTo(pts[i + 1]);
             if (metric) metric.textContent = `Pontos: ${state.drawPts.length} · Comprimento: ${fmtDist(d)}`;
         } else if (state.drawMode === 'polygon' && pts.length >= 2) {
-            state.drawPreview = L.polygon(pts, { color: col, weight: 2.5, fillColor: col, fillOpacity: 0.22, dashArray: '6, 4' }).addTo(map);
+            state.drawPreview = L.polygon(pts, { color: col, weight: 2.5, fillColor: col, fillOpacity: 0.22, dashArray: '6, 4', interactive: false }).addTo(map);
             if (pts.length >= 3) {
                 const area = calculateApproxArea({ type: 'Polygon', coordinates: [pts.map(p => [p.lng, p.lat]).concat([[pts[0].lng, pts[0].lat]])] });
                 let per = 0;
@@ -2218,13 +2223,13 @@ const GeoTools = (() => {
             }
         } else if (state.drawMode === 'rect' && state.drawPts.length === 1 && cursorLatLng) {
             const bounds = L.latLngBounds(state.drawPts[0], cursorLatLng);
-            state.drawPreview = L.rectangle(bounds, { color: col, weight: 2.5, fillColor: col, fillOpacity: 0.22, dashArray: '6, 4' }).addTo(map);
+            state.drawPreview = L.rectangle(bounds, { color: col, weight: 2.5, fillColor: col, fillOpacity: 0.22, dashArray: '6, 4', interactive: false }).addTo(map);
             const ring = [bounds.getSouthWest(), bounds.getNorthWest(), bounds.getNorthEast(), bounds.getSouthEast()];
             const area = calculateApproxArea({ type: 'Polygon', coordinates: [ring.map(p => [p.lng, p.lat]).concat([[ring[0].lng, ring[0].lat]])] });
             if (metric) metric.textContent = `Área: ${fmtArea(area)}`;
         } else if (state.drawMode === 'circle' && state.drawPts.length === 1 && cursorLatLng) {
             const r = state.drawPts[0].distanceTo(cursorLatLng);
-            state.drawPreview = L.circle(state.drawPts[0], { radius: r, color: col, weight: 2.5, fillColor: col, fillOpacity: 0.22, dashArray: '6, 4' }).addTo(map);
+            state.drawPreview = L.circle(state.drawPts[0], { radius: r, color: col, weight: 2.5, fillColor: col, fillOpacity: 0.22, dashArray: '6, 4', interactive: false }).addTo(map);
             if (metric) metric.textContent = `Raio: ${fmtDist(r)} · Área: ${fmtArea(Math.PI * r * r)}`;
         }
     }
@@ -2356,6 +2361,7 @@ const GeoTools = (() => {
 
     function onDrawMapMove(e) {
         if (!state.drawMode) return;
+        state.lastCursorContainerPt = e.containerPoint;
         const t = state.snapOn ? findSnap(e.latlng) : null;
         state.activeSnap = t;
         showSnapMarker(t);
@@ -3252,9 +3258,77 @@ const GeoTools = (() => {
         document.title = 'SELFTEST ' + (results.every(r => r.ok) ? 'OK' : 'FALHOU');
     }
 
+    function setupMapScrollAndMiddlePan() {
+        if (!map) return;
+        const container = map.getContainer();
+        if (!container) return;
+
+        if (map.scrollWheelZoom) map.scrollWheelZoom.enable();
+        if (map.dragging) map.dragging.enable();
+
+        // Garante que o scroll (wheel) sobre marcadores, vértices ou feições no mapa sempre faça zoom quando fora dos painéis
+        container.addEventListener('wheel', e => {
+            if (e.target && e.target.closest && e.target.closest('#tools-dock, #tool-panels, .leaflet-popup-content, .measure-card')) return;
+            if (map.scrollWheelZoom && !map.scrollWheelZoom.enabled()) {
+                map.scrollWheelZoom.enable();
+            }
+        }, { capture: true, passive: true });
+
+        // Atualiza a pré-visualização do desenho após zoom com o scroll do mouse
+        map.on('zoomend', () => {
+            if (state.drawMode && state.drawPts.length && state.lastCursorContainerPt) {
+                const ll = map.containerPointToLatLng(state.lastCursorContainerPt);
+                const t = state.snapOn ? findSnap(ll) : null;
+                state.activeSnap = t;
+                showSnapMarker(t);
+                updateLivePreview(t ? t.ll : ll);
+            }
+        });
+
+        // Permite arrastar o mapa (pan) pressionando o botão do scroll do mouse (botão do meio, button === 1), padrão CAD/GIS
+        let midDrag = false;
+        let lastX = 0;
+        let lastY = 0;
+        container.addEventListener('mousedown', e => {
+            if (e.button !== 1) return;
+            if (e.target && e.target.closest && e.target.closest('#tools-dock, #tool-panels')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            midDrag = true;
+            lastX = e.clientX;
+            lastY = e.clientY;
+            container.style.cursor = 'grabbing';
+        }, true);
+
+        window.addEventListener('mousemove', e => {
+            if (!midDrag) return;
+            const dx = lastX - e.clientX;
+            const dy = lastY - e.clientY;
+            lastX = e.clientX;
+            lastY = e.clientY;
+            if (dx !== 0 || dy !== 0) {
+                map.panBy([dx, dy], { animate: false });
+            }
+        }, true);
+
+        window.addEventListener('mouseup', e => {
+            if (!midDrag || e.button !== 1) return;
+            midDrag = false;
+            container.style.cursor = '';
+        }, true);
+
+        container.addEventListener('auxclick', e => {
+            if (e.button === 1) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }, true);
+    }
+
     /* ---------- init ---------- */
     function init() {
         buildDock();
+        setupMapScrollAndMiddlePan();
         try { if (localStorage.getItem('geoportal-dark') === '1') setDark(true); } catch (e) { /* ignore */ }
         document.addEventListener('fullscreenchange', () => {
             const b = $('dock-fullscreen');

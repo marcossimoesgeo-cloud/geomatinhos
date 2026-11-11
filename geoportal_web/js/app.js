@@ -2168,12 +2168,12 @@ function renderMeasureGraphics() {
 
     // Recriar todos os marcadores
     measurePoints.forEach(p => {
-        L.circleMarker(p, { radius: 5, color: '#fff', fillColor: '#00a896', fillOpacity: 1, weight: 2 }).addTo(measureLayerGroup);
+        L.circleMarker(p, { radius: 5, color: '#fff', fillColor: '#00a896', fillOpacity: 1, weight: 2, interactive: false }).addTo(measureLayerGroup);
     });
 
     if (measureMode === 'distance') {
         if (measurePoints.length > 1) {
-            L.polyline(measurePoints, { color: '#00a896', weight: 3, dashArray: '4, 4' }).addTo(measureLayerGroup);
+            L.polyline(measurePoints, { color: '#00a896', weight: 3, dashArray: '4, 4', interactive: false }).addTo(measureLayerGroup);
 
             let totalDist = 0;
             for (let i = 0; i < measurePoints.length - 1; i++) {
@@ -2186,7 +2186,7 @@ function renderMeasureGraphics() {
         }
     } else if (measureMode === 'area') {
         if (measurePoints.length > 2) {
-            L.polygon(measurePoints, { color: '#00a896', weight: 2, fillColor: '#00a896', fillOpacity: 0.3 }).addTo(measureLayerGroup);
+            L.polygon(measurePoints, { color: '#00a896', weight: 2, fillColor: '#00a896', fillOpacity: 0.3, interactive: false }).addTo(measureLayerGroup);
 
             // Calcular área geodésica
             const geom = {
@@ -2204,7 +2204,7 @@ function renderMeasureGraphics() {
                 : `${area.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} m²`) + ` | Perímetro: ${perFmt}`;
             document.getElementById('measure-result').textContent = formatted;
         } else if (measurePoints.length === 2) {
-            L.polyline(measurePoints, { color: '#00a896', weight: 3, dashArray: '4, 4' }).addTo(measureLayerGroup);
+            L.polyline(measurePoints, { color: '#00a896', weight: 3, dashArray: '4, 4', interactive: false }).addTo(measureLayerGroup);
             const dist = measurePoints[0].distanceTo(measurePoints[1]);
             const formatted = dist > 1000 ? `${(dist / 1000).toFixed(2)} km` : `${dist.toFixed(1)} m`;
             document.getElementById('measure-result').textContent = `Comprimento: ${formatted} (adicione mais pontos)`;
