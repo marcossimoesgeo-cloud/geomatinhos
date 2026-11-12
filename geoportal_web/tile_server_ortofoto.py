@@ -49,6 +49,10 @@ ECW_PATH = (
 BBOX_3857 = (-5405962.40, -2980881.39, -5396020.55, -2961799.03)
 TILE_SIZE  = 256
 
+# Recalibragem posicional topográfica (SIRGAS 2000 UTM 22S dE = -2.80m, dN = -3.72m -> EPSG:3857 dX = -3.020m, dY = -4.203m)
+CALIB_DX_3857 = -3.020
+CALIB_DY_3857 = -4.203
+
 # Limiares de cor para pixels de "sem dado"
 DARK_THRESH  = 8    # preto / quase-preto
 LIGHT_THRESH = 250  # branco / quase-branco
@@ -164,6 +168,11 @@ def render_tile(z, x, y):
       3. Erosao de borda: remove franjas de pixels residuais
     """
     t_minx, t_miny, t_maxx, t_maxy = tile_to_bbox_3857(x, y, z)
+    # Deslocar janela amostrada na ortofoto bruta para corrigir o erro sistemático de +2,80m E / +3,72m N
+    t_minx -= CALIB_DX_3857
+    t_maxx -= CALIB_DX_3857
+    t_miny -= CALIB_DY_3857
+    t_maxy -= CALIB_DY_3857
     b_minx, b_miny, b_maxx, b_maxy = BBOX_3857
     if t_maxx <= b_minx or t_minx >= b_maxx or t_maxy <= b_miny or t_miny >= b_maxy:
         return None

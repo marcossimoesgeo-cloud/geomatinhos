@@ -48,9 +48,57 @@ function initGeoportal() {
     // Cada slot tem seu proprio TileLayer; zIndex determina qual fica por cima.
     // =========================================================================
 
+    // Parâmetros de Recalibragem Topográfica da Ortofoto (SIRGAS 2000 UTM 22S -> Web Mercator EPSG:3857)
+    // Aferição topográfica de campo constatou deslocamento médio da ortofoto bruta de +2,80m E e +3,72m N (4,66m NE)
+    // no setor norte (Ex: Lote Rua Itiberê V1..V4) e +0,67m E e +1,40m N (1,58m NE) no setor central.
+    // A correção padrão translada a ortofoto em dE = -2,80m (Oeste) e dN = -3,72m (Sul).
+    window.ORTHO_CALIBRATION = {
+        preset: 'topo_norte',
+        dE: -2.80,
+        dN: -3.72
+    };
+
+    function getEffectiveOrthoShiftUTM() {
+        const cal = window.ORTHO_CALIBRATION || { preset: 'topo_norte', dE: -2.80, dN: -3.72 };
+        if (cal.preset === 'adaptive' && map) {
+            // Interpolação linear regional entre Centro (lat -25.7876 -> dE -0.67, dN -1.40) e Norte (lat -25.7219 -> dE -2.80, dN -3.72)
+            const lat = map.getCenter().lat;
+            const t = Math.max(0, Math.min(1.2, (lat - (-25.7876)) / (-25.7219 - (-25.7876))));
+            return {
+                dE: -0.67 + t * (-2.80 - (-0.67)),
+                dN: -1.40 + t * (-3.72 - (-1.40))
+            };
+        }
+        return { dE: Number(cal.dE) || 0, dN: Number(cal.dN) || 0 };
+    }
+
+    function getOrthoPixelOffset(z) {
+        const { dE, dN } = getEffectiveOrthoShiftUTM();
+        if (dE === 0 && dN === 0) return L.point(0, 0);
+        // Conversão rigorosa SIRGAS 2000 / UTM 22S (EPSG:31982, MC -51°) -> Web Mercator (EPSG:3857) em Matinhos (lat ~ -25.72°)
+        // Convergência meridiana gamma = -1.088° (cos = 0.99982, sin = -0.01899) e fator de escala Mercator (1/cos(lat) = 1.1101 / 1.1149)
+        const dX3857 = (0.99982 * dE - 0.01899 * dN) * 1.1101;
+        const dY3857 = (0.01899 * dE + 0.99982 * dN) * 1.1149;
+        const pxPerMeter3857 = (256 * Math.pow(2, z)) / 40075016.68557849;
+        return L.point(Math.round(dX3857 * pxPerMeter3857 * 10) / 10, Math.round(-dY3857 * pxPerMeter3857 * 10) / 10);
+    }
+
     // Camada customizada para o Ortomosaico: remove via Canvas o colarinho branco (RGB 255,255,255)
-    // e a borda de serrilhado (halo de reamostragem), deixando recorte limpo sobre imagens de satélite
+    // e a borda de serrilhado (halo de reamostragem), aplicando recalibragem posicional topográfica
     const OrthoCutoutTileLayer = L.TileLayer.extend({
+        _getTilePos: function (coords) {
+            const pos = L.TileLayer.prototype._getTilePos.call(this, coords);
+            return pos.add(getOrthoPixelOffset(coords.z));
+        },
+        updateCalibrationOffset: function () {
+            if (!this._map || !this._tiles) return;
+            for (const key in this._tiles) {
+                const tile = this._tiles[key];
+                if (tile && tile.el && tile.coords) {
+                    L.DomUtil.setPosition(tile.el, this._getTilePos(tile.coords));
+                }
+            }
+        },
         createTile: function (coords, done) {
             const tile = document.createElement('canvas');
             tile.width = 256;
@@ -324,6 +372,69 @@ function initGeoportal() {
 
         const swapBtn = document.getElementById('btn-swap-basemaps');
         if (swapBtn) swapBtn.addEventListener('click', swapBasemapZOrder);
+
+        // Controles de Recalibragem Topográfica da Ortofoto
+        const calPresetEl = document.getElementById('ortho-calib-preset');
+        const calDeEl = document.getElementById('ortho-calib-de');
+        const calDnEl = document.getElementById('ortho-calib-dn');
+        const calBadgeEl = document.getElementById('ortho-calib-badge');
+
+        function refreshOrthoCalibrationUI() {
+            const eff = getEffectiveOrthoShiftUTM();
+            if (calDeEl && document.activeElement !== calDeEl) calDeEl.value = eff.dE.toFixed(2);
+            if (calDnEl && document.activeElement !== calDnEl) calDnEl.value = eff.dN.toFixed(2);
+            if (calBadgeEl) {
+                const mod = Math.hypot(eff.dE, eff.dN);
+                calBadgeEl.textContent = mod < 0.01 ? '0,00 m (Bruta)' : `${mod.toFixed(2).replace('.', ',')} m SO`;
+            }
+            [1, 2].forEach(slot => {
+                const lyr = basemapState[slot].layer;
+                if (lyr && typeof lyr.updateCalibrationOffset === 'function') {
+                    lyr.updateCalibrationOffset();
+                }
+            });
+        }
+
+        if (calPresetEl) {
+            calPresetEl.addEventListener('change', () => {
+                const v = calPresetEl.value;
+                window.ORTHO_CALIBRATION.preset = v;
+                if (v === 'topo_norte') {
+                    window.ORTHO_CALIBRATION.dE = -2.80;
+                    window.ORTHO_CALIBRATION.dN = -3.72;
+                } else if (v === 'topo_centro') {
+                    window.ORTHO_CALIBRATION.dE = -0.67;
+                    window.ORTHO_CALIBRATION.dN = -1.40;
+                } else if (v === 'raw') {
+                    window.ORTHO_CALIBRATION.dE = 0.0;
+                    window.ORTHO_CALIBRATION.dN = 0.0;
+                }
+                refreshOrthoCalibrationUI();
+            });
+        }
+
+        [calDeEl, calDnEl].forEach(inp => {
+            if (!inp) return;
+            inp.addEventListener('input', () => {
+                const de = parseFloat(calDeEl.value);
+                const dn = parseFloat(calDnEl.value);
+                if (!isNaN(de) && !isNaN(dn)) {
+                    window.ORTHO_CALIBRATION.preset = 'custom';
+                    window.ORTHO_CALIBRATION.dE = de;
+                    window.ORTHO_CALIBRATION.dN = dn;
+                    if (calPresetEl) calPresetEl.value = 'custom';
+                    refreshOrthoCalibrationUI();
+                }
+            });
+        });
+
+        map.on('moveend', () => {
+            if (window.ORTHO_CALIBRATION && window.ORTHO_CALIBRATION.preset === 'adaptive') {
+                refreshOrthoCalibrationUI();
+            }
+        });
+        window.refreshOrthoCalibrationUI = refreshOrthoCalibrationUI;
+        refreshOrthoCalibrationUI();
     }
     setupBasemapControls();
 

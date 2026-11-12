@@ -174,6 +174,34 @@
                             <span id="basemap-opacity-2-val" class="basemap-opacity-val">100%</span>
                         </div>
                     </div>
+
+                    <!-- Recalibragem Topográfica da Ortofoto (SIRGAS 2000 UTM 22S) -->
+                    <div class="basemap-slot" style="margin-top:8px;border:1px solid #0284c7;background:#f0f9ff;">
+                        <div class="basemap-slot-header" style="justify-content:space-between;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <span class="basemap-slot-badge" style="background:#0284c7;color:#fff;"><i class="fa-solid fa-compass-drafting"></i> CALIBRAÇÃO</span>
+                                <span class="basemap-slot-label" style="font-weight:700;color:#0c4a6e;">Ajuste Topográfico da Ortofoto</span>
+                            </div>
+                            <span id="ortho-calib-badge" style="font-size:0.68rem;font-weight:700;color:#0369a1;background:#e0f2fe;padding:2px 6px;border-radius:4px;">4,66 m SO</span>
+                        </div>
+                        <select id="ortho-calib-preset" class="basemap-select" style="margin-top:4px;">
+                            <option value="topo_norte" selected>✅ Recalibrada Topografia (ΔE -2,80m | ΔN -3,72m · 4,66m)</option>
+                            <option value="adaptive">📐 Adaptativa Regional (Norte 4,66m ↔ Centro 1,58m)</option>
+                            <option value="topo_centro">📍 Ajuste Setor Central (ΔE -0,67m | ΔN -1,40m · 1,58m)</option>
+                            <option value="raw">⚠️ Ortofoto Bruta Original (Sem Correção · 0,00m)</option>
+                            <option value="custom">🔧 Ajuste Fino Manual (ΔE / ΔN personalizados)</option>
+                        </select>
+                        <div style="display:flex;gap:6px;margin-top:6px;align-items:center;font-size:0.73rem;color:#0c4a6e;">
+                            <label style="flex:1;display:flex;align-items:center;gap:4px;">
+                                <b>ΔE (m):</b>
+                                <input type="number" id="ortho-calib-de" step="0.10" value="-2.80" style="width:100%;padding:3px 5px;border:1px solid #93c5fd;border-radius:5px;font-size:0.74rem;font-weight:600;background:#fff;color:#0f172a;">
+                            </label>
+                            <label style="flex:1;display:flex;align-items:center;gap:4px;">
+                                <b>ΔN (m):</b>
+                                <input type="number" id="ortho-calib-dn" step="0.10" value="-3.72" style="width:100%;padding:3px 5px;border:1px solid #93c5fd;border-radius:5px;font-size:0.74rem;font-weight:600;background:#fff;color:#0f172a;">
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <!-- ===== FIM PAINEL BASEMAPS ===== -->
 
