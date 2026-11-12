@@ -48,28 +48,30 @@ function initGeoportal() {
     // Cada slot tem seu proprio TileLayer; zIndex determina qual fica por cima.
     // =========================================================================
 
-    // Parâmetros de Recalibragem Topográfica da Ortofoto (SIRGAS 2000 UTM 22S -> Web Mercator EPSG:3857)
-    // Aferição topográfica de campo constatou deslocamento médio da ortofoto bruta de +2,80m E e +3,72m N (4,66m NE)
-    // no setor norte (Ex: Lote Rua Itiberê V1..V4) e +0,67m E e +1,40m N (1,58m NE) no setor central.
-    // A correção padrão translada a ortofoto em dE = -2,80m (Oeste) e dN = -3,72m (Sul).
+    // Recalibragem Progressiva Setor Norte (SIRGAS 2000 UTM 22S -> Web Mercator EPSG:3857)
+    // - Caiobá, Praia Mansa e Centro (lat <= -25.8050° / N <= 7.143.500): permanece inalterada (dE = 0,00m, dN = 0,00m).
+    // - Balneários ao Norte (lat > -25.8050° até -25.7219° / N ~ 7.152.750): correção progressiva até dE = -2,80m, dN = -3,72m (4,66m SO),
+    //   calibrada pelos dois lotes aferidos em campo (V1..V4 e P01..P04).
     window.ORTHO_CALIBRATION = {
-        preset: 'topo_norte',
-        dE: -2.80,
-        dN: -3.72
+        mode: 'progressive_north',
+        latStartNorth: -25.8050,
+        latFullNorth: -25.7219,
+        maxDE: -2.80,
+        maxDN: -3.72
     };
 
     function getEffectiveOrthoShiftUTM() {
-        const cal = window.ORTHO_CALIBRATION || { preset: 'topo_norte', dE: -2.80, dN: -3.72 };
-        if (cal.preset === 'adaptive' && map) {
-            // Interpolação linear regional entre Centro (lat -25.7876 -> dE -0.67, dN -1.40) e Norte (lat -25.7219 -> dE -2.80, dN -3.72)
-            const lat = map.getCenter().lat;
-            const t = Math.max(0, Math.min(1.2, (lat - (-25.7876)) / (-25.7219 - (-25.7876))));
-            return {
-                dE: -0.67 + t * (-2.80 - (-0.67)),
-                dN: -1.40 + t * (-3.72 - (-1.40))
-            };
+        const cal = window.ORTHO_CALIBRATION;
+        if (!cal || !map) return { dE: 0, dN: 0 };
+        const lat = map.getCenter().lat;
+        if (lat <= cal.latStartNorth) {
+            return { dE: 0, dN: 0 };
         }
-        return { dE: Number(cal.dE) || 0, dN: Number(cal.dN) || 0 };
+        const t = Math.max(0, Math.min(1.05, (lat - cal.latStartNorth) / (cal.latFullNorth - cal.latStartNorth)));
+        return {
+            dE: cal.maxDE * t,
+            dN: cal.maxDN * t
+        };
     }
 
     function getOrthoPixelOffset(z) {
@@ -373,6 +375,14 @@ function initGeoportal() {
         const swapBtn = document.getElementById('btn-swap-basemaps');
         if (swapBtn) swapBtn.addEventListener('click', swapBasemapZOrder);
 
+        map.on('moveend zoomend', () => {
+            [1, 2].forEach(slot => {
+                const lyr = basemapState[slot].layer;
+                if (lyr && typeof lyr.updateCalibrationOffset === 'function') {
+                    lyr.updateCalibrationOffset();
+                }
+            });
+        });
     }
     setupBasemapControls();
 

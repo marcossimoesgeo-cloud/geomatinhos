@@ -49,9 +49,11 @@ ECW_PATH = (
 BBOX_3857 = (-5405962.40, -2980881.39, -5396020.55, -2961799.03)
 TILE_SIZE  = 256
 
-# Recalibragem posicional topográfica (SIRGAS 2000 UTM 22S dE = -2.80m, dN = -3.72m -> EPSG:3857 dX = -3.020m, dY = -4.203m)
-CALIB_DX_3857 = -3.020
-CALIB_DY_3857 = -4.203
+# Recalibragem progressiva Setor Norte (Caiobá, Praia Mansa e Centro permanecem em 0,00m para Y_3857 <= -2974930.0)
+CALIB_Y3857_START = -2974930.0  # lat -25.8050 (limite Norte do Centro)
+CALIB_Y3857_FULL  = -2964675.0  # lat -25.7219 (Balneários ao Norte: V1..V4 e P01..P04)
+CALIB_DX_3857     = -3.020
+CALIB_DY_3857     = -4.203
 
 # Limiares de cor para pixels de "sem dado"
 DARK_THRESH  = 8    # preto / quase-preto
@@ -168,11 +170,15 @@ def render_tile(z, x, y):
       3. Erosao de borda: remove franjas de pixels residuais
     """
     t_minx, t_miny, t_maxx, t_maxy = tile_to_bbox_3857(x, y, z)
-    # Deslocar janela amostrada na ortofoto bruta para corrigir o erro sistemático de +2,80m E / +3,72m N
-    t_minx -= CALIB_DX_3857
-    t_maxx -= CALIB_DX_3857
-    t_miny -= CALIB_DY_3857
-    t_maxy -= CALIB_DY_3857
+    # Em Caiobá, Praia Mansa e Centro (y_mid <= CALIB_Y3857_START), t = 0 (imagem original inalterada).
+    # Nos balneários ao Norte, aplica correção progressiva até (CALIB_DX_3857, CALIB_DY_3857).
+    y_mid = 0.5 * (t_miny + t_maxy)
+    if y_mid > CALIB_Y3857_START:
+        t_factor = min(1.05, max(0.0, (y_mid - CALIB_Y3857_START) / (CALIB_Y3857_FULL - CALIB_Y3857_START)))
+        t_minx -= CALIB_DX_3857 * t_factor
+        t_maxx -= CALIB_DX_3857 * t_factor
+        t_miny -= CALIB_DY_3857 * t_factor
+        t_maxy -= CALIB_DY_3857 * t_factor
     b_minx, b_miny, b_maxx, b_maxy = BBOX_3857
     if t_maxx <= b_minx or t_minx >= b_maxx or t_maxy <= b_miny or t_miny >= b_maxy:
         return None
