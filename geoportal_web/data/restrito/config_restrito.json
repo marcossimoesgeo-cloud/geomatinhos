@@ -1,0 +1,51 @@
+{
+  "project": "Projeto_areas_irregulares",
+  "title": "Projeto Áreas Irregulares (REURB)",
+  "layers": [
+    {
+      "id": "areas_publicas",
+      "file": "areas_publicas.geojson",
+      "title": "Áreas Irregulares — Áreas Públicas",
+      "group": "areas_irregulares",
+      "project": "Projeto_areas_irregulares",
+      "type": "polygon",
+      "color": "#fffa33",
+      "weight": 2.5,
+      "fill": true,
+      "fillColor": "#fffa33",
+      "fillOpacity": 0.18,
+      "name_field": "Layer",
+      "visible_default": false
+    },
+    {
+      "id": "areas_privadas",
+      "file": "areas_privadas.geojson",
+      "title": "Áreas Irregulares — Áreas Privadas (Aptas REURB)",
+      "group": "areas_irregulares",
+      "project": "Projeto_areas_irregulares",
+      "type": "polygon",
+      "color": "#46ffff",
+      "weight": 2.5,
+      "fill": true,
+      "fillColor": "#46ffff",
+      "fillOpacity": 0.18,
+      "name_field": "Layer",
+      "visible_default": false
+    },
+    {
+      "id": "ocupacoes_ate2016_e_apos",
+      "file": "ocupacoes_ate2016_e_apos.geojson",
+      "title": "Áreas Irregulares — Ocupações até 2016 e Após",
+      "group": "areas_irregulares",
+      "project": "Projeto_areas_irregulares",
+      "type": "polygon",
+      "color": "#25f300",
+      "weight": 2.5,
+      "fill": true,
+      "fillColor": "#25f300",
+      "fillOpacity": 0.18,
+      "name_field": "Layer",
+      "visible_default": false
+    }
+  ]
+}

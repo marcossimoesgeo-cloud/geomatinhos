@@ -298,21 +298,25 @@ const GeoAuth = (() => {
         setSession(null);
     }
 
-    /** Baixa um arquivo JSON do bucket privado (só funciona com sessão de servidor). */
+    /** Baixa um arquivo JSON restrito (só funciona com sessão ativa de servidor). */
     async function fetchJSON(path) {
         if (!isStaff()) throw new Error('Sem sessão de servidor.');
         const cleanPath = String(path || '').replace(/^\/+/, '');
         const bucket = cfg.bucket || 'restrito';
         if (configured() && session && session.access_token) {
-            const res = await fetch(`${projectUrl()}/storage/v1/object/authenticated/${bucket}/${cleanPath}`, {
-                headers: {
-                    'apikey': cfg.anonKey,
-                    'Authorization': 'Bearer ' + session.access_token
-                }
-            });
-            if (res.ok) return await res.json();
+            try {
+                const res = await fetch(`${projectUrl()}/storage/v1/object/authenticated/${bucket}/${cleanPath}`, {
+                    headers: {
+                        'apikey': cfg.anonKey,
+                        'Authorization': 'Bearer ' + session.access_token
+                    }
+                });
+                if (res.ok) return await res.json();
+            } catch (e) { /* fallback local abaixo */ }
         }
-        throw new Error('Arquivo restrito não encontrado no bucket.');
+        const localRes = await fetch(`data/restrito/${cleanPath}`);
+        if (localRes.ok) return await localRes.json();
+        throw new Error('Arquivo restrito não encontrado.');
     }
 
     /* ---------- HISTÓRICO DE USO DOS SERVIDORES (visível somente ao administrador) ---------- */

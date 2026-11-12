@@ -26,5 +26,6 @@ Desktop.ini
 # Logs
 *.log
 
-# Camadas restritas (sobem só pelo painel do Supabase, nunca pelo Git)
-restrito/
+# Camadas restritas locais na raiz
+/restrito/
+!geoportal_web/data/restrito/

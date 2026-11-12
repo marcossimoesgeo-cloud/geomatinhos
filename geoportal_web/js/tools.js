@@ -3020,18 +3020,37 @@ const GeoTools = (() => {
 
     function buildRestrictedGroup(defs) {
         if (state.restrictedGroupEl) state.restrictedGroupEl.remove();
+        if (!GeoAuth.isStaff()) return;
         const tab = $('tab-camadas');
         const group = document.createElement('div');
         group.className = 'layer-group restricted-group';
-        group.innerHTML = `<div class="group-header" data-toggle="group-restrito"><span><i class="fa-solid fa-user-shield"></i> Camadas Internas <small class="badge-staff">SERVIDORES</small></span><i class="fa-solid fa-chevron-down toggle-icon"></i></div>
+        group.innerHTML = `<div class="group-header" data-toggle="group-restrito"><span><i class="fa-solid fa-user-shield"></i> Projeto Áreas Irregulares & Camadas Internas <small class="badge-staff">SERVIDORES</small></span><i class="fa-solid fa-chevron-down toggle-icon"></i></div>
             <div class="group-content" id="group-restrito"></div>`;
         const content = group.querySelector('.group-content');
         defs.forEach(def => {
             const item = document.createElement('div');
             item.className = 'layer-item';
-            item.innerHTML = `<label class="layer-label"><span class="layer-badge" style="background:${esc(def.fillColor || def.color || '#16a34a')};border:1px solid ${esc(def.color || '#14532d')};"></span><span><i class="fa-solid fa-lock lock-ico"></i> ${esc(def.title || def.id)}</span></label>
-                <label class="switch"><input type="checkbox" id="layer-${esc(def.id)}"><span class="slider"></span></label>`;
+            item.innerHTML = `<label class="layer-label"><span class="layer-badge" style="background:${esc(def.fillColor || def.color || '#16a34a')};border:2px solid ${esc(def.color || '#14532d')};"></span><span><i class="fa-solid fa-lock lock-ico"></i> ${esc(def.title || def.id)}</span></label>
+                <div class="layer-item-actions">
+                    <button type="button" class="btn-zoom-layer" data-restrito-zoom="${esc(def.id)}" title="Enquadrar camada no mapa"><i class="fa-solid fa-magnifying-glass-location"></i></button>
+                    <label class="switch"><input type="checkbox" id="layer-${esc(def.id)}"><span class="slider"></span></label>
+                </div>`;
             content.appendChild(item);
+        });
+        content.querySelectorAll('[data-restrito-zoom]').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                const lid = btn.getAttribute('data-restrito-zoom');
+                const g = layersMap[lid];
+                const cb = $('layer-' + lid);
+                if (cb && !cb.checked) {
+                    cb.checked = true;
+                    cb.dispatchEvent(new Event('change'));
+                }
+                if (g && g.getBounds && g.getBounds().isValid()) {
+                    map.fitBounds(g.getBounds(), { padding: [40, 40], maxZoom: 18 });
+                }
+            });
         });
         group.querySelector('.group-header').addEventListener('click', () => {
             const open = content.style.display !== 'none';
@@ -3046,12 +3065,10 @@ const GeoTools = (() => {
 
     async function loadRestricted() {
         unloadRestricted();
+        if (!GeoAuth.isStaff()) return;
         const allDefs = [];
-        // 1. Camada técnica interna automática para servidores
-        const techDef = buildTechnicalCentroidsLayer();
-        allDefs.push(techDef);
 
-        // 2. Camadas adicionais do bucket privado Supabase (se houver)
+        // 1. Camadas restritas do Projeto_areas_irregulares / bucket privado de servidores
         try {
             const manifest = await GeoAuth.fetchJSON(GeoAuth.manifest);
             const bucketDefs = (manifest.layers || []).map(d => Object.assign({}, d, { id: 'restrito_' + d.id }));
@@ -3062,7 +3079,9 @@ const GeoTools = (() => {
                         style: genericStyle(def),
                         onEachFeature: (feature, layer) => {
                             layer.layerDef = def;
-                            layer.bindTooltip(`<i class="fa-solid fa-lock"></i> <b>${esc(featureName(feature.properties, def))}</b>`, { sticky: true });
+                            const p = feature.properties || {};
+                            const areaTxt = p.area_m2 ? ` · ${Number(p.area_m2).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} m² (${Number(p.area_ha || (p.area_m2 / 10000)).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ha)` : '';
+                            layer.bindTooltip(`<i class="fa-solid fa-lock"></i> <b>${esc(featureName(p, def))}</b>${areaTxt}`, { sticky: true });
                             setupFeatureInteractions(feature, layer, def);
                         }
                     });
@@ -3072,6 +3091,15 @@ const GeoTools = (() => {
                 } catch (e) { console.warn('Camada restrita ausente:', def.id); }
             }
         } catch (e) { /* bucket restrito ainda sem arquivos extras */ }
+
+        // 2. Camada técnica interna automática para servidores
+        const techDef = buildTechnicalCentroidsLayer();
+        allDefs.push(techDef);
+
+        if (!GeoAuth.isStaff()) {
+            unloadRestricted();
+            return;
+        }
 
         buildRestrictedGroup(allDefs);
         allDefs.forEach(def => {
@@ -3085,6 +3113,7 @@ const GeoTools = (() => {
                 if (def.visible_default) { cb.checked = true; g.addTo(map); }
             }
         });
+        if (typeof fillLayerSelect === 'function') fillLayerSelect();
         if (window.updateLayerCounters) window.updateLayerCounters();
     }
 
@@ -3097,6 +3126,7 @@ const GeoTools = (() => {
         if (typeof activeHighlight !== 'undefined' && activeHighlight && activeHighlight.layerDef && state.restrictedIds.has(activeHighlight.layerDef.id)) activeHighlight = null;
         state.restrictedIds.clear();
         if (state.restrictedGroupEl) { state.restrictedGroupEl.remove(); state.restrictedGroupEl = null; }
+        if (typeof fillLayerSelect === 'function') fillLayerSelect();
         if (window.updateLayerCounters) window.updateLayerCounters();
         const d = $('info-details');
         if (d && state.lastDetail && state.lastDetail.restricted) {
