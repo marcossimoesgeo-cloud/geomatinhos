@@ -373,68 +373,6 @@ function initGeoportal() {
         const swapBtn = document.getElementById('btn-swap-basemaps');
         if (swapBtn) swapBtn.addEventListener('click', swapBasemapZOrder);
 
-        // Controles de Recalibragem Topográfica da Ortofoto
-        const calPresetEl = document.getElementById('ortho-calib-preset');
-        const calDeEl = document.getElementById('ortho-calib-de');
-        const calDnEl = document.getElementById('ortho-calib-dn');
-        const calBadgeEl = document.getElementById('ortho-calib-badge');
-
-        function refreshOrthoCalibrationUI() {
-            const eff = getEffectiveOrthoShiftUTM();
-            if (calDeEl && document.activeElement !== calDeEl) calDeEl.value = eff.dE.toFixed(2);
-            if (calDnEl && document.activeElement !== calDnEl) calDnEl.value = eff.dN.toFixed(2);
-            if (calBadgeEl) {
-                const mod = Math.hypot(eff.dE, eff.dN);
-                calBadgeEl.textContent = mod < 0.01 ? '0,00 m (Bruta)' : `${mod.toFixed(2).replace('.', ',')} m SO`;
-            }
-            [1, 2].forEach(slot => {
-                const lyr = basemapState[slot].layer;
-                if (lyr && typeof lyr.updateCalibrationOffset === 'function') {
-                    lyr.updateCalibrationOffset();
-                }
-            });
-        }
-
-        if (calPresetEl) {
-            calPresetEl.addEventListener('change', () => {
-                const v = calPresetEl.value;
-                window.ORTHO_CALIBRATION.preset = v;
-                if (v === 'topo_norte') {
-                    window.ORTHO_CALIBRATION.dE = -2.80;
-                    window.ORTHO_CALIBRATION.dN = -3.72;
-                } else if (v === 'topo_centro') {
-                    window.ORTHO_CALIBRATION.dE = -0.67;
-                    window.ORTHO_CALIBRATION.dN = -1.40;
-                } else if (v === 'raw') {
-                    window.ORTHO_CALIBRATION.dE = 0.0;
-                    window.ORTHO_CALIBRATION.dN = 0.0;
-                }
-                refreshOrthoCalibrationUI();
-            });
-        }
-
-        [calDeEl, calDnEl].forEach(inp => {
-            if (!inp) return;
-            inp.addEventListener('input', () => {
-                const de = parseFloat(calDeEl.value);
-                const dn = parseFloat(calDnEl.value);
-                if (!isNaN(de) && !isNaN(dn)) {
-                    window.ORTHO_CALIBRATION.preset = 'custom';
-                    window.ORTHO_CALIBRATION.dE = de;
-                    window.ORTHO_CALIBRATION.dN = dn;
-                    if (calPresetEl) calPresetEl.value = 'custom';
-                    refreshOrthoCalibrationUI();
-                }
-            });
-        });
-
-        map.on('moveend', () => {
-            if (window.ORTHO_CALIBRATION && window.ORTHO_CALIBRATION.preset === 'adaptive') {
-                refreshOrthoCalibrationUI();
-            }
-        });
-        window.refreshOrthoCalibrationUI = refreshOrthoCalibrationUI;
-        refreshOrthoCalibrationUI();
     }
     setupBasemapControls();
 
