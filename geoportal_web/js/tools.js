@@ -595,16 +595,33 @@ const GeoTools = (() => {
 
     function identifyLotCadastre(center) {
         const matches = [];
+        const seen = new Set();
         if (typeof layersMap !== 'undefined' && layersMap) {
-            ['loteamento_por_bairro', 'zoneamento_corrigido', 'limite_bairros_ipm'].forEach(id => {
+            const priorityIds = [
+                'loteamento_por_bairro',
+                'zoneamento_corrigido',
+                'limite_bairros_ipm',
+                'restrito_areas_publicas',
+                'restrito_areas_privadas',
+                'restrito_ocupacoes'
+            ];
+            const allIds = [...priorityIds, ...Object.keys(layersMap).filter(k => !priorityIds.includes(k))];
+            allIds.forEach(id => {
                 const group = layersMap[id];
                 if (!group || !group.eachLayer) return;
                 group.eachLayer(l => {
                     if (l.feature && l.feature.geometry) {
+                        const gt = l.feature.geometry.type;
+                        if (gt !== 'Polygon' && gt !== 'MultiPolygon') return;
                         if (pointInGeom(center.lat, center.lng, l.feature.geometry)) {
                             const p = l.feature.properties || {};
                             const n = featureName(p, l.layerDef);
-                            matches.push({ id, title: layerTitle(l, id), name: n, p });
+                            const title = layerTitle(l, id);
+                            const key = `${title}|${n}`;
+                            if (!seen.has(key)) {
+                                seen.add(key);
+                                matches.push({ id, title, name: n, p, layer: l });
+                            }
                         }
                     }
                 });
@@ -618,8 +635,8 @@ const GeoTools = (() => {
         body.innerHTML = `
             <div class="tp-sub" style="margin-top:0;">Localizar por Coordenadas</div>
             <div class="co-tabs">
-                <button type="button" class="co-tab active" data-tab="lot" id="tab-co-lot"><i class="fa-solid fa-draw-polygon"></i> 4 Vértices (Lote)</button>
-                <button type="button" class="co-tab" data-tab="single" id="tab-co-single"><i class="fa-solid fa-location-dot"></i> Ponto Único</button>
+                <button type="button" class="co-tab active" data-tab="lot" id="tab-co-lot"><i class="fa-solid fa-draw-polygon"></i> Vértices (Lote)</button>
+                <button type="button" class="co-tab" data-tab="single" id="tab-co-single"><i class="fa-solid fa-location-dot"></i> Par Único (Lote)</button>
             </div>
 
             <div class="tp-row" style="margin-top:6px;margin-bottom:6px;">
@@ -672,14 +689,16 @@ const GeoTools = (() => {
                 </div>
             </div>
 
-            <!-- MODO PONTO ÚNICO -->
+            <!-- MODO PONTO ÚNICO / PAR ÚNICO -->
             <div id="co-single-box" style="display:none;">
+                <div class="tp-hint" style="margin:2px 0 6px;">Informe ou cole um único par de coordenadas (E, N ou Lat, Lon) para localizar o lote/ponto no mapa:</div>
                 <div class="tp-row two">
                     <input type="text" id="co-a" class="tp-input" placeholder="Este (E)  ex.: 752453,75">
                     <input type="text" id="co-b" class="tp-input" placeholder="Norte (N)  ex.: 7153896,31">
                 </div>
-                <div class="tp-row">
-                    <button type="button" class="tp-btn primary" id="co-go"><i class="fa-solid fa-location-arrow"></i> Ir para o ponto</button>
+                <div class="tp-row two">
+                    <button type="button" class="tp-btn primary" id="co-go"><i class="fa-solid fa-location-arrow"></i> Localizar no Mapa</button>
+                    <button type="button" class="tp-btn" id="co-single-clear"><i class="fa-solid fa-eraser"></i> Limpar</button>
                 </div>
                 <div class="tp-sub">Capturar coordenada no mapa</div>
                 <div class="tp-row">
@@ -744,6 +763,26 @@ const GeoTools = (() => {
         $('co-toggle-dims').addEventListener('click', toggleLotDimensions);
         $('co-pick-lot').addEventListener('click', () => togglePick('lot'));
         $('co-go').addEventListener('click', goToCoord);
+        if ($('co-single-clear')) {
+            $('co-single-clear').addEventListener('click', () => {
+                $('co-a').value = '';
+                $('co-b').value = '';
+                clearCoordLot();
+            });
+        }
+        $('co-a').addEventListener('paste', e => {
+            const pasted = (e.clipboardData || window.clipboardData).getData('text');
+            const pair = parseSinglePairText(pasted);
+            if (pair) {
+                e.preventDefault();
+                $('co-a').value = pair.a;
+                $('co-b').value = pair.b;
+                const isUtm = Math.abs(num(pair.a)) > 90 || Math.abs(num(pair.b)) > 90;
+                if ($('co-mode')) $('co-mode').value = isUtm ? 'utm' : 'dd';
+                updateCoordPlaceholders();
+                goToCoord();
+            }
+        });
         ['co-a', 'co-b'].forEach(i => $(i).addEventListener('keydown', e => { if (e.key === 'Enter') goToCoord(); }));
         $('co-pick').addEventListener('click', () => togglePick('single'));
 
@@ -777,12 +816,92 @@ const GeoTools = (() => {
         );
     }
 
-    const num = s => parseFloat(String(s).trim().replace(/\s/g, '').replace(',', '.'));
+    const num = s => {
+        let str = String(s || '').trim().replace(/\s+/g, '');
+        if (!str) return NaN;
+        if (str.includes('.') && str.includes(',')) {
+            str = str.replace(/\./g, '').replace(',', '.');
+        } else if (str.includes(',')) {
+            str = str.replace(',', '.');
+        } else if ((str.match(/\./g) || []).length > 1) {
+            const last = str.lastIndexOf('.');
+            str = str.slice(0, last).replace(/\./g, '') + str.slice(last);
+        }
+        return parseFloat(str);
+    };
+
+    function parseSinglePairText(raw) {
+        if (!raw) return null;
+        let text = String(raw).trim()
+            .replace(/[eEnNxXyY][:\s=]+/g, ' ')
+            .replace(/[lL]at(itude)?[:\s=]+/gi, ' ')
+            .replace(/[lL]on(gitude)?[:\s=]+/gi, ' ');
+        // Normaliza separadores de milhar brasileiros se houver vírgula decimal
+        text = text.replace(/(\d)\.(\d{3})(?=[.,\s;]|$)/g, '$1$2');
+        text = text.replace(/(\d)\.(\d{3})(?=[.,\s;]|$)/g, '$1$2');
+        text = text.replace(/(\d),(\d+)/g, '$1.$2');
+        const matches = text.match(/-?\d+(?:\.\d+)?/g);
+        if (!matches || matches.length < 2) return null;
+        return { a: matches[0], b: matches[1] };
+    }
+
+    function parseCoordPairToPoint(rawA, rawB, isUtm, vIdx) {
+        const a = num(rawA), b = num(rawB);
+        if (!isFinite(a) || !isFinite(b)) return { error: `Informe as coordenadas numéricas do Vértice V${vIdx}.` };
+        if (isUtm) {
+            if (a < 100000 || a > 900000 || b < 6000000 || b > 8000000) {
+                return { error: `Vértice V${vIdx}: Coordenadas UTM fora da faixa de Matinhos (E 100000–900000, N 6000000–8000000).` };
+            }
+            const ll = fromUTM22S(a, b);
+            return { v: vIdx, e: a, n: b, lat: ll.lat, lng: ll.lng, ll: L.latLng(ll.lat, ll.lng) };
+        }
+        if (Math.abs(a) > 90 || Math.abs(b) > 180) {
+            return { error: `Vértice V${vIdx}: Latitude (-90 a 90) ou Longitude (-180 a 180) inválida.` };
+        }
+        const u = toUTM22S(a, b);
+        return { v: vIdx, e: parseFloat(u.x), n: parseFloat(u.y), lat: a, lng: b, ll: L.latLng(a, b) };
+    }
 
     function locateLot() {
         const coords = [];
         const isUtm = $('co-mode').value === 'utm';
         const totalRows = state.coordVertexCount || 4;
+
+        // Verifica quantos vértices foram preenchidos
+        const filledRows = [];
+        for (let i = 1; i <= totalRows; i++) {
+            const ea = $(`co-v${i}-a`), eb = $(`co-v${i}-b`);
+            if (!ea || !eb) continue;
+            const rawA = ea.value.trim(), rawB = eb.value.trim();
+            if (rawA !== '' || rawB !== '') {
+                filledRows.push({ i, ea, eb, rawA, rawB });
+            }
+        }
+
+        if (!filledRows.length) {
+            toast('Informe ao menos 1 par de coordenadas para localizar.', 'err');
+            if ($(`co-v1-a`)) $(`co-v1-a`).focus();
+            return;
+        }
+
+        // Busca direta por 1 único par de coordenadas (ex.: apenas V1 preenchido)
+        if (filledRows.length === 1) {
+            const row = filledRows[0];
+            if (row.rawA === '' || row.rawB === '') {
+                toast(`Informe os dois valores (E/N ou Lat/Lon) do Vértice V${row.i}.`, 'err');
+                (row.rawA === '' ? row.ea : row.eb).focus();
+                return;
+            }
+            const parsed = parseCoordPairToPoint(row.rawA, row.rawB, isUtm, row.i);
+            if (parsed.error) {
+                toast(parsed.error, 'err');
+                row.ea.focus();
+                return;
+            }
+            showCoordInfo(parsed.ll, true);
+            toast('Localizado pelo par de coordenadas!', 'ok', 2200);
+            return;
+        }
 
         for (let i = 1; i <= totalRows; i++) {
             const ea = $(`co-v${i}-a`), eb = $(`co-v${i}-b`);
@@ -805,27 +924,13 @@ const GeoTools = (() => {
                 }
             }
 
-            const a = num(rawA), b = num(rawB);
-            if (!isFinite(a) || !isFinite(b)) {
-                toast(`Informe as coordenadas numéricas do Vértice V${i}.`, 'err');
+            const parsed = parseCoordPairToPoint(rawA, rawB, isUtm, i);
+            if (parsed.error) {
+                toast(parsed.error, 'err');
                 ea.focus();
                 return;
             }
-            if (isUtm) {
-                if (a < 100000 || a > 900000 || b < 6000000 || b > 8000000) {
-                    toast(`Vértice V${i}: Coordenadas UTM fora da faixa de Matinhos (E 100000–900000, N 6000000–8000000).`, 'err');
-                    return;
-                }
-                const ll = fromUTM22S(a, b);
-                coords.push({ v: i, e: a, n: b, lat: ll.lat, lng: ll.lng, ll: L.latLng(ll.lat, ll.lng) });
-            } else {
-                if (Math.abs(a) > 90 || Math.abs(b) > 180) {
-                    toast(`Vértice V${i}: Latitude (-90 a 90) ou Longitude (-180 a 180) inválida.`, 'err');
-                    return;
-                }
-                const u = toUTM22S(a, b);
-                coords.push({ v: i, e: parseFloat(u.x), n: parseFloat(u.y), lat: a, lng: b, ll: L.latLng(a, b) });
-            }
+            coords.push(parsed);
         }
 
         if (coords.length < 3) {
@@ -1293,12 +1398,19 @@ const GeoTools = (() => {
 
     function showCoordInfo(latlng, flyTo) {
         ensureCoordLotGroup();
+        if (state.coordLotGroup) state.coordLotGroup.clearLayers();
         const u = toUTM22S(latlng.lat, latlng.lng);
         const dd = `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`;
         const utm = `E ${u.x} N ${u.y}`;
+        const cadMatches = identifyLotCadastre(latlng);
+        const cadPopup = cadMatches.length
+            ? '<br>' + cadMatches.map(m => `<b>${esc(m.title)}:</b> ${esc(m.name)}`).join('<br>')
+            : '';
         if (state.coordMarker) state.coordMarker.remove();
-        state.coordMarker = L.marker(latlng).addTo(state.coordLotGroup).bindPopup(`<b>Ponto</b><br>Lat/Lon: ${dd}<br>UTM 22S: ${utm}`).openPopup();
-        if (flyTo) map.flyTo(latlng, Math.max(map.getZoom(), 17), { duration: 1 });
+        state.coordMarker = L.marker(latlng).addTo(state.coordLotGroup)
+            .bindPopup(`<b>Ponto / Lote Localizado</b><br>Lat/Lon: ${dd}<br>UTM 22S: ${utm}${cadPopup}`)
+            .openPopup();
+        if (flyTo) map.flyTo(latlng, Math.max(map.getZoom(), 19), { duration: 1 });
 
         state.lastLocatedPoint = {
             lat: latlng.lat,
@@ -1307,23 +1419,40 @@ const GeoTools = (() => {
             n: parseFloat(u.y),
             ll: latlng
         };
+        state.lastLocatedLot = null;
+
+        const cadHtml = cadMatches.length
+            ? `<div class="co-cad-info" style="margin-top:6px;"><i class="fa-solid fa-circle-info"></i> ${cadMatches.map(m => `<b>${esc(m.title)}:</b> ${esc(m.name)}`).join(' · ')}</div>`
+            : '';
 
         const out = $('co-out');
         if (out) {
             out.innerHTML = `<div><b>Lat/Lon:</b> ${dd} <button type="button" class="mini-copy" data-c="${dd}" title="Copiar"><i class="fa-regular fa-copy"></i></button></div>
                 <div><b>UTM 22S:</b> ${utm} <button type="button" class="mini-copy" data-c="${u.x}, ${u.y}" title="Copiar"><i class="fa-regular fa-copy"></i></button></div>
-                <div style="margin-top:6px;">
-                    <button type="button" class="tp-btn primary" id="co-save-pt" style="width:100%;"><i class="fa-solid fa-floppy-disk"></i> Salvar Vértice p/ Comparar</button>
+                ${cadHtml}
+                <div class="tp-row two" style="margin-top:8px; margin-bottom:0;">
+                    <button type="button" class="tp-btn primary" id="co-save-pt"><i class="fa-solid fa-floppy-disk"></i> Salvar Ponto</button>
+                    <button type="button" class="tp-btn danger" id="co-clear-pt"><i class="fa-solid fa-trash-can"></i> Limpar</button>
                 </div>`;
             out.querySelectorAll('.mini-copy').forEach(b => b.addEventListener('click', () => copyText(b.dataset.c)));
             $('co-save-pt').addEventListener('click', saveCurrentCoordPoint);
+            $('co-clear-pt').addEventListener('click', clearCoordLot);
         }
         renderSavedCoordLots();
     }
 
     function goToCoord() {
+        const rawA = $('co-a').value.trim();
+        const rawB = $('co-b').value.trim();
+        if (rawA && !rawB) {
+            const pair = parseSinglePairText(rawA);
+            if (pair) {
+                $('co-a').value = pair.a;
+                $('co-b').value = pair.b;
+            }
+        }
         const a = num($('co-a').value), b = num($('co-b').value);
-        if (!isFinite(a) || !isFinite(b)) { toast('Informe dois valores numéricos.', 'err'); return; }
+        if (!isFinite(a) || !isFinite(b)) { toast('Informe um par de coordenadas válido.', 'err'); return; }
         let ll;
         if ($('co-mode').value === 'utm') {
             if (a < 100000 || a > 900000 || b < 6000000 || b > 8000000) { toast('Valores UTM fora da faixa esperada (E 100000–900000, N 6000000–8000000).', 'err'); return; }
