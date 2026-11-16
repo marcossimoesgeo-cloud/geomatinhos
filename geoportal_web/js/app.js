@@ -53,6 +53,7 @@ function initGeoportal() {
     // - Balneários ao Norte (lat > -25.8050° até -25.7219° / N ~ 7.152.750): correção progressiva até dE = -2,80m, dN = -3,72m (4,66m SO),
     //   calibrada pelos dois lotes aferidos em campo (V1..V4 e P01..P04).
     window.ORTHO_CALIBRATION = {
+        enabled: false, // Desativada temporariamente (usando ortofoto bruta da empresa)
         mode: 'progressive_north',
         latStartNorth: -25.8050,
         latFullNorth: -25.7219,
@@ -62,7 +63,7 @@ function initGeoportal() {
 
     function getEffectiveOrthoShiftUTM() {
         const cal = window.ORTHO_CALIBRATION;
-        if (!cal || !map) return { dE: 0, dN: 0 };
+        if (!cal || !cal.enabled || !map) return { dE: 0, dN: 0 };
         const lat = map.getCenter().lat;
         if (lat <= cal.latStartNorth) {
             return { dE: 0, dN: 0 };
