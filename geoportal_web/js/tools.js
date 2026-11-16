@@ -284,14 +284,14 @@ const GeoTools = (() => {
     function buildDock() {
         const wrap = document.querySelector('.main-wrapper');
         const dock = document.createElement('aside');
-        dock.className = 'tools-dock';
+        dock.className = 'tools-dock collapsed';
         dock.id = 'tools-dock';
 
         const head = document.createElement('div');
         head.className = 'dock-header';
         head.innerHTML = `<span><i class="fa-solid fa-screwdriver-wrench"></i> Ferramentas</span>
             <button type="button" class="dock-collapse-btn" id="dock-collapse-btn" title="Recolher / Expandir barra de ferramentas">
-                <i class="fa-solid fa-chevron-up"></i>
+                <i class="fa-solid fa-chevron-down"></i>
             </button>`;
         dock.appendChild(head);
 
